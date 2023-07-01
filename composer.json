@@ -1,0 +1,32 @@
+{
+    "name": "shudd3r/filesystem",
+    "description": "Basic filesystem abstractions",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Shudd3r",
+            "email": "q3.shudder@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^7.4 || ^8.0"
+    },
+    "require-dev": {
+        "polymorphine/dev": "0.3.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Shudd3r\\Filesystem\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Shudd3r\\Filesystem\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test-cs": "php-cs-fixer --dry-run -v --config=cs-fixer.php.dist --path-mode=intersection fix src tests"
+    }
+}
