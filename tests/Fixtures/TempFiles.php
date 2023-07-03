@@ -1,0 +1,101 @@
+<?php declare(strict_types=1);
+
+/*
+ * This file is part of Shudd3r/Filesystem package.
+ *
+ * (c) Shudd3r <q3.shudder@gmail.com>
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this source code in the file LICENSE.
+ */
+
+namespace Shudd3r\Filesystem\Tests\Fixtures;
+
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
+use FilesystemIterator;
+use InvalidArgumentException;
+use RuntimeException;
+
+
+class TempFiles
+{
+    private string $root;
+
+    public function __construct(string $testName = null)
+    {
+        $tmpName = getenv('DEV_TESTS_DIRECTORY') . '/' . ($testName ?? 'test' . bin2hex(random_bytes(3)));
+        $this->root = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . $this->normalized($tmpName);
+        is_dir($this->root) || mkdir($this->root, 0700, true);
+    }
+
+    public function __destruct()
+    {
+        $this->clear();
+        rmdir($this->root);
+    }
+
+    public function clear(): void
+    {
+        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
+        $nodes = new RecursiveDirectoryIterator($this->root, $flags);
+        $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($nodes as $pathname) {
+            $this->remove($pathname);
+        }
+    }
+
+    public function file(string $filename = '', string $contents = ''): string
+    {
+        $this->directory(dirname($filename));
+        file_put_contents($filename = $this->name($filename), $contents);
+        return $filename;
+    }
+
+    public function directory(string $directory = ''): string
+    {
+        $directory = $directory === '.' ? $this->root : $this->name($directory);
+        if (!is_dir($directory)) {
+            mkdir($directory, 0700, true);
+        }
+        return $directory;
+    }
+
+    public function symlink(string $target, string $name): string
+    {
+        if (strpos($target, $this->root) !== 0) {
+            throw new InvalidArgumentException();
+        }
+
+        $this->directory($this->normalized(dirname($name)));
+
+        if (!symlink($target, $name = $this->name($name))) {
+            throw new RuntimeException();
+        }
+        return $name;
+    }
+
+    public function remove(string $pathname): void
+    {
+        $isWinOS = DIRECTORY_SEPARATOR === '\\';
+        $isFile  = $isWinOS ? is_file($pathname) : is_file($pathname) || is_link($pathname);
+        if ($isFile || is_dir($pathname)) {
+            $isFile ? unlink($pathname) : rmdir($pathname);
+            return;
+        }
+
+        @unlink($pathname) || rmdir($pathname);
+    }
+
+    public function name(string $nodeName): string
+    {
+        if ($nodeName === '.') { return $this->root; }
+        $path = $this->normalized($nodeName);
+        return $this->root . DIRECTORY_SEPARATOR . $path;
+    }
+
+    public function normalized(string $path): string
+    {
+        return trim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
+    }
+}
