@@ -45,14 +45,14 @@ class TempFiles
         }
     }
 
-    public function file(string $filename = '', string $contents = ''): string
+    public function file(string $filename, string $contents = ''): string
     {
         $this->directory(dirname($filename));
         file_put_contents($filename = $this->name($filename), $contents);
         return $filename;
     }
 
-    public function directory(string $directory = ''): string
+    public function directory(string $directory = '.'): string
     {
         $directory = $directory === '.' ? $this->root : $this->name($directory);
         if (!is_dir($directory)) {

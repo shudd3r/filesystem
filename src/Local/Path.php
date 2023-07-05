@@ -21,12 +21,12 @@ class Path
         $this->path = $path;
     }
 
-    public static function fromString(string $path): ?self
+    public static function fromString(string $absolutePathname): ?self
     {
-        if (!is_dir($path) && !is_file($path)) { return null; }
+        if (!is_dir($absolutePathname) && !is_file($absolutePathname)) { return null; }
 
-        $realpath = realpath($path);
-        if ($realpath !== $path && !is_link($path)) { return null; }
+        $realpath = realpath($absolutePathname);
+        if ($realpath !== $absolutePathname && !is_link($absolutePathname)) { return null; }
         return $realpath ? new self($realpath) : null;
     }
 
@@ -36,5 +36,23 @@ class Path
     public function __toString(): string
     {
         return $this->path;
+    }
+
+    public function expandedWith(string $relativePathname): ?string
+    {
+        if (!is_dir($this->path)) { return null; }
+
+        $name = basename($relativePathname);
+        $path = '';
+        foreach ($this->segments(dirname($relativePathname)) as $subdirectory) {
+            $path .= DIRECTORY_SEPARATOR . $subdirectory;
+            if (is_file($this->path . $path)) { return null; }
+        }
+        return $this->path . $path . DIRECTORY_SEPARATOR . $name;
+    }
+
+    private function segments(string $relativePath): array
+    {
+        return explode('/', trim(str_replace('\\', '/', $relativePath), '/'));
     }
 }
