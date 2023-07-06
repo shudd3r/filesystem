@@ -11,6 +11,8 @@
 
 namespace Shudd3r\Filesystem\Local;
 
+use Shudd3r\Filesystem\Exception;
+
 
 class LocalDirectory
 {
@@ -21,6 +23,9 @@ class LocalDirectory
         $this->rootPath = $rootPath;
     }
 
+    /**
+     * @param string $path Real path to existing directory
+     */
     public static function instance(string $path): ?self
     {
         $path   = rtrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
@@ -36,44 +41,92 @@ class LocalDirectory
         return $this->rootPath;
     }
 
-    public function filePath(string $name): ?string
+    /**
+     * Absolute filename path in this directory.
+     *
+     * File for this path might not exist, but if this path points
+     * to a directory (symlink) or non directory node is found on its
+     * path `Exception\InvalidPath` will be thrown.
+     *
+     * Forward and backward slashes at the beginning of $name argument
+     * will be silently removed, and dot path segments (`.`, `..`) are
+     * not allowed (`Exception\UnsupportedPathFormat`)
+     *
+     * @param string $name relative file name
+     *
+     * @throws Exception\InvalidPath
+     *
+     * @return string
+     */
+    public function filePath(string $name): string
     {
-        return $this->absolutePath($name, true);
+        return $this->absolutePath($this->normalizedPath($name), true);
     }
 
-    public function subdirectoryPath(string $name): ?string
+    /**
+     * Absolute subdirectory path.
+     *
+     * Directory for this path might not exist, but if this path points
+     * to a file (symlink) or non directory node is found on its path
+     * `Exception\InvalidPath` will be thrown.
+     *
+     * Forward and backward slashes at the beginning of $name argument
+     * will be silently removed, and dot path segments (`.`, `..`) are
+     * not allowed (`Exception\UnsupportedPathFormat`)
+     *
+     * @param string $name relative directory name
+     *
+     * @throws Exception\InvalidPath
+     *
+     * @return string
+     */
+    public function subdirectoryPath(string $name): string
     {
-        return $this->absolutePath($name, false);
+        return $this->absolutePath($this->normalizedPath($name), false);
     }
 
-    private function absolutePath(string $relativePathname, bool $forFile): ?string
+    private function absolutePath(string $relativePath, bool $forFile): string
     {
-        $segments = $this->pathSegments($relativePathname);
-        $basename = array_pop($segments);
         $path     = '';
+        $segments = explode(DIRECTORY_SEPARATOR, $relativePath);
+        $basename = array_pop($segments);
         foreach ($segments as $subdirectory) {
-            $path = $this->expandedPath($path, $subdirectory);
-            if (!$path) { return null; }
+            $path = $this->expandedPath($path, $subdirectory, false, $relativePath);
         }
-        $path = $this->expandedPath($path, $basename, $forFile);
-        return $path ? $this->rootPath . $path : null;
+
+        return $this->rootPath . $this->expandedPath($path, $basename, $forFile, $relativePath);
     }
 
-    private function expandedPath(string $path, string $segment, bool $isFile = false): ?string
+    private function expandedPath(string $path, string $segment, bool $isFile, string $originalPath): ?string
     {
-        if (in_array($segment, ['', '.', '..'], true)) { return null; }
+        if (!$segment) {
+            $message = 'Empty path segment in `%s`';
+            throw new Exception\InvalidPath(sprintf($message, $originalPath));
+        }
+
+        if (in_array($segment, ['.', '..'], true)) {
+            $message = 'Dot path segments not allowed for `%s`';
+            throw new Exception\InvalidPath\UnsupportedPathFormat(sprintf($message, $originalPath));
+        }
+
         $path     = $path . DIRECTORY_SEPARATOR . $segment;
         $pathname = $this->rootPath . $path;
         $nameCollision = $isFile
             ? is_dir($pathname) || is_link($pathname) && !is_file($pathname)
             : is_file($pathname) || is_link($pathname) && !is_dir($pathname);
 
-        return $nameCollision ? null : $path;
+        if ($nameCollision && str_ends_with($originalPath, $segment)) {
+            throw Exception\InvalidPath\UnexpectedNodeType::for($originalPath, $isFile);
+        }
+        if ($nameCollision) {
+            throw Exception\InvalidPath\UnreachablePath::for($originalPath, $path);
+        }
+
+        return $path;
     }
 
-    private function pathSegments(string $relativePath): array
+    private function normalizedPath(string $relativePath): string
     {
-        $relativePath = trim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $relativePath), DIRECTORY_SEPARATOR);
-        return explode(DIRECTORY_SEPARATOR, $relativePath);
+        return trim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $relativePath), DIRECTORY_SEPARATOR);
     }
 }
