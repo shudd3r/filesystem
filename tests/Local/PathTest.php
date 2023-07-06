@@ -97,9 +97,7 @@ class PathTest extends TestCase
     {
         chdir(self::$temp->directory());
         self::$temp->file('exists/dir/foo.txt');
-        $file = self::$temp->file('linked/file.txt');
-        self::$temp->symlink($file, 'invalid-link');
-        self::$temp->remove($file);
+        self::$temp->symlink('', 'invalid-link');
         self::$temp->symlink(self::$temp->directory('exists/dir'), 'valid-link');
 
         return [

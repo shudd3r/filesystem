@@ -63,6 +63,12 @@ class TempFiles
 
     public function symlink(string $target, string $name): string
     {
+        $invalid = false;
+        if (!$target) {
+            $invalid = true;
+            $target  = $this->file('remove.after.link');
+        }
+
         if (strpos($target, $this->root) !== 0) {
             throw new InvalidArgumentException();
         }
@@ -72,6 +78,9 @@ class TempFiles
         if (!symlink($target, $name = $this->name($name))) {
             throw new RuntimeException();
         }
+
+        if ($invalid) { $this->remove($target); }
+
         return $name;
     }
 
