@@ -35,18 +35,37 @@ class LocalDirectory
         return $this->rootPath;
     }
 
-    public function expandedWith(string $relativePathname): ?string
+    public function filePath(string $name): ?string
+    {
+        return $this->expandedPath($name, true);
+    }
+
+    public function subdirectoryPath(string $name): ?string
+    {
+        return $this->expandedPath($name, false);
+    }
+
+    private function expandedPath(string $relativePathname, bool $forFile): ?string
     {
         $name = basename($relativePathname);
         $path = '';
-        foreach ($this->segments(dirname($relativePathname)) as $subdirectory) {
+        foreach ($this->pathSegments(dirname($relativePathname)) as $subdirectory) {
             $path .= DIRECTORY_SEPARATOR . $subdirectory;
-            if (is_file($this->rootPath . $path)) { return null; }
+            if ($this->hasPathCollision($path)) { return null; }
         }
-        return $this->rootPath . $path . DIRECTORY_SEPARATOR . $name;
+        $path = $path . DIRECTORY_SEPARATOR . $name;
+        return $this->hasPathCollision($path, $forFile) ? null : $this->rootPath . $path;
     }
 
-    private function segments(string $relativePath): array
+    private function hasPathCollision($path, bool $forFilename = false): bool
+    {
+        $pathname = $this->rootPath . $path;
+        return $forFilename
+            ? is_dir($pathname) || is_link($pathname) && !is_file($pathname)
+            : is_file($pathname) || is_link($pathname) && !is_dir($pathname);
+    }
+
+    private function pathSegments(string $relativePath): array
     {
         return explode('/', trim(str_replace('\\', '/', $relativePath), '/'));
     }

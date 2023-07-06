@@ -20,7 +20,7 @@ class LocalDirectoryTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
 
-    public function test_Instance_can_only_be_created_with_real_directory_path(): void
+    public function test_instance_can_only_be_created_with_real_directory_path(): void
     {
         foreach ($this->invalidDirectoryPaths() as $type => $path) {
             $this->assertNull($this->directory($path), "Failed for `$type`");
@@ -32,36 +32,68 @@ class LocalDirectoryTest extends TestCase
         $this->assertInstanceOf(LocalDirectory::class, $this->directory($path));
     }
 
-    public function test_Path_method_returns_instance_path(): void
+    public function test_path_returns_absolute_path_to_existing_directory(): void
     {
         $path = self::$temp->directory('foo/bar/baz');
         $this->assertSame($path, $this->directory($path)->path());
     }
 
-    public function test_Expanding_directory_path_returns_absolute_path_name(): void
-    {
-        $this->assertSame(self::$temp->name('foo/bar.dir/baz'), $this->directory()->expandedWith('foo/bar.dir/baz'));
-        $this->assertSame(self::$temp->name('foo/bar.txt'), $this->directory()->expandedWith('foo/bar.txt'));
-    }
-
-    public function test_Expanding_with_file_on_path_returns_null(): void
-    {
-        self::$temp->file('foo/bar.txt');
-        $this->assertNull($this->directory()->expandedWith('foo/bar.txt/baz'));
-    }
-
-    public function test_Expanding_with_directory_link_on_path_returns_absolute_symlink_path(): void
-    {
-        $directory = self::$temp->directory('foo/bar.dir');
-        self::$temp->symlink($directory, 'bar.lnk');
-        $this->assertSame(self::$temp->name('bar.lnk/baz'), $this->directory()->expandedWith('bar.lnk/baz'));
-    }
-
-    public function test_Expanding_with_file_link_on_path_returns_null(): void
+    public function test_filePath_returns_absolute_path_to_existing_file(): void
     {
         $file = self::$temp->file('foo/bar.txt');
-        self::$temp->symlink($file, 'bar.lnk');
-        $this->assertNull($this->directory()->expandedWith('bar.lnk/baz'));
+        $this->assertSame($file, $this->directory()->filePath('foo/bar.txt'));
+    }
+
+    public function test_filePath_returns_absolute_path_to_not_existing_file(): void
+    {
+        $file = self::$temp->name('foo/bar.txt');
+        $this->assertSame($file, $this->directory()->filePath('foo/bar.txt'));
+    }
+
+    public function test_filePath_returns_linked_path_for_symlinks(): void
+    {
+        $file     = self::$temp->file('foo/bar.txt');
+        $fileLink = self::$temp->symlink($file, 'link/file.lnk');
+        $this->assertSame($fileLink, $this->directory()->filePath('link\file.lnk'));
+
+        $pathLink = self::$temp->symlink(dirname($file), 'path.lnk') . DIRECTORY_SEPARATOR . 'bar.txt';
+        $this->assertSame($pathLink, $this->directory()->filePath('path.lnk/bar.txt'));
+    }
+
+    public function test_filePath_returns_null_for_non_file_paths(): void
+    {
+        foreach ($this->invalidRelativePaths(true) as $type => $relativePath) {
+            $this->assertNull($this->directory()->filePath($relativePath), "Failed for `$type`");
+        }
+    }
+
+    public function test_subdirectoryPath_returns_absolute_path_to_existing_directory(): void
+    {
+        $path = self::$temp->directory('foo/bar/baz');
+        $this->assertSame($path, $this->directory()->subdirectoryPath('foo/bar/baz'));
+    }
+
+    public function test_subdirectoryPath_returns_absolute_path_to_not_existing_directory(): void
+    {
+        $path = self::$temp->name('foo/bar/baz');
+        $this->assertSame($path, $this->directory()->subdirectoryPath('foo/bar/baz'));
+    }
+
+    public function test_subdirectoryPath_returns_linked_path_for_symlinks(): void
+    {
+        $dir     = self::$temp->directory('foo/bar/baz');
+        $dirLink = self::$temp->symlink($dir, 'link/dir.lnk');
+        $this->assertSame($dirLink, $this->directory()->subdirectoryPath('link/dir.lnk'));
+
+        $pathLink = self::$temp->symlink(dirname($dir), 'path.lnk') . DIRECTORY_SEPARATOR . 'baz';
+        $this->assertSame($pathLink, $this->directory()->subdirectoryPath('path.lnk/baz'));
+    }
+
+    public function test_subdirectoryPath_returns_null_for_non_directory_paths(): void
+    {
+        foreach ($this->invalidRelativePaths(false) as $type => $relativePath) {
+            $this->assertNull($this->directory()->subdirectoryPath($relativePath), "Failed for `$type`");
+        }
     }
 
     private function invalidDirectoryPaths(): array
@@ -74,6 +106,24 @@ class LocalDirectoryTest extends TestCase
             'valid symlink'     => self::$temp->symlink(self::$temp->name('foo/bar'), 'link'),
             'relative path'     => self::$temp->normalized('foo/bar'),
             'step-up path'      => self::$temp->name('foo/bar/..')
+        ];
+    }
+
+    private function invalidRelativePaths(bool $forFile): array
+    {
+        $directory = self::$temp->directory('foo/bar');
+        $file      = self::$temp->file('foo/bar/baz.txt');
+        self::$temp->symlink($file, 'file/name.lnk');
+        self::$temp->symlink($directory, 'dir/name.lnk');
+        self::$temp->symlink('', 'dead/name.lnk');
+
+        return [
+            'file <=> directory'      => $forFile ? 'foo/bar' : 'foo/bar/baz.txt',
+            'link file <=> directory' => $forFile ? 'dir/name.lnk' : 'file/name.lnk',
+            'file on path'            => 'foo/bar/baz.txt/file.or.dir',
+            'file symlink on path'    => 'file/name.lnk/baz',
+            'dead symlink'            => 'dead/name.lnk',
+            'dead symlink on path'    => 'dead/name.lnk/baz'
         ];
     }
 
