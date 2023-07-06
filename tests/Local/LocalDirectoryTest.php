@@ -96,6 +96,27 @@ class LocalDirectoryTest extends TestCase
         }
     }
 
+    public function test_path_separator_normalization(): void
+    {
+        $root     = self::$temp->directory();
+        $instance = $this->directory(self::$temp->directory('foo/bar'));
+        $this->assertEquals($instance, $this->directory($root . '/foo/bar'));
+        $this->assertEquals($instance, $this->directory(str_replace('/', '\\', $root) . '\foo\bar'));
+        $this->assertEquals($instance, $this->directory($root . '\foo/bar/'));
+        $this->assertEquals($instance, $this->directory($root . '/foo\bar\\'));
+
+        $path     = self::$temp->name('bar/baz');
+        $instance = $this->directory($root);
+        $this->assertSame($path, $instance->subdirectoryPath('/bar/baz'));
+        $this->assertSame($path, $instance->subdirectoryPath('bar/baz/'));
+        $this->assertSame($path, $instance->subdirectoryPath('\bar\baz'));
+        $this->assertSame($path, $instance->subdirectoryPath('\\\\\\bar/baz\\'));
+        $this->assertSame($path, $instance->filePath('/bar/baz'));
+        $this->assertSame($path, $instance->filePath('\bar\baz'));
+        $this->assertSame($path, $instance->filePath('bar/baz////'));
+        $this->assertSame($path, $instance->filePath('\bar/baz\\'));
+    }
+
     private function invalidDirectoryPaths(): array
     {
         chdir(self::$temp->directory());
@@ -104,7 +125,7 @@ class LocalDirectoryTest extends TestCase
             'not existing path' => self::$temp->name('not/exists'),
             'invalid symlink'   => self::$temp->symlink('', 'link'),
             'valid symlink'     => self::$temp->symlink(self::$temp->name('foo/bar'), 'link'),
-            'relative path'     => self::$temp->normalized('foo/bar'),
+            'relative path'     => self::$temp->normalized('./foo/bar'),
             'step-up path'      => self::$temp->name('foo/bar/..')
         ];
     }

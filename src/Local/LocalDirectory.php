@@ -23,8 +23,9 @@ class LocalDirectory
 
     public static function instance(string $path): ?self
     {
-        $isRealDirectoryPath = $path === realpath($path) && is_dir($path);
-        return $isRealDirectoryPath ? new self($path) : null;
+        $path   = rtrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
+        $isReal = $path === realpath($path) && is_dir($path);
+        return $isReal ? new self($path) : null;
     }
 
     /**
@@ -67,6 +68,7 @@ class LocalDirectory
 
     private function pathSegments(string $relativePath): array
     {
-        return explode('/', trim(str_replace('\\', '/', $relativePath), '/'));
+        $relativePath = trim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $relativePath), DIRECTORY_SEPARATOR);
+        return explode(DIRECTORY_SEPARATOR, $relativePath);
     }
 }
