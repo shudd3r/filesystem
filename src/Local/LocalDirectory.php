@@ -12,43 +12,38 @@
 namespace Shudd3r\Filesystem\Local;
 
 
-class Path
+class LocalDirectory
 {
-    private string $path;
+    private string $rootPath;
 
-    private function __construct(string $path)
+    private function __construct(string $rootPath)
     {
-        $this->path = $path;
+        $this->rootPath = $rootPath;
     }
 
-    public static function fromString(string $absolutePathname): ?self
+    public static function instance(string $path): ?self
     {
-        if (!is_dir($absolutePathname) && !is_file($absolutePathname)) { return null; }
-
-        $realpath = realpath($absolutePathname);
-        if ($realpath !== $absolutePathname && !is_link($absolutePathname)) { return null; }
-        return $realpath ? new self($realpath) : null;
+        $isRealDirectoryPath = $path === realpath($path) && is_dir($path);
+        return $isRealDirectoryPath ? new self($path) : null;
     }
 
     /**
-     * @return string Absolute pathname string
+     * @return string Absolute directory pathname
      */
-    public function __toString(): string
+    public function path(): string
     {
-        return $this->path;
+        return $this->rootPath;
     }
 
     public function expandedWith(string $relativePathname): ?string
     {
-        if (!is_dir($this->path)) { return null; }
-
         $name = basename($relativePathname);
         $path = '';
         foreach ($this->segments(dirname($relativePathname)) as $subdirectory) {
             $path .= DIRECTORY_SEPARATOR . $subdirectory;
-            if (is_file($this->path . $path)) { return null; }
+            if (is_file($this->rootPath . $path)) { return null; }
         }
-        return $this->path . $path . DIRECTORY_SEPARATOR . $name;
+        return $this->rootPath . $path . DIRECTORY_SEPARATOR . $name;
     }
 
     private function segments(string $relativePath): array
