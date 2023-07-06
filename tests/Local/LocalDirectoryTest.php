@@ -126,7 +126,9 @@ class LocalDirectoryTest extends TestCase
             'invalid symlink'   => self::$temp->symlink('', 'link'),
             'valid symlink'     => self::$temp->symlink(self::$temp->name('foo/bar'), 'link'),
             'relative path'     => self::$temp->normalized('./foo/bar'),
-            'step-up path'      => self::$temp->name('foo/bar/..')
+            'step-up path'      => self::$temp->name('foo/bar/..'),
+            'empty path'        => '',
+            'dot path'          => '.'
         ];
     }
 
@@ -144,7 +146,10 @@ class LocalDirectoryTest extends TestCase
             'file on path'            => 'foo/bar/baz.txt/file.or.dir',
             'file symlink on path'    => 'file/name.lnk/baz',
             'dead symlink'            => 'dead/name.lnk',
-            'dead symlink on path'    => 'dead/name.lnk/baz'
+            'dead symlink on path'    => 'dead/name.lnk/baz',
+            'empty segment'           => 'foo/bar//baz.txt',
+            'dot segment'             => './foo/bar/baz',
+            'double dot segment'      => 'foo/baz/../dir'
         ];
     }
 

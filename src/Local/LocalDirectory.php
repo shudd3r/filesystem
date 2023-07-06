@@ -38,32 +38,37 @@ class LocalDirectory
 
     public function filePath(string $name): ?string
     {
-        return $this->expandedPath($name, true);
+        return $this->absolutePath($name, true);
     }
 
     public function subdirectoryPath(string $name): ?string
     {
-        return $this->expandedPath($name, false);
+        return $this->absolutePath($name, false);
     }
 
-    private function expandedPath(string $relativePathname, bool $forFile): ?string
+    private function absolutePath(string $relativePathname, bool $forFile): ?string
     {
-        $name = basename($relativePathname);
-        $path = '';
-        foreach ($this->pathSegments(dirname($relativePathname)) as $subdirectory) {
-            $path .= DIRECTORY_SEPARATOR . $subdirectory;
-            if ($this->hasPathCollision($path)) { return null; }
+        $segments = $this->pathSegments($relativePathname);
+        $basename = array_pop($segments);
+        $path     = '';
+        foreach ($segments as $subdirectory) {
+            $path = $this->expandedPath($path, $subdirectory);
+            if (!$path) { return null; }
         }
-        $path = $path . DIRECTORY_SEPARATOR . $name;
-        return $this->hasPathCollision($path, $forFile) ? null : $this->rootPath . $path;
+        $path = $this->expandedPath($path, $basename, $forFile);
+        return $path ? $this->rootPath . $path : null;
     }
 
-    private function hasPathCollision($path, bool $forFilename = false): bool
+    private function expandedPath(string $path, string $segment, bool $isFile = false): ?string
     {
+        if (in_array($segment, ['', '.', '..'], true)) { return null; }
+        $path     = $path . DIRECTORY_SEPARATOR . $segment;
         $pathname = $this->rootPath . $path;
-        return $forFilename
+        $nameCollision = $isFile
             ? is_dir($pathname) || is_link($pathname) && !is_file($pathname)
             : is_file($pathname) || is_link($pathname) && !is_dir($pathname);
+
+        return $nameCollision ? null : $path;
     }
 
     private function pathSegments(string $relativePath): array
