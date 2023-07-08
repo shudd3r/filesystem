@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem\Tests\Local;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\LocalDirectory;
+use Shudd3r\Filesystem\Local\LocalFile;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Tests\Fixtures;
 
@@ -33,69 +34,65 @@ class LocalDirectoryTest extends TestCase
         $this->assertInstanceOf(LocalDirectory::class, $this->directory($path));
     }
 
-    public function test_path_returns_absolute_path_to_existing_directory(): void
+    public function test_pathname_returns_absolute_path_to_existing_directory(): void
     {
         $path = self::$temp->directory('foo/bar/baz');
-        $this->assertSame($path, $this->directory($path)->path());
+        $this->assertSame($path, $this->directory($path)->pathname());
     }
 
-    public function test_filePath_returns_absolute_path_to_existing_file(): void
+    public function test_file_for_existing_pathname_returns_File(): void
     {
-        $file = self::$temp->file('foo/bar.txt');
-        $this->assertSame($file, $this->directory()->filePath('foo/bar.txt'));
+        self::$temp->file('foo/bar.txt');
+        $this->assertFile($this->directory(), 'foo/bar.txt');
     }
 
-    public function test_filePath_returns_absolute_path_to_not_existing_file(): void
+    public function test_file_for_not_existing_pathname_returns_File(): void
     {
-        $file = self::$temp->name('foo/bar.txt');
-        $this->assertSame($file, $this->directory()->filePath('foo/bar.txt'));
+        $this->assertFile($this->directory(), 'foo/bar.txt');
     }
 
-    public function test_filePath_returns_linked_path_for_symlinks(): void
+    public function test_file_for_linked_path_returns_File(): void
     {
-        $file     = self::$temp->file('foo/bar.txt');
-        $fileLink = self::$temp->symlink($file, 'link/file.lnk');
-        $this->assertSame($fileLink, $this->directory()->filePath('link\file.lnk'));
+        self::$temp->symlink(self::$temp->file('foo/bar.txt'), 'link/file.lnk');
+        $this->assertFile($this->directory(), 'link\file.lnk');
 
-        $pathLink = self::$temp->symlink(dirname($file), 'path.lnk') . DIRECTORY_SEPARATOR . 'bar.txt';
-        $this->assertSame($pathLink, $this->directory()->filePath('path.lnk/bar.txt'));
+        self::$temp->symlink(self::$temp->directory('foo'), 'path.lnk');
+        $this->assertFile($this->directory(), 'path.lnk/bar.txt');
     }
 
-    public function test_filePath_returns_null_for_non_file_paths(): void
+    public function test_file_returns_null_for_non_file_paths(): void
     {
         foreach ($this->invalidRelativePaths(true) as $type => [$relativePath, $invalid]) {
-            $procedure = fn () => $this->directory()->filePath($relativePath);
+            $procedure = fn () => $this->directory()->file($relativePath);
             $exception = $invalid ? Exception\InvalidPath::class : Exception\UnreachablePath::class;
             $this->assertExceptionType($procedure, $exception, "Failed for `$type`");
         }
     }
 
-    public function test_subdirectoryPath_returns_absolute_path_to_existing_directory(): void
+    public function test_subdirectory_for_existing_pathname_returns_Directory(): void
     {
-        $path = self::$temp->directory('foo/bar/baz');
-        $this->assertSame($path, $this->directory()->subdirectoryPath('foo/bar/baz'));
+        self::$temp->directory('foo/bar/baz');
+        $this->assertDirectory($this->directory(), 'foo/bar/baz');
     }
 
-    public function test_subdirectoryPath_returns_absolute_path_to_not_existing_directory(): void
+    public function test_subdirectory_for_not_existing_pathname_returns_Directory(): void
     {
-        $path = self::$temp->name('foo/bar/baz');
-        $this->assertSame($path, $this->directory()->subdirectoryPath('foo/bar/baz'));
+        $this->assertDirectory($this->directory(), 'foo/bar/baz');
     }
 
-    public function test_subdirectoryPath_returns_linked_path_for_symlinks(): void
+    public function test_subdirectory_for_linked_path_returns_Directory(): void
     {
-        $dir     = self::$temp->directory('foo/bar/baz');
-        $dirLink = self::$temp->symlink($dir, 'link/dir.lnk');
-        $this->assertSame($dirLink, $this->directory()->subdirectoryPath('link/dir.lnk'));
+        self::$temp->symlink(self::$temp->directory('foo/bar/baz'), 'link/dir.lnk');
+        $this->assertDirectory($this->directory(), 'link/dir.lnk');
 
-        $pathLink = self::$temp->symlink(dirname($dir), 'path.lnk') . DIRECTORY_SEPARATOR . 'baz';
-        $this->assertSame($pathLink, $this->directory()->subdirectoryPath('path.lnk/baz'));
+        self::$temp->symlink(self::$temp->directory('foo/bar'), 'path.lnk');
+        $this->assertDirectory($this->directory(), 'path.lnk/baz');
     }
 
     public function test_subdirectoryPath_returns_null_for_non_directory_paths(): void
     {
         foreach ($this->invalidRelativePaths(false) as $type => [$relativePath, $invalid]) {
-            $procedure = fn () => $this->directory()->subdirectoryPath($relativePath);
+            $procedure = fn () => $this->directory()->subdirectory($relativePath);
             $exception = $invalid ? Exception\InvalidPath::class : Exception\UnreachablePath::class;
             $this->assertExceptionType($procedure, $exception, "Failed for `$type`");
         }
@@ -112,14 +109,14 @@ class LocalDirectoryTest extends TestCase
 
         $path     = self::$temp->name('bar/baz');
         $instance = $this->directory($root);
-        $this->assertSame($path, $instance->subdirectoryPath('/bar/baz'));
-        $this->assertSame($path, $instance->subdirectoryPath('bar/baz/'));
-        $this->assertSame($path, $instance->subdirectoryPath('\bar\baz'));
-        $this->assertSame($path, $instance->subdirectoryPath('\\\\\\bar/baz\\'));
-        $this->assertSame($path, $instance->filePath('/bar/baz'));
-        $this->assertSame($path, $instance->filePath('\bar\baz'));
-        $this->assertSame($path, $instance->filePath('bar/baz////'));
-        $this->assertSame($path, $instance->filePath('\bar/baz\\'));
+        $this->assertDirectory($instance, '/bar/baz');
+        $this->assertDirectory($instance, 'bar/baz');
+        $this->assertDirectory($instance, '\bar\baz');
+        $this->assertDirectory($instance, '\\\\\\bar/baz\\');
+        $this->assertFile($instance, '/bar/baz');
+        $this->assertFile($instance, '\bar\baz');
+        $this->assertFile($instance, 'bar/baz////');
+        $this->assertFile($instance, '\bar/baz\\');
     }
 
     private function invalidDirectoryPaths(): array
@@ -156,6 +153,18 @@ class LocalDirectoryTest extends TestCase
             'dot segment'             => ['./foo/bar/baz', true],
             'double dot segment'      => ['foo/baz/../dir', true]
         ];
+    }
+
+    private function assertFile(LocalDirectory $rootDirectory, string $pathname): void
+    {
+        $expected = new LocalFile($rootDirectory, self::$temp->normalized($pathname));
+        $this->assertEquals($expected, $rootDirectory->file($pathname));
+    }
+
+    private function assertDirectory(LocalDirectory $rootDirectory, string $pathname): void
+    {
+        $expected = $rootDirectory->pathname() . DIRECTORY_SEPARATOR . self::$temp->normalized($pathname);
+        $this->assertSame($expected, $rootDirectory->subdirectory($pathname)->pathname());
     }
 
     private function assertExceptionType(callable $procedure, string $expectedException, string $fail): void

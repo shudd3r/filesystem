@@ -11,11 +11,12 @@
 
 namespace Shudd3r\Filesystem\Local;
 
-use Shudd3r\Filesystem\Exception\InvalidPath;
-use Shudd3r\Filesystem\Exception\UnreachablePath;
+use Shudd3r\Filesystem\Directory;
+use Shudd3r\Filesystem\File;
+use Shudd3r\Filesystem\Exception;
 
 
-class LocalDirectory
+class LocalDirectory implements Directory
 {
     private string $rootPath;
 
@@ -25,7 +26,7 @@ class LocalDirectory
     }
 
     /**
-     * @param string $path Real path to existing directory
+     * @param string $path Real pathname to existing directory
      */
     public static function instance(string $path): ?self
     {
@@ -34,17 +35,12 @@ class LocalDirectory
         return $isReal ? new self($path) : null;
     }
 
-    /**
-     * @return string Absolute directory pathname
-     */
-    public function path(): string
+    public function pathname(): string
     {
         return $this->rootPath;
     }
 
     /**
-     * Absolute filename path in this directory.
-     *
      * File for this path might not exist, but if this path points
      * to a directory (symlink) or non directory node is found on its
      * path `Exception\InvalidPath` will be thrown.
@@ -52,21 +48,16 @@ class LocalDirectory
      * Forward and backward slashes at the beginning of $name argument
      * will be silently removed, and dot path segments (`.`, `..`) are
      * not allowed (`Exception\UnsupportedPathFormat`)
-     *
-     * @param string $name relative file name
-     *
-     * @throws InvalidPath|UnreachablePath
-     *
-     * @return string
      */
-    public function filePath(string $name): string
+    public function file(string $name): File
     {
-        return $this->absolutePath($this->normalizedPath($name), true);
+        $relativePath = $this->normalizedPath($name);
+        $this->absolutePath($relativePath, true);
+
+        return new LocalFile($this, $relativePath);
     }
 
     /**
-     * Absolute subdirectory path.
-     *
      * Directory for this path might not exist, but if this path points
      * to a file (symlink) or non directory node is found on its path
      * `Exception\InvalidPath` will be thrown.
@@ -74,19 +65,12 @@ class LocalDirectory
      * Forward and backward slashes at the beginning of $name argument
      * will be silently removed, and dot path segments (`.`, `..`) are
      * not allowed (`Exception\UnsupportedPathFormat`)
-     *
-     * @param string $name relative directory name
-     *
-     * @throws InvalidPath|UnreachablePath
-     *
-     * @return string
      */
-    public function subdirectoryPath(string $name): string
+    public function subdirectory(string $name): self
     {
-        return $this->absolutePath($this->normalizedPath($name), false);
+        return new self($this->absolutePath($this->normalizedPath($name), false));
     }
 
-    /** @throws InvalidPath|UnreachablePath */
     private function absolutePath(string $relativePath, bool $forFile): string
     {
         $path     = '';
@@ -99,17 +83,16 @@ class LocalDirectory
         return $this->rootPath . $this->expandedPath($path, $basename, $forFile, $relativePath);
     }
 
-    /** @throws InvalidPath|UnreachablePath */
     private function expandedPath(string $path, string $segment, bool $isFile, string $originalPath): ?string
     {
         if (!$segment) {
             $message = 'Empty path segment in `%s`';
-            throw new InvalidPath(sprintf($message, $originalPath));
+            throw new Exception\InvalidPath(sprintf($message, $originalPath));
         }
 
         if (in_array($segment, ['.', '..'], true)) {
             $message = 'Dot path segments not allowed for `%s`';
-            throw new InvalidPath(sprintf($message, $originalPath));
+            throw new Exception\InvalidPath(sprintf($message, $originalPath));
         }
 
         $path     = $path . DIRECTORY_SEPARATOR . $segment;
@@ -119,7 +102,7 @@ class LocalDirectory
             : is_file($pathname) || is_link($pathname) && !is_dir($pathname);
 
         if ($nameCollision) {
-            throw UnreachablePath::for($originalPath, $path, $isFile);
+            throw Exception\UnreachablePath::for($originalPath, $path, $isFile);
         }
 
         return $path;
