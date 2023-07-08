@@ -13,12 +13,8 @@ namespace Shudd3r\Filesystem\Tests\Local;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\LocalDirectory;
-use Shudd3r\Filesystem\Exception\InvalidPath;
-use Shudd3r\Filesystem\Exception\InvalidPath\UnsupportedPathFormat;
-use Shudd3r\Filesystem\Exception\InvalidPath\UnexpectedNodeType;
-use Shudd3r\Filesystem\Exception\InvalidPath\UnreachablePath;
+use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Tests\Fixtures;
-use Exception;
 
 
 class LocalDirectoryTest extends TestCase
@@ -67,8 +63,9 @@ class LocalDirectoryTest extends TestCase
 
     public function test_filePath_returns_null_for_non_file_paths(): void
     {
-        foreach ($this->invalidRelativePaths(true) as $type => [$relativePath, $exception]) {
+        foreach ($this->invalidRelativePaths(true) as $type => [$relativePath, $invalid]) {
             $procedure = fn () => $this->directory()->filePath($relativePath);
+            $exception = $invalid ? Exception\InvalidPath::class : Exception\UnreachablePath::class;
             $this->assertExceptionType($procedure, $exception, "Failed for `$type`");
         }
     }
@@ -97,8 +94,9 @@ class LocalDirectoryTest extends TestCase
 
     public function test_subdirectoryPath_returns_null_for_non_directory_paths(): void
     {
-        foreach ($this->invalidRelativePaths(false) as $type => [$relativePath, $exception]) {
+        foreach ($this->invalidRelativePaths(false) as $type => [$relativePath, $invalid]) {
             $procedure = fn () => $this->directory()->subdirectoryPath($relativePath);
+            $exception = $invalid ? Exception\InvalidPath::class : Exception\UnreachablePath::class;
             $this->assertExceptionType($procedure, $exception, "Failed for `$type`");
         }
     }
@@ -148,15 +146,15 @@ class LocalDirectoryTest extends TestCase
         self::$temp->symlink('', 'dead/name.lnk');
 
         return [
-            'file <=> directory'      => [$forFile ? 'foo/bar' : 'foo/bar/baz.txt', UnexpectedNodeType::class],
-            'link file <=> directory' => [$forFile ? 'dir/name.lnk' : 'file/name.lnk', UnexpectedNodeType::class],
-            'file on path'            => ['foo/bar/baz.txt/file.or.dir', UnreachablePath::class],
-            'file symlink on path'    => ['file/name.lnk/baz', UnreachablePath::class],
-            'dead symlink'            => ['dead/name.lnk', UnexpectedNodeType::class],
-            'dead symlink on path'    => ['dead/name.lnk/baz', UnreachablePath::class],
-            'empty segment'           => ['foo/bar//baz.txt', InvalidPath::class],
-            'dot segment'             => ['./foo/bar/baz', UnsupportedPathFormat::class],
-            'double dot segment'      => ['foo/baz/../dir', UnsupportedPathFormat::class]
+            'file <=> directory'      => [$forFile ? 'foo/bar' : 'foo/bar/baz.txt', false],
+            'link file <=> directory' => [$forFile ? 'dir/name.lnk' : 'file/name.lnk', false],
+            'file on path'            => ['foo/bar/baz.txt/file.or.dir', false],
+            'file symlink on path'    => ['file/name.lnk/baz', false],
+            'dead symlink'            => ['dead/name.lnk', false],
+            'dead symlink on path'    => ['dead/name.lnk/baz', false],
+            'empty segment'           => ['foo/bar//baz.txt', true],
+            'dot segment'             => ['./foo/bar/baz', true],
+            'double dot segment'      => ['foo/baz/../dir', true]
         ];
     }
 

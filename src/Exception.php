@@ -9,11 +9,11 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Exception\InvalidPath;
+namespace Shudd3r\Filesystem;
 
-use Shudd3r\Filesystem\Exception\InvalidPath;
+use Exception as StandardException;
 
 
-class UnsupportedPathFormat extends InvalidPath
+class Exception extends StandardException
 {
 }

@@ -11,9 +11,9 @@
 
 namespace Shudd3r\Filesystem\Exception;
 
-use InvalidArgumentException;
+use Shudd3r\Filesystem\Exception;
 
 
-class InvalidPath extends InvalidArgumentException
+class InvalidPath extends Exception
 {
 }

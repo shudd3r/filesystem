@@ -11,7 +11,8 @@
 
 namespace Shudd3r\Filesystem\Local;
 
-use Shudd3r\Filesystem\Exception;
+use Shudd3r\Filesystem\Exception\InvalidPath;
+use Shudd3r\Filesystem\Exception\UnreachablePath;
 
 
 class LocalDirectory
@@ -54,7 +55,7 @@ class LocalDirectory
      *
      * @param string $name relative file name
      *
-     * @throws Exception\InvalidPath
+     * @throws InvalidPath|UnreachablePath
      *
      * @return string
      */
@@ -76,7 +77,7 @@ class LocalDirectory
      *
      * @param string $name relative directory name
      *
-     * @throws Exception\InvalidPath
+     * @throws InvalidPath|UnreachablePath
      *
      * @return string
      */
@@ -85,6 +86,7 @@ class LocalDirectory
         return $this->absolutePath($this->normalizedPath($name), false);
     }
 
+    /** @throws InvalidPath|UnreachablePath */
     private function absolutePath(string $relativePath, bool $forFile): string
     {
         $path     = '';
@@ -97,16 +99,17 @@ class LocalDirectory
         return $this->rootPath . $this->expandedPath($path, $basename, $forFile, $relativePath);
     }
 
+    /** @throws InvalidPath|UnreachablePath */
     private function expandedPath(string $path, string $segment, bool $isFile, string $originalPath): ?string
     {
         if (!$segment) {
             $message = 'Empty path segment in `%s`';
-            throw new Exception\InvalidPath(sprintf($message, $originalPath));
+            throw new InvalidPath(sprintf($message, $originalPath));
         }
 
         if (in_array($segment, ['.', '..'], true)) {
             $message = 'Dot path segments not allowed for `%s`';
-            throw new Exception\InvalidPath\UnsupportedPathFormat(sprintf($message, $originalPath));
+            throw new InvalidPath(sprintf($message, $originalPath));
         }
 
         $path     = $path . DIRECTORY_SEPARATOR . $segment;
@@ -115,11 +118,8 @@ class LocalDirectory
             ? is_dir($pathname) || is_link($pathname) && !is_file($pathname)
             : is_file($pathname) || is_link($pathname) && !is_dir($pathname);
 
-        if ($nameCollision && str_ends_with($originalPath, $segment)) {
-            throw Exception\InvalidPath\UnexpectedNodeType::for($originalPath, $isFile);
-        }
         if ($nameCollision) {
-            throw Exception\InvalidPath\UnreachablePath::for($originalPath, $path);
+            throw UnreachablePath::for($originalPath, $path, $isFile);
         }
 
         return $path;
