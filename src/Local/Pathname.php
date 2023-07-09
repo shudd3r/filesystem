@@ -23,6 +23,9 @@ class Pathname
         $this->path = $path;
     }
 
+    /**
+     * @return string Absolute pathname within local filesystem
+     */
     public function __toString(): string
     {
         return $this->path;

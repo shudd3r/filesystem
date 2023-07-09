@@ -29,6 +29,9 @@ class FileName extends Pathname
         return $this->path . DIRECTORY_SEPARATOR . $this->name;
     }
 
+    /**
+     * @return string Path name relative to its root directory
+     */
     public function name(): string
     {
         return $this->name;

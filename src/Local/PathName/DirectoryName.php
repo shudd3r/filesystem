@@ -12,7 +12,8 @@
 namespace Shudd3r\Filesystem\Local\PathName;
 
 use Shudd3r\Filesystem\Local\Pathname;
-use Shudd3r\Filesystem\Exception;
+use Shudd3r\Filesystem\Exception\UnreachablePath;
+use Shudd3r\Filesystem\Exception\InvalidPath;
 
 
 class DirectoryName extends Pathname
@@ -24,11 +25,37 @@ class DirectoryName extends Pathname
         return $isReal ? new self($path) : null;
     }
 
+    /**
+     * File for this path might not exist, but if this path points
+     * to a directory (symlink) or non directory node is found on its
+     * path `Exception\InvalidPath` will be thrown.
+     *
+     * Forward and backward slashes at the beginning of $name argument
+     * will be silently removed, and dot path segments (`.`, `..`) are
+     * not allowed (`Exception\UnsupportedPathFormat`)
+     *
+     * @param string $name File basename or relative file pathname
+     *
+     * @throws UnreachablePath|InvalidPath
+     */
     public function file(string $name): FileName
     {
         return $this->filename($this->relativePath($name, true));
     }
 
+    /**
+     * Directory for this path might not exist, but if this path points
+     * to a file (symlink) or non directory node is found on its path
+     * `Exception\InvalidPath` will be thrown.
+     *
+     * Forward and backward slashes at the beginning of $name argument
+     * will be silently removed, and dot path segments (`.`, `..`) are
+     * not allowed (`Exception\UnsupportedPathFormat`)
+     *
+     * @param string $name Directory basename or relative directory pathname
+     *
+     * @throws InvalidPath|UnreachablePath
+     */
     public function directory(string $name): self
     {
         return new self($this->path . DIRECTORY_SEPARATOR . $this->relativePath($name, false));
@@ -56,7 +83,7 @@ class DirectoryName extends Pathname
             : is_file($pathname) || is_link($pathname) && !is_dir($pathname);
 
         if ($nameCollision) {
-            throw Exception\UnreachablePath::for($originalPath, $path, $isFile);
+            throw UnreachablePath::for($originalPath, $path, $isFile);
         }
 
         return $path;
@@ -67,17 +94,17 @@ class DirectoryName extends Pathname
         $name = trim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $name), DIRECTORY_SEPARATOR);
         if (!$name) {
             $message = 'Name given for %s is empty';
-            throw new Exception\InvalidPath(sprintf($message, $nodeType));
+            throw new InvalidPath(sprintf($message, $nodeType));
         }
 
         if ($this->hasSegment($name, '')) {
             $message = 'Empty path segment in `%s` %s path';
-            throw new Exception\InvalidPath(sprintf($message, $name, $nodeType));
+            throw new InvalidPath(sprintf($message, $name, $nodeType));
         }
 
         if ($this->hasSegment($name, '..', '.')) {
             $message = 'Dot segments not allowed for `%s` %s path';
-            throw new Exception\InvalidPath(sprintf($message, $name, $nodeType));
+            throw new InvalidPath(sprintf($message, $name, $nodeType));
         }
 
         return $name;
