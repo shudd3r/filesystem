@@ -12,26 +12,23 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\File;
+use Shudd3r\Filesystem\Local\PathName\FileName;
 
 
 class LocalFile implements File
 {
-    private LocalDirectory $rootDirectory;
-    private string         $relativePath;
+    private string $absolutePath;
+    private string $relativePath;
 
-    /**
-     * @param LocalDirectory $rootDirectory
-     * @param string         $relativePath
-     */
-    public function __construct(LocalDirectory $rootDirectory, string $relativePath)
+    public function __construct(FileName $fileName)
     {
-        $this->rootDirectory = $rootDirectory;
-        $this->relativePath  = $relativePath;
+        $this->absolutePath = (string) $fileName;
+        $this->relativePath = $fileName->name();
     }
 
     public function pathname(): string
     {
-        return $this->rootDirectory->pathname() . DIRECTORY_SEPARATOR . $this->relativePath;
+        return $this->absolutePath;
     }
 
     public function name(): string

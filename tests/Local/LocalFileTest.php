@@ -12,8 +12,8 @@
 namespace Shudd3r\Filesystem\Tests\Local;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Local\LocalFile;
+use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Tests\Fixtures;
 
 
@@ -23,13 +23,12 @@ class LocalFileTest extends TestCase
 
     public function test_pathname_returns_absolute_path_to_file(): void
     {
-        $expected = self::$temp->directory() . DIRECTORY_SEPARATOR . 'foo/bar/baz.txt';
-        $this->assertSame($expected, $this->file('foo/bar/baz.txt')->pathname());
+        $this->assertSame(self::$temp->name('foo/bar/baz.txt'), $this->file('foo/bar/baz.txt')->pathname());
     }
 
     public function test_name_returns_pathname_relative_to_root_directory(): void
     {
-        $this->assertSame('foo/bar/baz.txt', $this->file('foo/bar/baz.txt')->name());
+        $this->assertSame(self::$temp->normalized('foo/bar/baz.txt'), $this->file('foo/bar/baz.txt')->name());
     }
 
     public function test_exists_for_existing_file_returns_true(): void
@@ -42,13 +41,6 @@ class LocalFileTest extends TestCase
     public function test_exists_for_not_existing_file_returns_false(): void
     {
         $this->assertFalse($this->file('foo/bar/baz.txt')->exists());
-    }
-
-    public function test_exists_for_non_file_node_returns_false(): void
-    {
-        self::$temp->symlink(self::$temp->directory('foo/bar.dir'), 'directory.lnk');
-        $this->assertFalse($this->file('foo/bar.dir')->exists());
-        $this->assertFalse($this->file('directory.lnk')->exists());
     }
 
     public function test_contents_returns_file_contents(): void
@@ -64,6 +56,6 @@ class LocalFileTest extends TestCase
 
     private function file(string $filename): LocalFile
     {
-        return new LocalFile(LocalDirectory::instance(self::$temp->directory()), $filename);
+        return new LocalFile(Pathname\DirectoryName::root(self::$temp->directory())->file($filename));
     }
 }
