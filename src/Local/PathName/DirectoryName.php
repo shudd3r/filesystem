@@ -34,7 +34,7 @@ class DirectoryName extends Pathname
         return new self($this->path . DIRECTORY_SEPARATOR . $this->relativePath($name, false));
     }
 
-    protected function relativePath(string $name, bool $forFile): string
+    private function relativePath(string $name, bool $forFile): string
     {
         $name     = $this->normalizedPath($name, $forFile ? 'file' : 'directory');
         $path     = '';
