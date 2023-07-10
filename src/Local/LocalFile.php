@@ -38,11 +38,16 @@ class LocalFile implements File
 
     public function exists(): bool
     {
-        return is_file($this->pathname());
+        return is_file($this->absolutePath);
     }
 
     public function contents(): string
     {
-        return $this->exists() ? file_get_contents($this->pathname()) : '';
+        return $this->exists() ? file_get_contents($this->absolutePath) : '';
+    }
+
+    public function write(string $contents): void
+    {
+        file_put_contents($this->absolutePath, $contents);
     }
 }

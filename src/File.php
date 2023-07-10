@@ -33,4 +33,11 @@ interface File
      * @return string Contents of this file or empty string if file does not exist
      */
     public function contents(): string;
+
+    /**
+     * Creates file with given contents or replaces contents of existing file.
+     *
+     * @param string $contents
+     */
+    public function write(string $contents): void;
 }
