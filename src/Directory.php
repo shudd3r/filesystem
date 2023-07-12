@@ -39,4 +39,9 @@ interface Directory
      * @return self
      */
     public function subdirectory(string $name): self;
+
+    /**
+     * @return Files Iterator of all files in directory and its subdirectories
+     */
+    public function files(): Files;
 }

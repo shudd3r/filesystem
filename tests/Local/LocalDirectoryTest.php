@@ -79,6 +79,19 @@ class LocalDirectoryTest extends TestCase
         $this->assertExceptionType(Exception\UnreachablePath::class, $procedure, 'foo/bar.dir');
     }
 
+    public function test_files_returns_all_files_iterator(): void
+    {
+        $directory = $this->directory();
+        $filenames = ['bar/baz.txt', 'foo/bar/file.txt', 'foo.txt'];
+        $expected  = [];
+        foreach ($filenames as $name) {
+            self::$temp->file($name);
+            $expected[] = $directory->file($name);
+        }
+
+        $this->assertEquals($expected, $directory->files()->list());
+    }
+
     private function assertExceptionType(string $expectedException, callable $procedure, string $name): void
     {
         try {

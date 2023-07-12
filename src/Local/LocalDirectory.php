@@ -13,6 +13,13 @@ namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Local\PathName\DirectoryName;
+use Shudd3r\Filesystem\Generic\FileList;
+use Shudd3r\Filesystem\Files;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
+use FilesystemIterator;
+use CachingIterator;
+use Generator;
 
 
 class LocalDirectory implements Directory
@@ -64,5 +71,24 @@ class LocalDirectory implements Directory
     public function subdirectory(string $name): self
     {
         return new self($this->path->directory($name));
+    }
+
+    public function files(): Files
+    {
+        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
+        $nodes = new RecursiveDirectoryIterator((string) $this->path, $flags);
+        $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
+        $files = new CachingIterator($this->generateFile($nodes), CachingIterator::FULL_CACHE);
+        return new FileList($files);
+    }
+
+    private function generateFile(\Iterator $nodes): Generator
+    {
+        $rootLength = strlen((string) $this->path);
+        $relative   = fn (string $path) => substr($path, $rootLength);
+        foreach ($nodes as $name) {
+            if (!is_file($name)) { continue; }
+            yield new LocalFile($this->path->file($relative($name)));
+        }
     }
 }
