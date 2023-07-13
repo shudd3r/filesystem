@@ -14,12 +14,13 @@ namespace Shudd3r\Filesystem\Local;
 use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Local\PathName\DirectoryName;
 use Shudd3r\Filesystem\Generic\FileList;
+use Shudd3r\Filesystem\Generic\FileGenerator;
 use Shudd3r\Filesystem\Files;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use FilesystemIterator;
-use CachingIterator;
 use Generator;
+use Iterator;
 
 
 class LocalDirectory implements Directory
@@ -78,11 +79,11 @@ class LocalDirectory implements Directory
         $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
         $nodes = new RecursiveDirectoryIterator((string) $this->path, $flags);
         $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
-        $files = new CachingIterator($this->generateFile($nodes), CachingIterator::FULL_CACHE);
-        return new FileList($files);
+
+        return new FileList(new FileGenerator(fn () => $this->generateFile($nodes)));
     }
 
-    private function generateFile(\Iterator $nodes): Generator
+    private function generateFile(Iterator $nodes): Generator
     {
         $rootLength = strlen((string) $this->path);
         $relative   = fn (string $path) => substr($path, $rootLength);

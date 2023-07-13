@@ -15,7 +15,6 @@ use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Generic\FileList;
 use Shudd3r\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Filesystem\File;
-use ArrayIterator;
 
 
 class FileListTest extends TestCase
@@ -77,6 +76,6 @@ class FileListTest extends TestCase
 
     private static function files(): FileList
     {
-        return new FileList(new ArrayIterator($files ?? self::$example));
+        return FileList::fromArray(self::$example);
     }
 }

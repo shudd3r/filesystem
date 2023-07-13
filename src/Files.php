@@ -11,10 +11,10 @@
 
 namespace Shudd3r\Filesystem;
 
-use Iterator;
+use Traversable;
 
 
-interface Files extends Iterator
+interface Files extends Traversable
 {
     /**
      * @param callable $callback fn(File) => bool

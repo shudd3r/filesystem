@@ -13,32 +13,34 @@ namespace Shudd3r\Filesystem\Generic;
 
 use Shudd3r\Filesystem\Files;
 use Shudd3r\Filesystem\File;
-use FilterIterator;
+use IteratorAggregate;
+use Traversable;
 use ArrayIterator;
 use Iterator;
 use Closure;
 
 
-class FileList extends FilterIterator implements Files
+class FileList implements Files, IteratorAggregate
 {
-    private ?Closure $filter;
-    private ?array   $files = null;
+    private Traversable $files;
+    private ?Closure    $filter;
 
     /**
-     * @param Iterator<File> $files
-     * @param callable|null  $filter fn(File) => bool
+     * @param Traversable<File> $files
+     * @param ?callable         $filter fn(File) => bool
      */
-    public function __construct(Iterator $files, callable $filter = null)
+    public function __construct(Traversable $files, callable $filter = null)
     {
-        parent::__construct($files);
-        $this->filter = $filter ?? fn (File $file) => true;
+        $this->files  = $files;
+        $this->filter = $filter;
     }
 
+    /**
+     * @param File[] $files
+     */
     public static function fromArray(array $files): self
     {
-        $list = new self(new ArrayIterator($files));
-        $list->files = $files;
-        return $list;
+        return new self(new ArrayIterator($files));
     }
 
     public function find(callable $callback): ?File
@@ -52,7 +54,7 @@ class FileList extends FilterIterator implements Files
     public function select(callable $callback): Files
     {
         $callback = $this->filter ? fn (File $file) => ($this->filter)($file) && $callback($file) : $callback;
-        return new self($this->getInnerIterator(), $callback);
+        return new self($this->files, $callback);
     }
 
     public function forEach(callable $callback): void
@@ -71,13 +73,19 @@ class FileList extends FilterIterator implements Files
         return $items;
     }
 
+    /**
+     * @return File[]
+     */
     public function list(): array
     {
-        return $this->files ??= $this->map();
+        return $this->map();
     }
 
-    public function accept()
+    public function getIterator(): Iterator
     {
-        return $this->filter ? ($this->filter)($this->getInnerIterator()->current()) : true;
+        foreach ($this->files as $file) {
+            if ($this->filter && !($this->filter)($file)) { continue; }
+            yield $file;
+        }
     }
 }
