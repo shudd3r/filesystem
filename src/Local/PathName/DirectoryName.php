@@ -26,13 +26,13 @@ class DirectoryName extends Pathname
     }
 
     /**
-     * File for this path might not exist, but if this path points
-     * to a directory (symlink) or non directory node is found on its
-     * path `Exception\InvalidPath` will be thrown.
+     * File with this name might not exist, but if given path points to
+     * a directory (symlink) or non directory node is found on its path
+     * `UnreachablePath` will be thrown.
      *
-     * Forward and backward slashes at the beginning of $name argument
-     * will be silently removed, and dot path segments (`.`, `..`) are
-     * not allowed (`Exception\UnsupportedPathFormat`)
+     * Forward and backward slashes at the beginning and the end of name
+     * will be silently removed, and either empty or dot path segments are
+     * not allowed and method will throw `InvalidPath` exception.
      *
      * @param string $name File basename or relative file pathname
      *
@@ -44,13 +44,13 @@ class DirectoryName extends Pathname
     }
 
     /**
-     * Directory for this path might not exist, but if this path points
+     * Directory with this name might not exist, but if given path points
      * to a file (symlink) or non directory node is found on its path
-     * `Exception\InvalidPath` will be thrown.
+     * `UnreachablePath` will be thrown.
      *
-     * Forward and backward slashes at the beginning of $name argument
-     * will be silently removed, and dot path segments (`.`, `..`) are
-     * not allowed (`Exception\UnsupportedPathFormat`)
+     * Forward and backward slashes at the beginning and the end of name
+     * will be silently removed, and either empty or dot path segments are
+     * not allowed and method will throw `InvalidPath` exception.
      *
      * @param string $name Directory basename or relative directory pathname
      *

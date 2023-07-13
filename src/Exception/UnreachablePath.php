@@ -14,6 +14,11 @@ namespace Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Exception;
 
 
+/**
+ * This exception should be handled in concurrent environments where
+ * directories, files or symlinks are not controlled by single process
+ * (possible race conditions).
+ */
 class UnreachablePath extends Exception
 {
     public static function for(string $path, string $collision, bool $expectedFile = false): self

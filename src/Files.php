@@ -32,16 +32,16 @@ interface Files extends Traversable
     public function forEach(callable $callback): void;
 
     /**
-     * @template T
+     * @template Type
      *
-     * @param callable $callback fn(File) => T
+     * @param callable $callback fn(File) => Type
      *
-     * @return array<T>
+     * @return array<Type>
      */
     public function map(callable $callback): array;
 
     /**
-     * @return array
+     * @return array<File>
      */
     public function list(): array;
 }

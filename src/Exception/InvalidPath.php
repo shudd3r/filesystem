@@ -14,6 +14,9 @@ namespace Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Exception;
 
 
+/**
+ * Unchecked exception thrown for invalid path formats (developer error).
+ */
 class InvalidPath extends Exception
 {
 }

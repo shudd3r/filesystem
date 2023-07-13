@@ -35,7 +35,8 @@ interface File
     public function contents(): string;
 
     /**
-     * Creates file with given contents or replaces contents of existing file.
+     * Replaces existing file contents with given string or creates new
+     * file with it.
      *
      * @param string $contents
      */

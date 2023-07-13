@@ -27,16 +27,16 @@ class FileList implements Files, IteratorAggregate
 
     /**
      * @param Traversable<File> $files
-     * @param ?callable         $filter fn(File) => bool
+     * @param callable|null     $filter fn(File) => bool
      */
-    public function __construct(Traversable $files, callable $filter = null)
+    public function __construct(Traversable $files, ?callable $filter = null)
     {
         $this->files  = $files;
         $this->filter = $filter;
     }
 
     /**
-     * @param File[] $files
+     * @param array<File> $files
      */
     public static function fromArray(array $files): self
     {
@@ -73,9 +73,6 @@ class FileList implements Files, IteratorAggregate
         return $items;
     }
 
-    /**
-     * @return File[]
-     */
     public function list(): array
     {
         return $this->map();

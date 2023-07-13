@@ -20,6 +20,13 @@ class LocalFile implements File
     private string $absolutePath;
     private string $relativePath;
 
+    /**
+     * FileName value object ensures that path to file either already
+     * exists or is potentially valid (is not currently a directory
+     * nor directory symlink).
+     *
+     * @param FileName $fileName
+     */
     public function __construct(FileName $fileName)
     {
         $this->absolutePath = (string) $fileName;

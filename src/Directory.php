@@ -23,6 +23,15 @@ interface Directory
     public function pathname(): string;
 
     /**
+     * File instance MUST be returned regardless if file with given name
+     * exists within structure of this root directory or not, unless one
+     * of following exceptions occur:
+     * - When supplied name is syntactically correct path, but cannot be
+     *   resolved in the context of existing directory structure due to
+     *   conflicting nodes `UnreachablePath` exception SHOULD be thrown.
+     * - For name with invalid syntax specified by concrete implementation
+     *   this method MUST throw `InvalidPath` exception.
+     *
      * @param string $name File basename or relative file pathname
      *
      * @throws InvalidPath|UnreachablePath
@@ -32,6 +41,15 @@ interface Directory
     public function file(string $name): File;
 
     /**
+     * Directory instance MUST be returned regardless if directory with
+     * given name exists within structure of this root directory or not,
+     * unless one of following exceptions occur:
+     * - When supplied name is syntactically correct path, but cannot be
+     *   resolved in the context of existing directory structure due to
+     *   conflicting nodes `UnreachablePath` exception SHOULD be thrown.
+     * - For name with invalid syntax specified by concrete implementation
+     *   this method MUST throw `InvalidPath` exception.
+     *
      * @param string $name Directory basename or relative directory pathname
      *
      * @throws InvalidPath|UnreachablePath

@@ -19,6 +19,13 @@ class VirtualFile implements File
     private string  $name;
     private ?string $contents;
 
+    /**
+     * Null contents value assumes that instance is only a pointer
+     * to a file that does not exist.
+     *
+     * @param string      $name
+     * @param string|null $contents
+     */
     public function __construct(string $name, ?string $contents = null)
     {
         $this->name     = $name;

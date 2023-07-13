@@ -27,6 +27,13 @@ class LocalDirectory implements Directory
 {
     private DirectoryName $path;
 
+    /**
+     * DirectoryName value object ensures that path to directory either
+     * already exists or is potentially valid (is not currently a file
+     * nor a file symlink).
+     *
+     * @param DirectoryName $path
+     */
     public function __construct(DirectoryName $path)
     {
         $this->path = $path;
@@ -47,13 +54,10 @@ class LocalDirectory implements Directory
     }
 
     /**
-     * File for this path might not exist, but if this path points
-     * to a directory (symlink) or non directory node is found on its
-     * path `Exception\InvalidPath` will be thrown.
-     *
-     * Forward and backward slashes at the beginning of $name argument
-     * will be silently removed, and dot path segments (`.`, `..`) are
-     * not allowed (`Exception\UnsupportedPathFormat`)
+     * Superfluous path separators at the beginning or the end of
+     * the name are ignored, but only canonical paths are allowed.
+     * For empty or dot path segments `InvalidPath` exception is
+     * thrown.
      */
     public function file(string $name): LocalFile
     {
@@ -61,13 +65,10 @@ class LocalDirectory implements Directory
     }
 
     /**
-     * Directory for this path might not exist, but if this path points
-     * to a file (symlink) or non directory node is found on its path
-     * `Exception\InvalidPath` will be thrown.
-     *
-     * Forward and backward slashes at the beginning of $name argument
-     * will be silently removed, and dot path segments (`.`, `..`) are
-     * not allowed (`Exception\UnsupportedPathFormat`)
+     * Superfluous path separators at the beginning or the end of
+     * the name are ignored, but only canonical paths are allowed.
+     * For empty or dot path segments `InvalidPath` exception is
+     * thrown.
      */
     public function subdirectory(string $name): self
     {
