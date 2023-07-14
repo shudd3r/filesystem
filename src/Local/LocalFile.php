@@ -55,6 +55,7 @@ class LocalFile implements File
         $file = fopen($this->absolutePath, 'rb');
         flock($file, LOCK_SH);
         $contents = file_get_contents($this->absolutePath);
+        flock($file, LOCK_UN);
         fclose($file);
 
         return $contents;
@@ -62,18 +63,24 @@ class LocalFile implements File
 
     public function write(string $contents): void
     {
-        $this->exists() or $this->createDirectory(dirname($this->absolutePath));
-        file_put_contents($this->absolutePath, $contents, LOCK_EX);
+        $this->save($contents, LOCK_EX);
     }
 
     public function append(string $contents): void
     {
-        $this->exists() or $this->createDirectory(dirname($this->absolutePath));
-        file_put_contents($this->absolutePath, $contents, FILE_APPEND);
+        $this->save($contents, FILE_APPEND);
     }
 
-    private function createDirectory(string $directoryPath): void
+    private function save(string $contents, int $flags): void
     {
+        if ($create = !$this->exists()) { $this->createDirectory(); }
+        file_put_contents($this->absolutePath, $contents, $flags);
+        if ($create) { chmod($this->absolutePath, 0644); }
+    }
+
+    private function createDirectory(): void
+    {
+        $directoryPath = dirname($this->absolutePath);
         if (is_dir($directoryPath)) { return; }
         mkdir($directoryPath, 0755, true);
     }
