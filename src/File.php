@@ -41,4 +41,12 @@ interface File
      * @param string $contents
      */
     public function write(string $contents): void;
+
+    /**
+     * Appends given string to existing file contents or creates new file
+     * with it.
+     *
+     * @param string $contents
+     */
+    public function append(string $contents): void;
 }

@@ -41,6 +41,24 @@ class VirtualFileTest extends TestCase
         $this->assertSame('contents...', $file->contents());
     }
 
+    public function test_append_to_not_existing_file_creates_file(): void
+    {
+        $file = $this->file('file.txt');
+        $this->assertFalse($file->exists());
+        $file->append('contents...');
+        $this->assertTrue($file->exists());
+        $this->assertSame('contents...', $file->contents());
+    }
+
+    public function test_append_to_existing_file_appends_to_existing_contents(): void
+    {
+        $file = $this->file('file.txt', '');
+        $file->append('...added');
+        $this->assertSame('...added', $file->contents());
+        $file->append(' more');
+        $this->assertSame('...added more', $file->contents());
+    }
+
     public function test_exists_for_instance_with_null_contents_returns_false(): void
     {
         $file = $this->file('file/foo.txt');

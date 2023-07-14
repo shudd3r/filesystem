@@ -57,4 +57,9 @@ class LocalFile implements File
     {
         file_put_contents($this->absolutePath, $contents);
     }
+
+    public function append(string $contents): void
+    {
+        file_put_contents($this->absolutePath, $contents, FILE_APPEND);
+    }
 }

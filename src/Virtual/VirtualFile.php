@@ -56,4 +56,9 @@ class VirtualFile implements File
     {
         $this->contents = $contents;
     }
+
+    public function append(string $contents): void
+    {
+        $this->contents = $this->contents() . $contents;
+    }
 }
