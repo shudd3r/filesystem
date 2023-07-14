@@ -50,13 +50,20 @@ class LocalFile implements File
 
     public function contents(): string
     {
-        return $this->exists() ? file_get_contents($this->absolutePath) : '';
+        if (!$this->exists()) { return ''; }
+
+        $file = fopen($this->absolutePath, 'rb');
+        flock($file, LOCK_SH);
+        $contents = file_get_contents($this->absolutePath);
+        fclose($file);
+
+        return $contents;
     }
 
     public function write(string $contents): void
     {
         $this->exists() or $this->createDirectory(dirname($this->absolutePath));
-        file_put_contents($this->absolutePath, $contents);
+        file_put_contents($this->absolutePath, $contents, LOCK_EX);
     }
 
     public function append(string $contents): void
