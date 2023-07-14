@@ -29,8 +29,8 @@ class LocalFile implements File
      */
     public function __construct(FileName $fileName)
     {
-        $this->absolutePath = (string) $fileName;
-        $this->relativePath = $fileName->name();
+        $this->absolutePath = $fileName->absolute();
+        $this->relativePath = $fileName->relative();
     }
 
     public function pathname(): string

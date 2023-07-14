@@ -30,25 +30,25 @@ class LocalDirectoryTest extends TestCase
         $this->assertNull(LocalDirectory::root($rootPathname));
 
         $rootPathname = self::$temp->directory('foo/bar');
-        $expected     = new LocalDirectory(Pathname\DirectoryName::root($rootPathname));
+        $expected     = new LocalDirectory(Pathname\DirectoryName::forRootPath($rootPathname));
         $this->assertEquals($expected, LocalDirectory::root($rootPathname));
     }
 
     public function test_pathname_for_root_directory_returns_absolute_path_to_existing_directory(): void
     {
-        $path = Pathname\DirectoryName::root(self::$temp->directory('foo/bar/baz'));
-        $this->assertSame((string) $path, $this->directory($path)->pathname());
+        $path = Pathname\DirectoryName::forRootPath(self::$temp->directory('foo/bar/baz'));
+        $this->assertSame($path->absolute(), $this->directory($path)->pathname());
     }
 
     public function test_pathname_for_relative_directory_returns_absolute_path_to_not_existing_directory(): void
     {
-        $path = Pathname\DirectoryName::root(self::$temp->directory('foo'))->directory('bar/baz');
-        $this->assertSame((string) $path, $this->directory($path)->pathname());
+        $path = Pathname\DirectoryName::forRootPath(self::$temp->directory('foo'))->directory('bar/baz');
+        $this->assertSame($path->absolute(), $this->directory($path)->pathname());
     }
 
     public function test_subdirectory_for_valid_path_returns_Directory(): void
     {
-        $root      = Pathname\DirectoryName::root(self::$temp->directory());
+        $root      = Pathname\DirectoryName::forRootPath(self::$temp->directory());
         $directory = $this->directory($root);
         $this->assertEquals(new LocalDirectory($root->directory('foo/bar')), $directory->subdirectory('foo/bar'));
     }
@@ -57,7 +57,7 @@ class LocalDirectoryTest extends TestCase
     {
         self::$temp->file('foo/bar.txt');
 
-        $root      = Pathname\DirectoryName::root(self::$temp->directory());
+        $root      = Pathname\DirectoryName::forRootPath(self::$temp->directory());
         $procedure = fn (string $name) => $this->directory($root)->subdirectory($name);
         $this->assertExceptionType(Exception\InvalidPath::class, $procedure, 'foo//bar');
         $this->assertExceptionType(Exception\UnreachablePath::class, $procedure, 'foo/bar.txt');
@@ -65,7 +65,7 @@ class LocalDirectoryTest extends TestCase
 
     public function test_file_for_valid_path_returns_File(): void
     {
-        $root      = Pathname\DirectoryName::root(self::$temp->directory());
+        $root      = Pathname\DirectoryName::forRootPath(self::$temp->directory());
         $directory = $this->directory($root);
         $this->assertEquals(new LocalFile($root->file('foo/file.txt')), $directory->file('foo/file.txt'));
     }
@@ -74,7 +74,7 @@ class LocalDirectoryTest extends TestCase
     {
         self::$temp->directory('foo/bar.dir');
 
-        $root      = Pathname\DirectoryName::root(self::$temp->directory());
+        $root      = Pathname\DirectoryName::forRootPath(self::$temp->directory());
         $procedure = fn (string $name) => $this->directory($root)->file($name);
         $this->assertExceptionType(Exception\InvalidPath::class, $procedure, '');
         $this->assertExceptionType(Exception\UnreachablePath::class, $procedure, 'foo/bar.dir');

@@ -16,9 +16,19 @@ use Shudd3r\Filesystem\Exception\UnreachablePath;
 use Shudd3r\Filesystem\Exception\InvalidPath;
 
 
-class DirectoryName extends Pathname
+/**
+ * Value Object which ensures that directory of this name either exists or
+ * can be created with adequate access permissions.
+ *
+ * This subtype can be instantiated only through static constructor or
+ * derived from root path with `self::directory()` method.
+ */
+final class DirectoryName extends Pathname
 {
-    public static function root(string $path): ?self
+    /**
+     * @param string $path Real, absolute path to existing directory
+     */
+    public static function forRootPath(string $path): ?self
     {
         $path   = rtrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
         $isReal = $path === realpath($path) && is_dir($path);
@@ -58,7 +68,7 @@ class DirectoryName extends Pathname
      */
     public function directory(string $name): self
     {
-        return new self($this->path . DIRECTORY_SEPARATOR . $this->relativePath($name, false));
+        return new self($this->root . DIRECTORY_SEPARATOR . $this->relativePath($name, false));
     }
 
     private function relativePath(string $name, bool $forFile): string
@@ -77,7 +87,7 @@ class DirectoryName extends Pathname
     private function expandedPath(string $path, string $segment, bool $isFile, string $originalPath): string
     {
         $path     = $path . DIRECTORY_SEPARATOR . $segment;
-        $pathname = $this->path . $path;
+        $pathname = $this->root . $path;
         $nameCollision = $isFile
             ? is_dir($pathname) || is_link($pathname) && !is_file($pathname)
             : is_file($pathname) || is_link($pathname) && !is_dir($pathname);
