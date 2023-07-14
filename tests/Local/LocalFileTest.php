@@ -85,12 +85,27 @@ class LocalFileTest extends TestCase
 
     public function test_append_to_existing_file_appends_to_existing_contents(): void
     {
-        self::$temp->file('file.txt', '');
+        self::$temp->file('file.txt');
         $file = $this->file('file.txt');
         $file->append('...added');
         $this->assertSame('...added', $file->contents());
         $file->append(' more');
         $this->assertSame('...added more', $file->contents());
+    }
+
+    public function test_creating_file_with_directory_structure(): void
+    {
+        $file = $this->file('foo/bar/baz.txt');
+        $this->assertFalse(is_dir(self::$temp->name('foo')));
+        $file->write('');
+        $this->assertTrue($file->exists());
+        $this->assertTrue(is_dir(self::$temp->name('foo')));
+
+        $file = $this->file('foo/baz/file.txt');
+        $this->assertFalse(is_dir(self::$temp->name('foo/baz')));
+        $file->append('...contents');
+        $this->assertTrue($file->exists());
+        $this->assertTrue(is_dir(self::$temp->name('foo/baz')));
     }
 
     private function file(string $filename): LocalFile

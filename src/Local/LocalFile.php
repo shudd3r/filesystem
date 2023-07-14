@@ -55,11 +55,19 @@ class LocalFile implements File
 
     public function write(string $contents): void
     {
+        $this->exists() or $this->createDirectory(dirname($this->absolutePath));
         file_put_contents($this->absolutePath, $contents);
     }
 
     public function append(string $contents): void
     {
+        $this->exists() or $this->createDirectory(dirname($this->absolutePath));
         file_put_contents($this->absolutePath, $contents, FILE_APPEND);
+    }
+
+    private function createDirectory(string $directoryPath): void
+    {
+        if (is_dir($directoryPath)) { return; }
+        mkdir($directoryPath, 0755, true);
     }
 }
