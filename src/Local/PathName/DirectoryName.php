@@ -73,51 +73,51 @@ final class DirectoryName extends Pathname
 
     private function relativePath(string $name, bool $forFile): string
     {
-        $name     = $this->normalizedPath($name, $forFile ? 'file' : 'directory');
-        $path     = '';
-        $segments = explode(DIRECTORY_SEPARATOR, $name);
-        $basename = array_pop($segments);
-        foreach ($segments as $subdirectory) {
-            $path = $this->expandedPath($path, $subdirectory, false, $name);
+        $relative = $this->normalizedPath($name, $forFile);
+        if ($collision = $this->collidingPath($relative, $forFile)) {
+            throw UnreachablePath::for($relative, $collision, $forFile);
         }
 
-        return substr($this->expandedPath($path, $basename, $forFile, $name), 1);
+        return $relative;
     }
 
-    private function expandedPath(string $path, string $segment, bool $isFile, string $originalPath): string
+    private function normalizedPath(string $name, bool $forFile): string
     {
-        $path     = $path . DIRECTORY_SEPARATOR . $segment;
-        $pathname = $this->root . $path;
-        $nameCollision = $isFile
-            ? is_dir($pathname) || is_link($pathname) && !is_file($pathname)
-            : is_file($pathname) || is_link($pathname) && !is_dir($pathname);
-
-        if ($nameCollision) {
-            throw UnreachablePath::for($originalPath, $path, $isFile);
-        }
-
-        return $path;
-    }
-
-    private function normalizedPath(string $name, string $nodeType): string
-    {
+        $type = $forFile ? 'file' : 'directory';
         $name = trim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $name), DIRECTORY_SEPARATOR);
         if (!$name) {
             $message = 'Name given for %s is empty';
-            throw new InvalidPath(sprintf($message, $nodeType));
+            throw new InvalidPath(sprintf($message, $type));
         }
 
         if ($this->hasSegment($name, '')) {
             $message = 'Empty path segment in `%s` %s path';
-            throw new InvalidPath(sprintf($message, $name, $nodeType));
+            throw new InvalidPath(sprintf($message, $name, $type));
         }
 
         if ($this->hasSegment($name, '..', '.')) {
             $message = 'Dot segments not allowed for `%s` %s path';
-            throw new InvalidPath(sprintf($message, $name, $nodeType));
+            throw new InvalidPath(sprintf($message, $name, $type));
         }
 
         return $name;
+    }
+
+    private function collidingPath(string $name, bool $forFile): ?string
+    {
+        $pathname = $this->root . DIRECTORY_SEPARATOR . $name;
+        if ($this->exists($pathname, $forFile)) { return null; }
+
+        $path     = '';
+        $segments = explode(DIRECTORY_SEPARATOR, $name);
+        $basename = array_pop($segments);
+        foreach ($segments as $subdirectory) {
+            $path = $path . DIRECTORY_SEPARATOR . $subdirectory;
+            if (!$this->isValidPath($path, false)) { return $path; }
+        }
+
+        $path = $path . DIRECTORY_SEPARATOR . $basename;
+        return $this->isValidPath($path, $forFile) ? null : $path;
     }
 
     private function hasSegment(string $name, string ...$segments): bool
@@ -133,5 +133,19 @@ final class DirectoryName extends Pathname
     private function pathFragment(string $segment): string
     {
         return DIRECTORY_SEPARATOR . $segment . DIRECTORY_SEPARATOR;
+    }
+
+    private function isValidPath(string $path, bool $forFile): bool
+    {
+        $pathname = $this->root . $path;
+        if ($this->exists($pathname, $forFile)) { return true; }
+
+        $collides = $forFile ? is_dir($pathname) : is_file($pathname);
+        return !$collides && !is_link($pathname);
+    }
+
+    private function exists(string $pathname, bool $isFile): bool
+    {
+        return $isFile ? is_file($pathname) : is_dir($pathname);
     }
 }

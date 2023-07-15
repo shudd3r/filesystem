@@ -51,6 +51,7 @@ class PathnameTest extends TestCase
 
         self::$temp->symlink(self::$temp->directory('foo'), 'path.lnk');
         $this->assertFileName('path.lnk/bar.txt');
+        $this->assertFileName('path.lnk/possible.file');
     }
 
     public function test_file_for_invalid_or_colliding_name_throws_FilesystemException(): void
@@ -80,6 +81,7 @@ class PathnameTest extends TestCase
 
         self::$temp->symlink(self::$temp->directory('foo/bar'), 'path.lnk');
         $this->assertDirectoryName('path.lnk/baz');
+        $this->assertDirectoryName('path.lnk/possible.dir');
     }
 
     public function test_directory_for_invalid_or_colliding_name_throws_FilesystemException(): void
