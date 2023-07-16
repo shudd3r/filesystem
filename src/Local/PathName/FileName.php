@@ -14,26 +14,13 @@ namespace Shudd3r\Filesystem\Local\PathName;
 use Shudd3r\Filesystem\Local\Pathname;
 
 
+/**
+ * Value Object which ensures that file of this name either exists or can
+ * be created with adequate access permissions.
+ *
+ * This subtype can be instantiated only with `DirectoryName::file()` method
+ * that derives it from existing directory root path.
+ */
 class FileName extends Pathname
 {
-    private string $name;
-
-    protected function __construct(string $root, string $name)
-    {
-        parent::__construct($root);
-        $this->name = $name;
-    }
-
-    public function __toString(): string
-    {
-        return $this->path . DIRECTORY_SEPARATOR . $this->name;
-    }
-
-    /**
-     * @return string Path name relative to its root directory
-     */
-    public function name(): string
-    {
-        return $this->name;
-    }
 }

@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem;
 
 use Shudd3r\Filesystem\Exception\InvalidPath;
 use Shudd3r\Filesystem\Exception\UnreachablePath;
+use Shudd3r\Filesystem\Exception\DirectoryDoesNotExist;
 
 
 interface Directory
@@ -41,6 +42,10 @@ interface Directory
     public function file(string $name): File;
 
     /**
+     * Creates relative directory instance for which all provided names
+     * will be prepended with given `$name` as if they were derived from
+     * root directory directly.
+     *
      * Directory instance MUST be returned regardless if directory with
      * given name exists within structure of this root directory or not,
      * unless one of following exceptions occur:
@@ -54,7 +59,7 @@ interface Directory
      *
      * @throws InvalidPath|UnreachablePath
      *
-     * @return self
+     * @return self Relative directory instance
      */
     public function subdirectory(string $name): self;
 
@@ -62,4 +67,16 @@ interface Directory
      * @return Files Iterator of all files in directory and its subdirectories
      */
     public function files(): Files;
+
+    /**
+     * Converts relative subdirectory instance to root directory.
+     * If current instance is already a root directory same object
+     * will be returned back, and if directory does not exist
+     * exception will be thrown.
+     *
+     * @throws DirectoryDoesNotExist
+     *
+     * @return self Root directory instance
+     */
+    public function asRoot(): self;
 }

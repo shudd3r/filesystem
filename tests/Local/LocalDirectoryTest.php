@@ -30,25 +30,25 @@ class LocalDirectoryTest extends TestCase
         $this->assertNull(LocalDirectory::root($rootPathname));
 
         $rootPathname = self::$temp->directory('foo/bar');
-        $expected     = new LocalDirectory(Pathname\DirectoryName::root($rootPathname));
+        $expected     = new LocalDirectory(Pathname\DirectoryName::forRootPath($rootPathname));
         $this->assertEquals($expected, LocalDirectory::root($rootPathname));
     }
 
     public function test_pathname_for_root_directory_returns_absolute_path_to_existing_directory(): void
     {
-        $path = Pathname\DirectoryName::root(self::$temp->directory('foo/bar/baz'));
-        $this->assertSame((string) $path, $this->directory($path)->pathname());
+        $path = Pathname\DirectoryName::forRootPath(self::$temp->directory('foo/bar/baz'));
+        $this->assertSame($path->absolute(), $this->directory($path)->pathname());
     }
 
     public function test_pathname_for_relative_directory_returns_absolute_path_to_not_existing_directory(): void
     {
-        $path = Pathname\DirectoryName::root(self::$temp->directory('foo'))->directory('bar/baz');
-        $this->assertSame((string) $path, $this->directory($path)->pathname());
+        $path = Pathname\DirectoryName::forRootPath(self::$temp->directory('foo'))->directory('bar/baz');
+        $this->assertSame($path->absolute(), $this->directory($path)->pathname());
     }
 
     public function test_subdirectory_for_valid_path_returns_Directory(): void
     {
-        $root      = Pathname\DirectoryName::root(self::$temp->directory());
+        $root      = Pathname\DirectoryName::forRootPath(self::$temp->directory());
         $directory = $this->directory($root);
         $this->assertEquals(new LocalDirectory($root->directory('foo/bar')), $directory->subdirectory('foo/bar'));
     }
@@ -57,7 +57,7 @@ class LocalDirectoryTest extends TestCase
     {
         self::$temp->file('foo/bar.txt');
 
-        $root      = Pathname\DirectoryName::root(self::$temp->directory());
+        $root      = Pathname\DirectoryName::forRootPath(self::$temp->directory());
         $procedure = fn (string $name) => $this->directory($root)->subdirectory($name);
         $this->assertExceptionType(Exception\InvalidPath::class, $procedure, 'foo//bar');
         $this->assertExceptionType(Exception\UnreachablePath::class, $procedure, 'foo/bar.txt');
@@ -65,7 +65,7 @@ class LocalDirectoryTest extends TestCase
 
     public function test_file_for_valid_path_returns_File(): void
     {
-        $root      = Pathname\DirectoryName::root(self::$temp->directory());
+        $root      = Pathname\DirectoryName::forRootPath(self::$temp->directory());
         $directory = $this->directory($root);
         $this->assertEquals(new LocalFile($root->file('foo/file.txt')), $directory->file('foo/file.txt'));
     }
@@ -74,7 +74,7 @@ class LocalDirectoryTest extends TestCase
     {
         self::$temp->directory('foo/bar.dir');
 
-        $root      = Pathname\DirectoryName::root(self::$temp->directory());
+        $root      = Pathname\DirectoryName::forRootPath(self::$temp->directory());
         $procedure = fn (string $name) => $this->directory($root)->file($name);
         $this->assertExceptionType(Exception\InvalidPath::class, $procedure, '');
         $this->assertExceptionType(Exception\UnreachablePath::class, $procedure, 'foo/bar.dir');
@@ -100,6 +100,42 @@ class LocalDirectoryTest extends TestCase
         $this->assertFiles($expected, $files);
     }
 
+    public function test_file_names_from_subdirectory_are_relative_to_root_directory(): void
+    {
+        $root    = $this->directory();
+        $dirname = self::$temp->normalized('foo/bar');
+
+        $expected = self::$temp->normalized('foo/bar/baz/file.txt');
+        $this->assertSame($expected, $root->subdirectory($dirname)->file('baz/file.txt')->name());
+
+        $expected = $root->pathname() . DIRECTORY_SEPARATOR . $expected;
+        $this->assertSame($expected, $root->subdirectory($dirname)->file('baz/file.txt')->pathname());
+
+        $files    = $this->files(['foo/file.txt', 'foo/bar/file.txt', 'foo/bar/baz/file.txt', 'root.file']);
+        $dirOnly  = fn (string $filename) => str_starts_with($filename, $dirname);
+        $expected = array_filter($files, $dirOnly, ARRAY_FILTER_USE_KEY);
+        $this->assertFiles($expected, $root->subdirectory($dirname)->files());
+    }
+
+    public function test_converting_subdirectory_to_root_directory(): void
+    {
+        $rootPath = Pathname\DirectoryName::forRootPath(self::$temp->directory('dir/foo'));
+        $relative = $this->directory()->subdirectory('dir/foo');
+
+        $this->assertEquals($this->directory($rootPath), $newRoot = $relative->asRoot());
+        $this->assertSame($relative->pathname(), $newRoot->pathname());
+        $this->assertSame(self::$temp->normalized('dir/foo/file.txt'), $relative->file('file.txt')->name());
+        $this->assertSame(self::$temp->normalized('file.txt'), $newRoot->file('file.txt')->name());
+        $this->assertSame($newRoot, $newRoot->asRoot());
+    }
+
+    public function test_converting_not_existing_subdirectory_to_root_throws_exception(): void
+    {
+        $relative = $this->directory()->subdirectory('dir/foo');
+        $this->expectException(Exception\DirectoryDoesNotExist::class);
+        $relative->asRoot();
+    }
+
     private function assertExceptionType(string $expectedException, callable $procedure, string $name): void
     {
         try {
@@ -117,12 +153,13 @@ class LocalDirectoryTest extends TestCase
     {
         /** @var LocalFile $file */
         foreach ($fileIterator as $file) {
-            $this->assertTrue($file->exists());
-            $this->assertArrayHasKey($name = $file->name(), $files);
+            $name = $file->name();
+            $this->assertTrue($file->exists(), sprintf('File `%s` should exist', $name));
+            $this->assertArrayHasKey($name, $files, sprintf('Unexpected file `%s` found', $name));
             $this->assertSame($files[$name], $file->pathname());
             unset($files[$name]);
         }
-        $this->assertSame([], $files);
+        $this->assertSame([], $files, 'Some expected files were not found');
     }
 
     private function files(array $filenames): array

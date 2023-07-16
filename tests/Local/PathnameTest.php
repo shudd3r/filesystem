@@ -30,7 +30,7 @@ class PathnameTest extends TestCase
         $path = self::$temp->directory('existing/directory');
         $this->assertSame($path, realpath($path));
         $this->assertTrue(is_dir($path));
-        $this->assertInstanceOf(Pathname::class, $this->path($path));
+        $this->assertInstanceOf(Pathname\DirectoryName::class, $this->path($path));
     }
 
     public function test_file_for_existing_pathname_returns_FileName(): void
@@ -51,6 +51,7 @@ class PathnameTest extends TestCase
 
         self::$temp->symlink(self::$temp->directory('foo'), 'path.lnk');
         $this->assertFileName('path.lnk/bar.txt');
+        $this->assertFileName('path.lnk/possible.file');
     }
 
     public function test_file_for_invalid_or_colliding_name_throws_FilesystemException(): void
@@ -80,6 +81,7 @@ class PathnameTest extends TestCase
 
         self::$temp->symlink(self::$temp->directory('foo/bar'), 'path.lnk');
         $this->assertDirectoryName('path.lnk/baz');
+        $this->assertDirectoryName('path.lnk/possible.dir');
     }
 
     public function test_directory_for_invalid_or_colliding_name_throws_FilesystemException(): void
@@ -91,14 +93,28 @@ class PathnameTest extends TestCase
         }
     }
 
+    public function test_converting_relative_name_to_root_returns_root_directory_name(): void
+    {
+        $path = self::$temp->directory('foo/bar');
+        $this->assertEquals($this->path($path), $newRoot = $this->path()->directory('foo/bar')->asRoot());
+        $this->assertSame($newRoot, $newRoot->asRoot());
+    }
+
+    public function test_converting_relative_name_for_not_existing_directory_throws_exception(): void
+    {
+        $directory = $this->path()->directory('foo/bar');
+        $this->expectException(Exception\DirectoryDoesNotExist::class);
+        $directory->asRoot();
+    }
+
     public function test_path_separator_normalization(): void
     {
         $rootName = self::$temp->directory();
         $expected = self::$temp->directory('foo/bar');
-        $this->assertEquals($expected, (string) $this->path($rootName . '/foo/bar'));
-        $this->assertEquals($expected, (string) $this->path(str_replace('/', '\\', $rootName) . '\foo\bar'));
-        $this->assertEquals($expected, (string) $this->path($rootName . '\foo/bar/'));
-        $this->assertEquals($expected, (string) $this->path($rootName . '/foo\bar\\'));
+        $this->assertEquals($expected, $this->path($rootName . '/foo/bar')->absolute());
+        $this->assertEquals($expected, $this->path(str_replace('/', '\\', $rootName) . '\foo\bar')->absolute());
+        $this->assertEquals($expected, $this->path($rootName . '\foo/bar/')->absolute());
+        $this->assertEquals($expected, $this->path($rootName . '/foo\bar\\')->absolute());
 
         $this->assertNormalizedName('/bar/baz');
         $this->assertNormalizedName('bar/baz');
@@ -150,21 +166,22 @@ class PathnameTest extends TestCase
         $instance     = $this->path();
         $expectedPath = self::$temp->name($name);
         $expectedName = self::$temp->normalized($name);
-        $this->assertSame($expectedPath, (string) $instance->directory($name));
-        $this->assertSame($expectedPath, (string) $instance->file($name));
-        $this->assertSame($expectedName, $instance->file($name)->name());
+        $this->assertSame($expectedPath, $instance->directory($name)->absolute());
+        $this->assertSame($expectedPath, $instance->file($name)->absolute());
+        $this->assertSame($expectedName, $instance->file($name)->relative());
     }
 
     private function assertDirectoryName(string $name): void
     {
         $this->assertInstanceOf(Pathname\DirectoryName::class, $path = $this->path()->directory($name));
-        $this->assertSame(self::$temp->name($name), (string) $path);
+        $this->assertSame(self::$temp->name($name), $path->absolute());
+        $this->assertSame(self::$temp->normalized($name), $path->relative());
     }
 
     private function assertFileName(string $name): void
     {
         $this->assertInstanceOf(Pathname\FileName::class, $path = $this->path()->file($name));
-        $this->assertSame(self::$temp->name($name), (string) $path);
+        $this->assertSame(self::$temp->name($name), $path->absolute());
     }
 
     private function assertExceptionType(string $expectedException, callable $procedure, string $fail): void
@@ -181,6 +198,6 @@ class PathnameTest extends TestCase
 
     private function path(string $pathname = null): ?Pathname\DirectoryName
     {
-        return Pathname\DirectoryName::root($pathname ?? self::$temp->directory());
+        return Pathname\DirectoryName::forRootPath($pathname ?? self::$temp->directory());
     }
 }

@@ -44,13 +44,13 @@ class LocalDirectory implements Directory
      */
     public static function root(string $path): ?self
     {
-        $path = DirectoryName::root($path);
+        $path = DirectoryName::forRootPath($path);
         return $path ? new self($path) : null;
     }
 
     public function pathname(): string
     {
-        return (string) $this->path;
+        return $this->path->absolute();
     }
 
     /**
@@ -78,16 +78,21 @@ class LocalDirectory implements Directory
     public function files(): Files
     {
         $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
-        $nodes = new RecursiveDirectoryIterator((string) $this->path, $flags);
+        $nodes = new RecursiveDirectoryIterator($this->path->absolute(), $flags);
         $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
 
         return new FileList(new FileGenerator(fn () => $this->generateFile($nodes)));
     }
 
+    public function asRoot(): self
+    {
+        return $this->path->relative() ? new self($this->path->asRoot()) : $this;
+    }
+
     private function generateFile(Iterator $nodes): Generator
     {
-        $rootLength = strlen((string) $this->path);
-        $relative   = fn (string $path) => substr($path, $rootLength);
+        $pathLength = strlen($this->path->absolute()) + 1;
+        $relative   = fn (string $path) => substr($path, $pathLength);
         foreach ($nodes as $name) {
             if (!is_file($name)) { continue; }
             yield new LocalFile($this->path->file($relative($name)));

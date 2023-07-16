@@ -14,25 +14,41 @@ namespace Shudd3r\Filesystem\Local;
 use Shudd3r\Filesystem\Local\PathName\FileName;
 
 
-class Pathname
+/**
+ * Base class for validated & normalized local filesystem paths.
+ *
+ * This type cannot be instantiated on its own.
+ */
+abstract class Pathname
 {
-    protected string $path;
+    protected string $root;
+    protected string $name;
 
-    protected function __construct(string $path)
+    protected function __construct(string $root, string $name = '')
     {
-        $this->path = $path;
+        $this->root = $root;
+        $this->name = $name;
     }
 
     /**
      * @return string Absolute pathname within local filesystem
      */
-    public function __toString(): string
+    public function absolute(): string
     {
-        return $this->path;
+        return $this->name ? $this->root . DIRECTORY_SEPARATOR . $this->name : $this->root;
+    }
+
+    /**
+     * @return string Path name relative to its root directory
+     */
+    public function relative(): string
+    {
+        return $this->name;
     }
 
     protected function filename(string $name): FileName
     {
-        return new FileName($this->path, $name);
+        $name = $this->name ? $this->name . DIRECTORY_SEPARATOR . $name : $name;
+        return new FileName($this->root, $name);
     }
 }
