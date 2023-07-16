@@ -11,6 +11,7 @@
 
 namespace Shudd3r\Filesystem\Local\PathName;
 
+use Shudd3r\Filesystem\Exception\DirectoryDoesNotExist;
 use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Exception\UnreachablePath;
 use Shudd3r\Filesystem\Exception\InvalidPath;
@@ -71,6 +72,21 @@ final class DirectoryName extends Pathname
     public function directory(string $name): self
     {
         return new self($this->root, $this->relativePath($name, false));
+    }
+
+    /**
+     * @throws DirectoryDoesNotExist For not existing directory
+     *
+     * @return self Directory name without relative path
+     */
+    public function asRoot(): self
+    {
+        if (!$this->name) { return $this; }
+        $pathname = $this->absolute();
+        if (!is_dir($pathname)) {
+            throw DirectoryDoesNotExist::forRoot($this->root, $this->name);
+        }
+        return new self($pathname);
     }
 
     private function relativePath(string $name, bool $forFile): string

@@ -117,6 +117,25 @@ class LocalDirectoryTest extends TestCase
         $this->assertFiles($expected, $root->subdirectory($dirname)->files());
     }
 
+    public function test_converting_subdirectory_to_root_directory(): void
+    {
+        $rootPath = Pathname\DirectoryName::forRootPath(self::$temp->directory('dir/foo'));
+        $relative = $this->directory()->subdirectory('dir/foo');
+
+        $this->assertEquals($this->directory($rootPath), $newRoot = $relative->asRoot());
+        $this->assertSame($relative->pathname(), $newRoot->pathname());
+        $this->assertSame(self::$temp->normalized('dir/foo/file.txt'), $relative->file('file.txt')->name());
+        $this->assertSame(self::$temp->normalized('file.txt'), $newRoot->file('file.txt')->name());
+        $this->assertSame($newRoot, $newRoot->asRoot());
+    }
+
+    public function test_converting_not_existing_subdirectory_to_root_throws_exception(): void
+    {
+        $relative = $this->directory()->subdirectory('dir/foo');
+        $this->expectException(Exception\DirectoryDoesNotExist::class);
+        $relative->asRoot();
+    }
+
     private function assertExceptionType(string $expectedException, callable $procedure, string $name): void
     {
         try {

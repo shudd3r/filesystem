@@ -93,6 +93,20 @@ class PathnameTest extends TestCase
         }
     }
 
+    public function test_converting_relative_name_to_root_returns_root_directory_name(): void
+    {
+        $path = self::$temp->directory('foo/bar');
+        $this->assertEquals($this->path($path), $newRoot = $this->path()->directory('foo/bar')->asRoot());
+        $this->assertSame($newRoot, $newRoot->asRoot());
+    }
+
+    public function test_converting_relative_name_for_not_existing_directory_throws_exception(): void
+    {
+        $directory = $this->path()->directory('foo/bar');
+        $this->expectException(Exception\DirectoryDoesNotExist::class);
+        $directory->asRoot();
+    }
+
     public function test_path_separator_normalization(): void
     {
         $rootName = self::$temp->directory();

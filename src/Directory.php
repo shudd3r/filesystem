@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem;
 
 use Shudd3r\Filesystem\Exception\InvalidPath;
 use Shudd3r\Filesystem\Exception\UnreachablePath;
+use Shudd3r\Filesystem\Exception\DirectoryDoesNotExist;
 
 
 interface Directory
@@ -66,4 +67,16 @@ interface Directory
      * @return Files Iterator of all files in directory and its subdirectories
      */
     public function files(): Files;
+
+    /**
+     * Converts relative subdirectory instance to root directory.
+     * If current instance is already a root directory same object
+     * will be returned back, and if directory does not exist
+     * exception will be thrown.
+     *
+     * @throws DirectoryDoesNotExist
+     *
+     * @return self Root directory instance
+     */
+    public function asRoot(): self;
 }

@@ -84,6 +84,11 @@ class LocalDirectory implements Directory
         return new FileList(new FileGenerator(fn () => $this->generateFile($nodes)));
     }
 
+    public function asRoot(): self
+    {
+        return $this->path->relative() ? new self($this->path->asRoot()) : $this;
+    }
+
     private function generateFile(Iterator $nodes): Generator
     {
         $pathLength = strlen($this->path->absolute()) + 1;
