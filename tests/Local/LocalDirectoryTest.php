@@ -100,6 +100,23 @@ class LocalDirectoryTest extends TestCase
         $this->assertFiles($expected, $files);
     }
 
+    public function test_file_names_from_subdirectory_are_relative_to_root_directory(): void
+    {
+        $root    = $this->directory();
+        $dirname = self::$temp->normalized('foo/bar');
+
+        $expected = self::$temp->normalized('foo/bar/baz/file.txt');
+        $this->assertSame($expected, $root->subdirectory($dirname)->file('baz/file.txt')->name());
+
+        $expected = $root->pathname() . DIRECTORY_SEPARATOR . $expected;
+        $this->assertSame($expected, $root->subdirectory($dirname)->file('baz/file.txt')->pathname());
+
+        $files    = $this->files(['foo/file.txt', 'foo/bar/file.txt', 'foo/bar/baz/file.txt', 'root.file']);
+        $dirOnly  = fn (string $filename) => str_starts_with($filename, $dirname);
+        $expected = array_filter($files, $dirOnly, ARRAY_FILTER_USE_KEY);
+        $this->assertFiles($expected, $root->subdirectory($dirname)->files());
+    }
+
     private function assertExceptionType(string $expectedException, callable $procedure, string $name): void
     {
         try {
@@ -117,12 +134,13 @@ class LocalDirectoryTest extends TestCase
     {
         /** @var LocalFile $file */
         foreach ($fileIterator as $file) {
-            $this->assertTrue($file->exists());
-            $this->assertArrayHasKey($name = $file->name(), $files);
+            $name = $file->name();
+            $this->assertTrue($file->exists(), sprintf('File `%s` should exist', $name));
+            $this->assertArrayHasKey($name, $files, sprintf('Unexpected file `%s` found', $name));
             $this->assertSame($files[$name], $file->pathname());
             unset($files[$name]);
         }
-        $this->assertSame([], $files);
+        $this->assertSame([], $files, 'Some expected files were not found');
     }
 
     private function files(array $filenames): array

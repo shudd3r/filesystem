@@ -65,10 +65,12 @@ final class DirectoryName extends Pathname
      * @param string $name Directory basename or relative directory pathname
      *
      * @throws InvalidPath|UnreachablePath
+     *
+     * @return self Directory name relative to root directory
      */
     public function directory(string $name): self
     {
-        return new self($this->root . DIRECTORY_SEPARATOR . $this->relativePath($name, false));
+        return new self($this->root, $this->relativePath($name, false));
     }
 
     private function relativePath(string $name, bool $forFile): string

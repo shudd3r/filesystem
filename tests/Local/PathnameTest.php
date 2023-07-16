@@ -161,6 +161,7 @@ class PathnameTest extends TestCase
     {
         $this->assertInstanceOf(Pathname\DirectoryName::class, $path = $this->path()->directory($name));
         $this->assertSame(self::$temp->name($name), $path->absolute());
+        $this->assertSame(self::$temp->normalized($name), $path->relative());
     }
 
     private function assertFileName(string $name): void

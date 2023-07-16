@@ -41,6 +41,10 @@ interface Directory
     public function file(string $name): File;
 
     /**
+     * Creates relative directory instance for which all provided names
+     * will be prepended with given `$name` as if they were derived from
+     * root directory directly.
+     *
      * Directory instance MUST be returned regardless if directory with
      * given name exists within structure of this root directory or not,
      * unless one of following exceptions occur:
@@ -54,7 +58,7 @@ interface Directory
      *
      * @throws InvalidPath|UnreachablePath
      *
-     * @return self
+     * @return self Relative directory instance
      */
     public function subdirectory(string $name): self;
 

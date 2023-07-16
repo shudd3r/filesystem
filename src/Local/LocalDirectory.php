@@ -86,8 +86,8 @@ class LocalDirectory implements Directory
 
     private function generateFile(Iterator $nodes): Generator
     {
-        $rootLength = strlen($this->path->absolute());
-        $relative   = fn (string $path) => substr($path, $rootLength);
+        $pathLength = strlen($this->path->absolute()) + 1;
+        $relative   = fn (string $path) => substr($path, $pathLength);
         foreach ($nodes as $name) {
             if (!is_file($name)) { continue; }
             yield new LocalFile($this->path->file($relative($name)));
