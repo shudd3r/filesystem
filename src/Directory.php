@@ -16,13 +16,8 @@ use Shudd3r\Filesystem\Exception\UnreachablePath;
 use Shudd3r\Filesystem\Exception\DirectoryDoesNotExist;
 
 
-interface Directory
+interface Directory extends Node
 {
-    /**
-     * @return string Absolute directory pathname
-     */
-    public function pathname(): string;
-
     /**
      * File instance MUST be returned regardless if file with given name
      * exists within structure of this root directory or not, unless one

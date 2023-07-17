@@ -12,23 +12,8 @@
 namespace Shudd3r\Filesystem;
 
 
-interface File
+interface File extends Node
 {
-    /**
-     * @return string Absolute file pathname
-     */
-    public function pathname(): string;
-
-    /**
-     * @return string Path name relative to its root directory
-     */
-    public function name(): string;
-
-    /**
-     * @return bool True if file or symlink to file exists
-     */
-    public function exists(): bool;
-
     /**
      * @return string Contents of this file or empty string if file does not exist
      */

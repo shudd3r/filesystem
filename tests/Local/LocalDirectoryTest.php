@@ -24,26 +24,35 @@ class LocalDirectoryTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
 
-    public function test_static_constructor_creates_root_instance_for_valid_path(): void
+    public function test_static_constructor_for_not_real_directory_path_returns_null(): void
     {
-        $rootPathname = self::$temp->name('not/exists');
-        $this->assertNull(LocalDirectory::root($rootPathname));
+        $path = self::$temp->name('not/exists');
+        $this->assertNull(LocalDirectory::root($path));
 
-        $rootPathname = self::$temp->directory('foo/bar');
-        $expected     = new LocalDirectory(Pathname\DirectoryName::forRootPath($rootPathname));
-        $this->assertEquals($expected, LocalDirectory::root($rootPathname));
+        $path = self::$temp->file('foo/file.path');
+        $this->assertNull(LocalDirectory::root($path));
+
+        $path = self::$temp->symlink(self::$temp->directory('foo/bar'), 'dir.link');
+        $this->assertNull(LocalDirectory::root($path));
     }
 
-    public function test_pathname_for_root_directory_returns_absolute_path_to_existing_directory(): void
+    public function test_static_constructor_for_existing_directory_path_returns_root_directory_instance(): void
     {
-        $path = Pathname\DirectoryName::forRootPath(self::$temp->directory('foo/bar/baz'));
-        $this->assertSame($path->absolute(), $this->directory($path)->pathname());
+        $path = self::$temp->directory('foo/bar');
+        $root = LocalDirectory::root($path);
+        $this->assertEquals(new LocalDirectory(Pathname\DirectoryName::forRootPath($path)), $root);
+        $this->assertSame($path, $root->pathname());
+        $this->assertSame('', $root->name());
+        $this->assertTrue($root->exists());
     }
 
     public function test_pathname_for_relative_directory_returns_absolute_path_to_not_existing_directory(): void
     {
-        $path = Pathname\DirectoryName::forRootPath(self::$temp->directory('foo'))->directory('bar/baz');
-        $this->assertSame($path->absolute(), $this->directory($path)->pathname());
+        $path      = Pathname\DirectoryName::forRootPath(self::$temp->directory('foo'))->directory('bar/baz');
+        $directory = $this->directory($path);
+        $this->assertSame($path->absolute(), $directory->pathname());
+        $this->assertSame($path->relative(), $directory->name());
+        $this->assertFalse($directory->exists());
     }
 
     public function test_subdirectory_for_valid_path_returns_Directory(): void
@@ -122,10 +131,16 @@ class LocalDirectoryTest extends TestCase
         $rootPath = Pathname\DirectoryName::forRootPath(self::$temp->directory('dir/foo'));
         $relative = $this->directory()->subdirectory('dir/foo');
 
-        $this->assertEquals($this->directory($rootPath), $newRoot = $relative->asRoot());
+        $newRoot = $relative->asRoot();
         $this->assertSame($relative->pathname(), $newRoot->pathname());
+
+        $this->assertSame(self::$temp->normalized('dir/foo'), $relative->name());
+        $this->assertSame('', $newRoot->name());
+
         $this->assertSame(self::$temp->normalized('dir/foo/file.txt'), $relative->file('file.txt')->name());
-        $this->assertSame(self::$temp->normalized('file.txt'), $newRoot->file('file.txt')->name());
+        $this->assertSame('file.txt', $newRoot->file('file.txt')->name());
+
+        $this->assertEquals($this->directory($rootPath), $newRoot);
         $this->assertSame($newRoot, $newRoot->asRoot());
     }
 

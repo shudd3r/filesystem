@@ -53,6 +53,16 @@ class LocalDirectory implements Directory
         return $this->path->absolute();
     }
 
+    public function name(): string
+    {
+        return $this->path->relative();
+    }
+
+    public function exists(): bool
+    {
+        return is_dir($this->path->absolute());
+    }
+
     /**
      * Superfluous path separators at the beginning or the end of
      * the name are ignored, but only canonical paths are allowed.
