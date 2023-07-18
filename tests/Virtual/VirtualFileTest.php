@@ -67,6 +67,22 @@ class VirtualFileTest extends TestCase
         $this->assertTrue($file->exists());
     }
 
+    public function test_remove_method(): void
+    {
+        $file = $this->file('file.txt');
+        $this->assertFalse($file->exists());
+        $file->remove();
+        $this->assertFalse($file->exists());
+        $file->write('contents...');
+        $this->assertTrue($file->exists());
+        $file->remove();
+        $this->assertFalse($file->exists());
+
+        $file = $this->file('file.txt', 'contents...');
+        $file->remove();
+        $this->assertFalse($file->exists());
+    }
+
     private function file(string $name, ?string $contents = null): VirtualFile
     {
         return new VirtualFile($name, $contents);

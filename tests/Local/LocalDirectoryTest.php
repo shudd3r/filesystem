@@ -151,6 +151,14 @@ class LocalDirectoryTest extends TestCase
         $relative->asRoot();
     }
 
+    public function test_remove_method(): void
+    {
+        self::$temp->symlink(self::$temp->file('foo/bar/baz.txt'), 'foo/link.file');
+        self::$temp->symlink(self::$temp->directory('foo/bar/dir/sub'), 'foo/bar/sub.link');
+        $this->directory()->subdirectory('foo')->remove();
+        $this->assertFalse(is_dir(self::$temp->name('foo')));
+    }
+
     private function assertExceptionType(string $expectedException, callable $procedure, string $name): void
     {
         try {

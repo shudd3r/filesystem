@@ -108,6 +108,17 @@ class LocalFileTest extends TestCase
         $this->assertTrue(is_dir(self::$temp->name('foo/baz')));
     }
 
+    public function test_remove_method(): void
+    {
+        $path = self::$temp->file('foo/bar.txt');
+        $file = $this->file('foo/bar.txt');
+        $this->assertFileExists($path);
+        $this->assertTrue($file->exists());
+        $file->remove();
+        $this->assertFileDoesNotExist($path);
+        $this->assertFalse($file->exists());
+    }
+
     private function file(string $filename): LocalFile
     {
         return new LocalFile(Pathname\DirectoryName::forRootPath(self::$temp->directory())->file($filename));

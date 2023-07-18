@@ -48,6 +48,11 @@ class LocalFile implements File
         return is_file($this->absolutePath);
     }
 
+    public function remove(): void
+    {
+        $this->exists() && unlink($this->absolutePath);
+    }
+
     public function contents(): string
     {
         if (!$this->exists()) { return ''; }

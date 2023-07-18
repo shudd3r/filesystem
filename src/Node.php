@@ -29,4 +29,9 @@ interface Node
      * @return bool True if node exists
      */
     public function exists(): bool;
+
+    /**
+     * Removes node and its child nodes from filesystem.
+     */
+    public function remove(): void;
 }

@@ -60,7 +60,24 @@ class LocalDirectory implements Directory
 
     public function exists(): bool
     {
-        return is_dir($this->path->absolute());
+        return is_dir($this->pathname());
+    }
+
+    public function remove(): void
+    {
+        if (!$this->exists()) { return; }
+
+        $isWinOS = DIRECTORY_SEPARATOR === '\\';
+        foreach ($this->childNodes() as $pathname) {
+            $isFile = $isWinOS ? is_file($pathname) : is_file($pathname) || is_link($pathname);
+            if ($isFile || is_dir($pathname)) {
+                $isFile ? unlink($pathname) : rmdir($pathname);
+                continue;
+            }
+            @unlink($pathname) || rmdir($pathname);
+        }
+
+        rmdir($this->pathname());
     }
 
     /**
@@ -87,11 +104,7 @@ class LocalDirectory implements Directory
 
     public function files(): Files
     {
-        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
-        $nodes = new RecursiveDirectoryIterator($this->path->absolute(), $flags);
-        $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
-
-        return new FileList(new FileGenerator(fn () => $this->generateFile($nodes)));
+        return new FileList(new FileGenerator(fn () => $this->generateFiles()));
     }
 
     public function asRoot(): self
@@ -99,13 +112,20 @@ class LocalDirectory implements Directory
         return $this->path->relative() ? new self($this->path->asRoot()) : $this;
     }
 
-    private function generateFile(Iterator $nodes): Generator
+    private function generateFiles(): Generator
     {
         $pathLength = strlen($this->path->absolute()) + 1;
         $relative   = fn (string $path) => substr($path, $pathLength);
-        foreach ($nodes as $name) {
-            if (!is_file($name)) { continue; }
-            yield new LocalFile($this->path->file($relative($name)));
+        foreach ($this->childNodes() as $pathname) {
+            if (!is_file($pathname)) { continue; }
+            yield new LocalFile($this->path->file($relative($pathname)));
         }
+    }
+
+    private function childNodes(): Iterator
+    {
+        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
+        $nodes = new RecursiveDirectoryIterator($this->pathname(), $flags);
+        return new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
     }
 }
