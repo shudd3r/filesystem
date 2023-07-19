@@ -121,6 +121,6 @@ class LocalFileTest extends TestCase
 
     private function file(string $filename): LocalFile
     {
-        return new LocalFile(Pathname\DirectoryName::forRootPath(self::$temp->directory())->file($filename));
+        return new LocalFile(Pathname::root(self::$temp->directory())->forChildNode($filename));
     }
 }

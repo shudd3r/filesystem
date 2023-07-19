@@ -40,7 +40,7 @@ class LocalDirectoryTest extends TestCase
     {
         $path = self::$temp->directory('foo/bar');
         $root = LocalDirectory::root($path);
-        $this->assertEquals(new LocalDirectory(Pathname\DirectoryName::forRootPath($path)), $root);
+        $this->assertEquals(new LocalDirectory(Pathname::root($path)), $root);
         $this->assertSame($path, $root->pathname());
         $this->assertSame('', $root->name());
         $this->assertTrue($root->exists());
@@ -48,8 +48,8 @@ class LocalDirectoryTest extends TestCase
 
     public function test_pathname_for_relative_directory_returns_absolute_path_to_not_existing_directory(): void
     {
-        $path      = Pathname\DirectoryName::forRootPath(self::$temp->directory('foo'))->directory('bar/baz');
-        $directory = $this->directory($path);
+        $path      = Pathname::root(self::$temp->directory('foo'))->forChildNode('bar/baz');
+        $directory = new LocalDirectory($path);
         $this->assertSame($path->absolute(), $directory->pathname());
         $this->assertSame($path->relative(), $directory->name());
         $this->assertFalse($directory->exists());
@@ -57,36 +57,28 @@ class LocalDirectoryTest extends TestCase
 
     public function test_subdirectory_for_valid_path_returns_Directory(): void
     {
-        $root      = Pathname\DirectoryName::forRootPath(self::$temp->directory());
-        $directory = $this->directory($root);
-        $this->assertEquals(new LocalDirectory($root->directory('foo/bar')), $directory->subdirectory('foo/bar'));
+        $root      = Pathname::root(self::$temp->directory());
+        $directory = new LocalDirectory($root);
+        $this->assertEquals(new LocalDirectory($root->forChildNode('foo/bar')), $directory->subdirectory('foo/bar'));
     }
 
     public function test_subdirectory_for_invalid_path_throws_Filesystem_Exception(): void
     {
-        self::$temp->file('foo/bar.txt');
-
-        $root      = Pathname\DirectoryName::forRootPath(self::$temp->directory());
-        $procedure = fn (string $name) => $this->directory($root)->subdirectory($name);
+        $procedure = fn (string $name) => $this->directory()->subdirectory($name);
         $this->assertExceptionType(Exception\InvalidPath::class, $procedure, 'foo//bar');
-        $this->assertExceptionType(Exception\UnreachablePath::class, $procedure, 'foo/bar.txt');
     }
 
     public function test_file_for_valid_path_returns_File(): void
     {
-        $root      = Pathname\DirectoryName::forRootPath(self::$temp->directory());
-        $directory = $this->directory($root);
-        $this->assertEquals(new LocalFile($root->file('foo/file.txt')), $directory->file('foo/file.txt'));
+        $root      = Pathname::root(self::$temp->directory());
+        $directory = new LocalDirectory($root);
+        $this->assertEquals(new LocalFile($root->forChildNode('foo/file.txt')), $directory->file('foo/file.txt'));
     }
 
     public function test_file_for_invalid_path_throws_Filesystem_Exception(): void
     {
-        self::$temp->directory('foo/bar.dir');
-
-        $root      = Pathname\DirectoryName::forRootPath(self::$temp->directory());
-        $procedure = fn (string $name) => $this->directory($root)->file($name);
+        $procedure = fn (string $name) => $this->directory()->file($name);
         $this->assertExceptionType(Exception\InvalidPath::class, $procedure, '');
-        $this->assertExceptionType(Exception\UnreachablePath::class, $procedure, 'foo/bar.dir');
     }
 
     public function test_files_returns_all_files_iterator(): void
@@ -128,7 +120,7 @@ class LocalDirectoryTest extends TestCase
 
     public function test_converting_subdirectory_to_root_directory(): void
     {
-        $rootPath = Pathname\DirectoryName::forRootPath(self::$temp->directory('dir/foo'));
+        $rootPath = self::$temp->directory('dir/foo');
         $relative = $this->directory()->subdirectory('dir/foo');
 
         $newRoot = $relative->asRoot();
@@ -195,8 +187,8 @@ class LocalDirectoryTest extends TestCase
         return $files;
     }
 
-    private function directory(Pathname\DirectoryName $name = null): ?LocalDirectory
+    private function directory(string $name = null): ?LocalDirectory
     {
-        return $name ? new LocalDirectory($name) : LocalDirectory::root(self::$temp->directory());
+        return LocalDirectory::root($name ?? self::$temp->directory());
     }
 }

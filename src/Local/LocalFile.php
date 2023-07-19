@@ -12,7 +12,6 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\File;
-use Shudd3r\Filesystem\Local\PathName\FileName;
 
 
 class LocalFile implements File
@@ -20,14 +19,7 @@ class LocalFile implements File
     private string $absolutePath;
     private string $relativePath;
 
-    /**
-     * FileName value object ensures that path to file either already
-     * exists or is potentially valid (is not currently a directory
-     * nor directory symlink).
-     *
-     * @param FileName $fileName
-     */
-    public function __construct(FileName $fileName)
+    public function __construct(Pathname $fileName)
     {
         $this->absolutePath = $fileName->absolute();
         $this->relativePath = $fileName->relative();

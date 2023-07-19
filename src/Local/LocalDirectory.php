@@ -12,7 +12,6 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Directory;
-use Shudd3r\Filesystem\Local\PathName\DirectoryName;
 use Shudd3r\Filesystem\Generic\FileList;
 use Shudd3r\Filesystem\Generic\FileGenerator;
 use Shudd3r\Filesystem\Files;
@@ -25,16 +24,9 @@ use Iterator;
 
 class LocalDirectory implements Directory
 {
-    private DirectoryName $path;
+    private Pathname $path;
 
-    /**
-     * DirectoryName value object ensures that path to directory either
-     * already exists or is potentially valid (is not currently a file
-     * nor a file symlink).
-     *
-     * @param DirectoryName $path
-     */
-    public function __construct(DirectoryName $path)
+    public function __construct(Pathname $path)
     {
         $this->path = $path;
     }
@@ -44,7 +36,7 @@ class LocalDirectory implements Directory
      */
     public static function root(string $path): ?self
     {
-        $path = DirectoryName::forRootPath($path);
+        $path = Pathname::root($path);
         return $path ? new self($path) : null;
     }
 
@@ -88,7 +80,7 @@ class LocalDirectory implements Directory
      */
     public function file(string $name): LocalFile
     {
-        return new LocalFile($this->path->file($name));
+        return new LocalFile($this->path->forChildNode($name));
     }
 
     /**
@@ -99,7 +91,7 @@ class LocalDirectory implements Directory
      */
     public function subdirectory(string $name): self
     {
-        return new self($this->path->directory($name));
+        return new self($this->path->forChildNode($name));
     }
 
     public function files(): Files
@@ -118,7 +110,7 @@ class LocalDirectory implements Directory
         $relative   = fn (string $path) => substr($path, $pathLength);
         foreach ($this->childNodes() as $pathname) {
             if (!is_file($pathname)) { continue; }
-            yield new LocalFile($this->path->file($relative($pathname)));
+            yield new LocalFile($this->path->forChildNode($relative($pathname)));
         }
     }
 
