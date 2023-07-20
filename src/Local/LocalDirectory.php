@@ -15,11 +15,7 @@ use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\FileList;
 use Shudd3r\Filesystem\Generic\FileGenerator;
 use Shudd3r\Filesystem\Files;
-use RecursiveIteratorIterator;
-use RecursiveDirectoryIterator;
-use FilesystemIterator;
 use Generator;
-use Iterator;
 
 
 class LocalDirectory implements Directory
@@ -59,16 +55,7 @@ class LocalDirectory implements Directory
     {
         if (!$this->exists()) { return; }
 
-        $isWinOS = DIRECTORY_SEPARATOR === '\\';
-        foreach ($this->childNodes() as $pathname) {
-            $isFile = $isWinOS ? is_file($pathname) : is_file($pathname) || is_link($pathname);
-            if ($isFile || is_dir($pathname)) {
-                $isFile ? unlink($pathname) : rmdir($pathname);
-                continue;
-            }
-            @unlink($pathname) || rmdir($pathname);
-        }
-
+        $this->removeDescendants();
         rmdir($this->pathname());
     }
 
@@ -106,18 +93,31 @@ class LocalDirectory implements Directory
 
     private function generateFiles(): Generator
     {
-        $pathLength = strlen($this->path->absolute()) + 1;
-        $relative   = fn (string $path) => substr($path, $pathLength);
-        foreach ($this->childNodes() as $pathname) {
-            if (!is_file($pathname)) { continue; }
-            yield new LocalFile($this->path->forChildNode($relative($pathname)));
+        $filter = fn (string $path) => is_file($path);
+        foreach ($this->path->descendantPaths($filter) as $pathname) {
+            yield new LocalFile($pathname);
         }
     }
 
-    private function childNodes(): Iterator
+    private function removeDescendants(): void
     {
-        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
-        $nodes = new RecursiveDirectoryIterator($this->pathname(), $flags);
-        return new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($this->path->descendantPaths() as $pathname) {
+            $this->removeNode($pathname->absolute());
+        }
+    }
+
+    private function removeNode(string $path): void
+    {
+        $isWinOS = DIRECTORY_SEPARATOR === '\\';
+        $isFile  = $isWinOS ? is_file($path) : is_file($path) || is_link($path);
+
+        $staleWindowsLink = !$isFile && !is_dir($path);
+        if ($staleWindowsLink) {
+            // Cannot determine if it should be removed as file or directory
+            @unlink($path) || rmdir($path);
+            return;
+        }
+
+        $isFile ? unlink($path) : rmdir($path);
     }
 }

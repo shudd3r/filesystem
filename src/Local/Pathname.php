@@ -13,6 +13,10 @@ namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Exception\DirectoryDoesNotExist;
 use Shudd3r\Filesystem\Exception\InvalidPath;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
+use FilesystemIterator;
+use Iterator;
 
 
 final class Pathname
@@ -78,6 +82,22 @@ final class Pathname
             $path = dirname($path);
         }
         return $path;
+    }
+
+    /**
+     * @param callable|null $filter fn(string) => bool
+     *
+     * @return Iterator
+     */
+    public function descendantPaths(callable $filter = null): Iterator
+    {
+        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
+        $nodes = new RecursiveDirectoryIterator($this->absolute(), $flags);
+        $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($nodes as $node) {
+            if ($filter && !$filter($node)) { continue; }
+            yield new self($this->root, substr($node, strlen($this->root) + 1));
+        }
     }
 
     /**
