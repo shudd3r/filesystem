@@ -21,6 +21,28 @@ class PathnameTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
 
+    public static function invalidNames(): array
+    {
+        return [
+            'empty name'         => [''],
+            'resolved empty'     => ['//\\'],
+            'empty segment'      => ['foo/bar//baz.txt'],
+            'dot segment'        => ['./foo/bar/baz'],
+            'double dot segment' => ['foo/baz/../dir']
+        ];
+    }
+
+    public static function acceptedNameVariations(): array
+    {
+        return [
+            ['/bar/baz'],
+            ['bar/baz'],
+            ['\bar\baz'],
+            ['\\\\\\bar/baz\\'],
+            ['\bar/baz\\']
+        ];
+    }
+
     public function test_instance_can_only_be_created_with_real_directory_path(): void
     {
         foreach ($this->invalidInstancePaths() as $type => $path) {
@@ -71,27 +93,34 @@ class PathnameTest extends TestCase
         $this->assertEquals($expected, $this->path($rootName . '/foo\bar\\')->absolute());
     }
 
-    /** @dataProvider acceptableNameVariations */
+    /** @dataProvider acceptedNameVariations */
     public function test_child_node_name_separator_normalization(string $name): void
     {
         $this->assertSame(self::$temp->name($name), $this->path()->forChildNode($name)->absolute());
         $this->assertSame(self::$temp->normalized($name), $this->path()->forChildNode($name)->relative());
     }
 
-    public static function invalidNames(): array
+    public function test_closestAncestor_method_returns_longest_path_fragment_existing_in_filesystem(): void
     {
-        return [
-            'empty name'         => [''],
-            'resolved empty'     => ['//\\'],
-            'empty segment'      => ['foo/bar//baz.txt'],
-            'dot segment'        => ['./foo/bar/baz'],
-            'double dot segment' => ['foo/baz/../dir']
-        ];
+        $file      = self::$temp->file('foo/bar/file.txt');
+        $directory = self::$temp->directory('foo/bar/dir name');
+        $fileLink  = self::$temp->symlink($file, 'linked/file.txt');
+        $dirLink   = self::$temp->symlink(dirname($directory), 'linked/dir');
+        $linkedDir = self::$temp->name('linked/dir/dir name');
+        $deadLink  = self::$temp->symlink('', 'linked/stale');
+
+        $this->assertAncestor($file, 'foo/bar/file.txt/expand/path/file.txt');
+        $this->assertAncestor($directory, 'foo/bar/dir name/expanded/sub');
+        $this->assertAncestor($fileLink, 'linked/file.txt/as/directory');
+        $this->assertAncestor($dirLink, 'linked/dir/not/exist');
+        $this->assertAncestor($linkedDir, 'linked/dir/dir name/not/exists');
+        $this->assertAncestor($deadLink, 'linked/stale/not/exists');
     }
 
-    public static function acceptableNameVariations(): array
+    private function assertAncestor(string $path, string $nodeName): void
     {
-        return [['/bar/baz'], ['bar/baz'], ['\bar\baz'], ['\\\\\\bar/baz\\'], ['\bar/baz\\']];
+        $node = $this->path()->forChildNode($nodeName);
+        $this->assertSame($path, $node->closestAncestor());
     }
 
     private function invalidInstancePaths(): array
