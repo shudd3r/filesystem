@@ -57,6 +57,11 @@ class VirtualFile implements File
         return true;
     }
 
+    public function validated(int $flags = 0): self
+    {
+        return $this;
+    }
+
     public function remove(): void
     {
         $this->contents = null;

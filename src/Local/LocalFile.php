@@ -16,6 +16,8 @@ use Shudd3r\Filesystem\File;
 
 class LocalFile implements File
 {
+    use PathValidation;
+
     private Pathname $pathname;
     private string   $filename;
 
@@ -38,6 +40,12 @@ class LocalFile implements File
     public function exists(): bool
     {
         return is_file($this->filename);
+    }
+
+    public function validated(int $flags = 0): self
+    {
+        $this->verifyPath($this->pathname, $flags, true);
+        return $this;
     }
 
     public function isReadable(): bool
@@ -74,12 +82,12 @@ class LocalFile implements File
 
     public function write(string $contents): void
     {
-        $this->save($contents, LOCK_EX);
+        $this->validated(self::WRITE)->save($contents, LOCK_EX);
     }
 
     public function append(string $contents): void
     {
-        $this->save($contents, FILE_APPEND);
+        $this->validated(self::WRITE)->save($contents, FILE_APPEND);
     }
 
     private function save(string $contents, int $flags): void

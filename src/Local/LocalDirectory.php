@@ -20,6 +20,8 @@ use Generator;
 
 class LocalDirectory implements Directory
 {
+    use PathValidation;
+
     private Pathname $path;
 
     public function __construct(Pathname $path)
@@ -65,11 +67,17 @@ class LocalDirectory implements Directory
         return is_dir($ancestor) && is_writable($ancestor);
     }
 
+    public function validated(int $flags = 0): self
+    {
+        $this->verifyPath($this->path, $flags, false);
+        return $this;
+    }
+
     public function remove(): void
     {
         if (!$this->exists()) { return; }
 
-        $this->removeDescendants();
+        $this->validated(self::WRITE)->removeDescendants();
         rmdir($this->pathname());
     }
 

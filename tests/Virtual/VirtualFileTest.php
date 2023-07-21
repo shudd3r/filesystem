@@ -73,6 +73,12 @@ class VirtualFileTest extends TestCase
         $this->assertTrue($this->file('not a file.txt')->isWritable());
     }
 
+    public function test_instance_validation(): void
+    {
+        $file = $this->file('foo/bar.txt');
+        $this->assertSame($file, $file->validated());
+    }
+
     public function test_remove_method(): void
     {
         $file = $this->file('file.txt');

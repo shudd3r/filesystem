@@ -14,12 +14,15 @@ namespace Shudd3r\Filesystem\Tests\Local;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\LocalFile;
 use Shudd3r\Filesystem\Local\Pathname;
+use Shudd3r\Filesystem\Node;
+use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Tests\Fixtures;
 
 
 class LocalFileTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
+    use Fixtures\ExceptionAssertion;
 
     public function test_pathname_returns_absolute_path_to_file(): void
     {
@@ -145,6 +148,57 @@ class LocalFileTest extends TestCase
         $file = $this->file('foo/file/baz.txt');
         $this->assertFalse($file->isReadable());
         $this->assertFalse($file->isWritable());
+    }
+
+    public function test_instance_validation_for_unreachable_paths(): void
+    {
+        $directory = self::$temp->directory('foo/bar.dir');
+        self::$temp->symlink($directory, 'dir.link');
+        self::$temp->symlink('', 'foo/dead.link');
+        self::$temp->file('foo/bar.file');
+
+        $unreachablePaths = [
+            'foo/bar.dir',
+            'dir.link',
+            'foo/dead.link',
+            'foo/dead.link/file.txt',
+            'foo/bar.file/file.txt'
+        ];
+
+        foreach ($unreachablePaths as $name) {
+            $check = fn () => $this->file($name)->validated();
+            $this->assertExceptionType(Exception\UnreachablePath::class, $check, $name);
+        }
+    }
+
+    public function test_instance_validation_for_access_permissions(): void
+    {
+        $file = $this->file('foo/bar.txt');
+        $this->assertSame($file, $file->validated(Node::READ | Node::WRITE));
+
+        $directory = self::$temp->directory('foo');
+        self::override('is_readable', $directory, false);
+        $check = fn () => $file->validated(Node::READ);
+        $this->assertExceptionType(Exception\AccessDenied::class, $check);
+        $this->assertSame($file, $file->validated(Node::WRITE));
+
+        self::override('is_writable', $directory, false);
+        $check = fn () => $file->validated(Node::WRITE);
+        $this->assertExceptionType(Exception\AccessDenied::class, $check);
+
+        $filename = self::$temp->file('foo/bar.txt');
+        $this->assertSame($file, $file->validated(Node::READ | Node::WRITE));
+
+        self::override('is_writable', $filename, false);
+        $check = fn () => $file->validated(Node::WRITE | Node::READ);
+        $this->assertExceptionType(Exception\AccessDenied::class, $check);
+        $this->assertSame($file, $file->validated(Node::READ));
+
+        self::override('is_readable', $filename, false);
+        self::override('is_writable', $filename, true);
+        $check = fn () => $file->validated(Node::WRITE | Node::READ);
+        $this->assertExceptionType(Exception\AccessDenied::class, $check);
+        $this->assertSame($file, $file->validated(Node::WRITE));
     }
 
     public function test_remove_method(): void

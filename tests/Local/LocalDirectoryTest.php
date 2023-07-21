@@ -23,6 +23,7 @@ use Shudd3r\Filesystem\Tests\Fixtures;
 class LocalDirectoryTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
+    use Fixtures\ExceptionAssertion;
 
     public function test_static_constructor_for_not_real_directory_path_returns_null(): void
     {
@@ -64,8 +65,8 @@ class LocalDirectoryTest extends TestCase
 
     public function test_subdirectory_for_invalid_path_throws_Filesystem_Exception(): void
     {
-        $procedure = fn (string $name) => $this->directory()->subdirectory($name);
-        $this->assertExceptionType(Exception\InvalidPath::class, $procedure, 'foo//bar');
+        $procedure = fn () => $this->directory()->subdirectory('foo//bar');
+        $this->assertExceptionType(Exception\InvalidPath::class, $procedure);
     }
 
     public function test_file_for_valid_path_returns_File(): void
@@ -77,8 +78,8 @@ class LocalDirectoryTest extends TestCase
 
     public function test_file_for_invalid_path_throws_Filesystem_Exception(): void
     {
-        $procedure = fn (string $name) => $this->directory()->file($name);
-        $this->assertExceptionType(Exception\InvalidPath::class, $procedure, '');
+        $procedure = fn () => $this->directory()->file('');
+        $this->assertExceptionType(Exception\InvalidPath::class, $procedure);
     }
 
     public function test_files_returns_all_files_iterator(): void
@@ -182,25 +183,34 @@ class LocalDirectoryTest extends TestCase
         $this->assertFalse($directory->isWritable());
     }
 
+    public function test_instance_validation_for_unreachable_paths(): void
+    {
+        $file = self::$temp->file('foo/bar.file');
+        self::$temp->symlink($file, 'file.link');
+        self::$temp->symlink('', 'foo/dead.link');
+
+        $unreachablePaths = [
+            'foo/bar.file',
+            'foo/bar.file/path',
+            'file.link',
+            'file.link/path',
+            'foo/dead.link',
+            'foo/dead.link/path'
+        ];
+
+        $directory = $this->directory();
+        foreach ($unreachablePaths as $name) {
+            $check = fn () => $directory->subdirectory($name)->validated();
+            $this->assertExceptionType(Exception\UnreachablePath::class, $check, $name);
+        }
+    }
+
     public function test_remove_method(): void
     {
         self::$temp->symlink(self::$temp->file('foo/bar/baz.txt'), 'foo/link.file');
         self::$temp->symlink(self::$temp->directory('foo/bar/dir/sub'), 'foo/bar/sub.link');
         $this->directory()->subdirectory('foo')->remove();
         $this->assertFalse(is_dir(self::$temp->name('foo')));
-    }
-
-    private function assertExceptionType(string $expectedException, callable $procedure, string $name): void
-    {
-        try {
-            $procedure($name);
-        } catch (Exception $exception) {
-            $message = 'Unexpected Exception type - expected `%s` caught `%s`';
-            $this->assertInstanceOf($expectedException, $exception, sprintf($message, $expectedException, $exception));
-            return;
-        }
-
-        $this->fail(sprintf('No Exception thrown - expected `%s`', $expectedException));
     }
 
     private function assertFiles(array $files, Files $fileIterator): void
