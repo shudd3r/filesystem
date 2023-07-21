@@ -16,42 +16,56 @@ use Shudd3r\Filesystem\File;
 
 class LocalFile implements File
 {
-    private string $absolutePath;
-    private string $relativePath;
+    private Pathname $pathname;
+    private string   $filename;
 
-    public function __construct(Pathname $fileName)
+    public function __construct(Pathname $pathname)
     {
-        $this->absolutePath = $fileName->absolute();
-        $this->relativePath = $fileName->relative();
+        $this->pathname = $pathname;
+        $this->filename = $pathname->absolute();
     }
 
     public function pathname(): string
     {
-        return $this->absolutePath;
+        return $this->filename;
     }
 
     public function name(): string
     {
-        return $this->relativePath;
+        return $this->pathname->relative();
     }
 
     public function exists(): bool
     {
-        return is_file($this->absolutePath);
+        return is_file($this->filename);
+    }
+
+    public function isReadable(): bool
+    {
+        if ($this->exists()) { return is_readable($this->filename); }
+        $ancestor = $this->pathname->closestAncestor();
+        return is_dir($ancestor) && is_readable($ancestor);
+    }
+
+    public function isWritable(): bool
+    {
+        if ($this->exists()) { return is_writable($this->filename); }
+        $ancestor = $this->pathname->closestAncestor();
+        return is_dir($ancestor) && is_writable($ancestor);
     }
 
     public function remove(): void
     {
-        $this->exists() && unlink($this->absolutePath);
+        $this->exists() && unlink($this->filename);
     }
 
     public function contents(): string
     {
         if (!$this->exists()) { return ''; }
 
-        $file = fopen($this->absolutePath, 'rb');
+        $file = fopen($this->filename, 'rb');
         flock($file, LOCK_SH);
-        $contents = file_get_contents($this->absolutePath);
+        $contents = file_get_contents($this->filename);
         flock($file, LOCK_UN);
         fclose($file);
 
@@ -71,13 +85,13 @@ class LocalFile implements File
     private function save(string $contents, int $flags): void
     {
         if ($create = !$this->exists()) { $this->createDirectory(); }
-        file_put_contents($this->absolutePath, $contents, $flags);
-        if ($create) { chmod($this->absolutePath, 0644); }
+        file_put_contents($this->filename, $contents, $flags);
+        if ($create) { chmod($this->filename, 0644); }
     }
 
     private function createDirectory(): void
     {
-        $directoryPath = dirname($this->absolutePath);
+        $directoryPath = dirname($this->filename);
         if (is_dir($directoryPath)) { return; }
         mkdir($directoryPath, 0755, true);
     }

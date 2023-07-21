@@ -31,6 +31,22 @@ interface Node
     public function exists(): bool;
 
     /**
+     * Attempt to read node that is not readable SHOULD return empty string
+     * or empty collection instead of throwing Exception.
+     *
+     * @return bool True if node contents or its child nodes can be read
+     */
+    public function isReadable(): bool;
+
+    /**
+     * Attempt to create, modify or remove not writable node MUST throw
+     * Exception.
+     *
+     * @return bool True if node can be created, modified or removed
+     */
+    public function isWritable(): bool;
+
+    /**
      * Removes node and its child nodes from filesystem.
      */
     public function remove(): void;

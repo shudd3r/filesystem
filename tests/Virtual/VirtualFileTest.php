@@ -67,6 +67,12 @@ class VirtualFileTest extends TestCase
         $this->assertTrue($file->exists());
     }
 
+    public function test_permission_checks(): void
+    {
+        $this->assertTrue($this->file('file.txt')->isReadable());
+        $this->assertTrue($this->file('not a file.txt')->isWritable());
+    }
+
     public function test_remove_method(): void
     {
         $file = $this->file('file.txt');

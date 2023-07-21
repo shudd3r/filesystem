@@ -47,6 +47,16 @@ class VirtualFile implements File
         return isset($this->contents);
     }
 
+    public function isReadable(): bool
+    {
+        return true;
+    }
+
+    public function isWritable(): bool
+    {
+        return true;
+    }
+
     public function remove(): void
     {
         $this->contents = null;

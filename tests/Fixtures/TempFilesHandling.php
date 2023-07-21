@@ -11,6 +11,8 @@
 
 namespace Shudd3r\Filesystem\Tests\Fixtures;
 
+include_once __DIR__ . '/native-functions.php';
+
 
 trait TempFilesHandling
 {
@@ -31,5 +33,11 @@ trait TempFilesHandling
     protected function tearDown(): void
     {
         self::$temp->clear();
+        Override::reset();
+    }
+
+    public static function override(string $function, string $pathname, $value): void
+    {
+        Override::$file[$pathname][$function] = $value;
     }
 }

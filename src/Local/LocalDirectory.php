@@ -51,6 +51,20 @@ class LocalDirectory implements Directory
         return is_dir($this->pathname());
     }
 
+    public function isReadable(): bool
+    {
+        if ($this->exists()) { return is_readable($this->pathname()); }
+        $ancestor = $this->path->closestAncestor();
+        return is_dir($ancestor) && is_readable($ancestor);
+    }
+
+    public function isWritable(): bool
+    {
+        if ($this->exists()) { return is_writable($this->pathname()); }
+        $ancestor = $this->path->closestAncestor();
+        return is_dir($ancestor) && is_writable($ancestor);
+    }
+
     public function remove(): void
     {
         if (!$this->exists()) { return; }

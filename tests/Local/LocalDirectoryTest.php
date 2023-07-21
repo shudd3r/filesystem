@@ -143,6 +143,45 @@ class LocalDirectoryTest extends TestCase
         $relative->asRoot();
     }
 
+    public function test_readable_and_writable_status_for_existing_directory(): void
+    {
+        $pathname = self::$temp->directory('foo');
+
+        $directory = $this->directory($pathname);
+        $this->assertTrue($directory->isReadable());
+        $this->assertTrue($directory->isWritable());
+        self::override('is_readable', $pathname, false);
+        $this->assertFalse($directory->isReadable());
+        $this->assertTrue($directory->isWritable());
+        self::override('is_writable', $pathname, false);
+        $this->assertFalse($directory->isReadable());
+        $this->assertFalse($directory->isWritable());
+    }
+
+    public function test_readable_and_writable_status_for_not_existing_directories_depends_on_ancestor_permissions(): void
+    {
+        $existing = self::$temp->directory('foo');
+
+        $directory = $this->directory($existing)->subdirectory('bar/dir');
+        $this->assertTrue($directory->isReadable());
+        $this->assertTrue($directory->isWritable());
+        self::override('is_readable', $existing, false);
+        $this->assertFalse($directory->isReadable());
+        $this->assertTrue($directory->isWritable());
+        self::override('is_writable', $existing, false);
+        $this->assertFalse($directory->isReadable());
+        $this->assertFalse($directory->isWritable());
+    }
+
+    public function test_readable_and_writable_status_for_invalid_file_path_returns_false(): void
+    {
+        self::$temp->file('foo/file');
+
+        $directory = $this->directory()->subdirectory('foo/file/baz');
+        $this->assertFalse($directory->isReadable());
+        $this->assertFalse($directory->isWritable());
+    }
+
     public function test_remove_method(): void
     {
         self::$temp->symlink(self::$temp->file('foo/bar/baz.txt'), 'foo/link.file');
