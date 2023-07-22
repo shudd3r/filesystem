@@ -65,7 +65,7 @@ class PathnameTest extends TestCase
     /** @dataProvider invalidNames */
     public function test_invalid_child_node_name_throws_Exception(string $name): void
     {
-        $this->expectException(Exception\InvalidPath::class);
+        $this->expectException(Exception\InvalidNodeName::class);
         $this->path()->forChildNode($name);
     }
 
@@ -79,7 +79,7 @@ class PathnameTest extends TestCase
     public function test_converting_relative_name_for_not_existing_directory_throws_exception(): void
     {
         $directory = $this->path()->forChildNode('foo/bar');
-        $this->expectException(Exception\DirectoryDoesNotExist::class);
+        $this->expectException(Exception\RootDirectoryNotFound::class);
         $directory->asRoot();
     }
 

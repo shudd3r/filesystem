@@ -20,11 +20,11 @@ trait PathValidation
     {
         $path = $this->validPath($pathname, $forFile);
         if ($flags & self::READ && !is_readable($path)) {
-            throw Exception\AccessDenied::forRead($pathname->relative(), $path, $forFile);
+            throw Exception\FailedPermissionCheck::forRead($pathname->relative(), $path, $forFile);
         }
 
         if ($flags & self::WRITE && !is_writable($path)) {
-            throw Exception\AccessDenied::forWrite($pathname->relative(), $path, $forFile);
+            throw Exception\FailedPermissionCheck::forWrite($pathname->relative(), $path, $forFile);
         }
     }
 
@@ -33,11 +33,13 @@ trait PathValidation
         $path = $pathname->absolute();
         if ($forFile ? is_file($path) : is_dir($path)) { return $path; }
 
-        $typeMismatch = file_exists($path) || is_link($path);
+        if (file_exists($path) || is_link($path)) {
+            throw Exception\UnexpectedNodeType::for($pathname->relative(), $path, $forFile);
+        }
+
         $ancestorPath = $pathname->closestAncestor();
-        if ($typeMismatch || !is_dir($ancestorPath)) {
-            $invalidPath = file_exists($path) ? $path : $ancestorPath;
-            throw Exception\UnreachablePath::for($pathname->relative(), $invalidPath, $forFile);
+        if (!is_dir($ancestorPath)) {
+            throw Exception\UnexpectedLeafNode::for($pathname->relative(), $ancestorPath);
         }
 
         return $ancestorPath;

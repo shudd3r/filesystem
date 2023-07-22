@@ -69,7 +69,7 @@ class LocalFile implements File
 
     public function contents(): string
     {
-        if (!$this->exists()) { return ''; }
+        if (!$this->validated(self::READ)->exists()) { return ''; }
 
         $file = fopen($this->filename, 'rb');
         flock($file, LOCK_SH);

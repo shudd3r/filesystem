@@ -11,8 +11,9 @@
 
 namespace Shudd3r\Filesystem;
 
-use Shudd3r\Filesystem\Exception\UnreachablePath;
-use Shudd3r\Filesystem\Exception\AccessDenied;
+use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
+use Shudd3r\Filesystem\Exception\UnexpectedLeafNode;
+use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
 
 
 interface Node
@@ -70,7 +71,7 @@ interface Node
      *
      * @param int $flags Node::READ|Node::WRITE to assert permissions
      *
-     * @throws UnreachablePath|AccessDenied
+     * @throws UnexpectedNodeType|UnexpectedLeafNode|FailedPermissionCheck
      *
      * @return self Validated node
      */
@@ -78,6 +79,8 @@ interface Node
 
     /**
      * Removes node and its child nodes from filesystem.
+     *
+     * @throws UnexpectedNodeType|UnexpectedLeafNode|FailedPermissionCheck
      */
     public function remove(): void;
 }

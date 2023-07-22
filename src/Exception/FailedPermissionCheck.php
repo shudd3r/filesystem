@@ -14,7 +14,7 @@ namespace Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Exception;
 
 
-class AccessDenied extends Exception
+class FailedPermissionCheck extends Exception
 {
     public static function forRead(string $name, string $path, bool $isFile): self
     {

@@ -11,8 +11,8 @@
 
 namespace Shudd3r\Filesystem\Local;
 
-use Shudd3r\Filesystem\Exception\DirectoryDoesNotExist;
-use Shudd3r\Filesystem\Exception\InvalidPath;
+use Shudd3r\Filesystem\Exception\InvalidNodeName;
+use Shudd3r\Filesystem\Exception\RootDirectoryNotFound;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use FilesystemIterator;
@@ -63,7 +63,7 @@ final class Pathname
      *
      * @param string $name Child node relative pathname
      *
-     * @throws InvalidPath
+     * @throws InvalidNodeName
      *
      * @return self with added or expanded relative path
      */
@@ -101,7 +101,7 @@ final class Pathname
     }
 
     /**
-     * @throws DirectoryDoesNotExist for not existing directory
+     * @throws RootDirectoryNotFound for not existing directory
      *
      * @return self without relative path
      */
@@ -110,7 +110,7 @@ final class Pathname
         if (!$this->name) { return $this; }
         $pathname = $this->absolute();
         if (!is_dir($pathname)) {
-            throw DirectoryDoesNotExist::forRoot($this->root, $this->name);
+            throw RootDirectoryNotFound::forRoot($this->root, $this->name);
         }
         return new self($pathname);
     }
@@ -119,17 +119,17 @@ final class Pathname
     {
         $name = trim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $name), DIRECTORY_SEPARATOR);
         if (!$name) {
-            throw new InvalidPath('Empty name for child node');
+            throw new InvalidNodeName('Empty name for child node');
         }
 
         if ($this->hasSegment($name, '')) {
             $message = 'Empty path segments not allowed - `%s` given';
-            throw new InvalidPath(sprintf($message, $name));
+            throw new InvalidNodeName(sprintf($message, $name));
         }
 
         if ($this->hasSegment($name, '..', '.')) {
             $message = 'Dot segments not allowed - `%s` given';
-            throw new InvalidPath(sprintf($message, $name));
+            throw new InvalidNodeName(sprintf($message, $name));
         }
 
         return $this->name ? $this->name . DIRECTORY_SEPARATOR . $name : $name;

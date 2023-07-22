@@ -158,16 +158,16 @@ class LocalFileTest extends TestCase
         self::$temp->file('foo/bar.file');
 
         $unreachablePaths = [
-            'foo/bar.dir',
-            'dir.link',
-            'foo/dead.link',
-            'foo/dead.link/file.txt',
-            'foo/bar.file/file.txt'
+            'foo/bar.dir'            => Exception\UnexpectedNodeType::class,
+            'dir.link'               => Exception\UnexpectedNodeType::class,
+            'foo/dead.link'          => Exception\UnexpectedNodeType::class,
+            'foo/dead.link/file.txt' => Exception\UnexpectedLeafNode::class,
+            'foo/bar.file/file.txt'  => Exception\UnexpectedLeafNode::class
         ];
 
-        foreach ($unreachablePaths as $name) {
+        foreach ($unreachablePaths as $name => $expectedException) {
             $check = fn () => $this->file($name)->validated();
-            $this->assertExceptionType(Exception\UnreachablePath::class, $check, $name);
+            $this->assertExceptionType($expectedException, $check, $name);
         }
     }
 
@@ -179,25 +179,25 @@ class LocalFileTest extends TestCase
         $directory = self::$temp->directory('foo');
         self::override('is_readable', $directory, false);
         $check = fn () => $file->validated(Node::READ);
-        $this->assertExceptionType(Exception\AccessDenied::class, $check);
+        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
         $this->assertSame($file, $file->validated(Node::WRITE));
 
         self::override('is_writable', $directory, false);
         $check = fn () => $file->validated(Node::WRITE);
-        $this->assertExceptionType(Exception\AccessDenied::class, $check);
+        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
 
         $filename = self::$temp->file('foo/bar.txt');
         $this->assertSame($file, $file->validated(Node::READ | Node::WRITE));
 
         self::override('is_writable', $filename, false);
         $check = fn () => $file->validated(Node::WRITE | Node::READ);
-        $this->assertExceptionType(Exception\AccessDenied::class, $check);
+        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
         $this->assertSame($file, $file->validated(Node::READ));
 
         self::override('is_readable', $filename, false);
         self::override('is_writable', $filename, true);
         $check = fn () => $file->validated(Node::WRITE | Node::READ);
-        $this->assertExceptionType(Exception\AccessDenied::class, $check);
+        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
         $this->assertSame($file, $file->validated(Node::WRITE));
     }
 

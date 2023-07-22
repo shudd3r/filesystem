@@ -11,8 +11,8 @@
 
 namespace Shudd3r\Filesystem;
 
-use Shudd3r\Filesystem\Exception\InvalidPath;
-use Shudd3r\Filesystem\Exception\DirectoryDoesNotExist;
+use Shudd3r\Filesystem\Exception\InvalidNodeName;
+use Shudd3r\Filesystem\Exception\RootDirectoryNotFound;
 
 
 interface Directory extends Node
@@ -23,8 +23,8 @@ interface Directory extends Node
      *
      * @param string $name File basename or relative file pathname
      *
-     * @throws InvalidPath for invalid name syntax specified by concrete
-     *                     environment implementations
+     * @throws InvalidNodeName for invalid name syntax specified by concrete
+     *                         environment implementations
      *
      * @return File
      */
@@ -41,8 +41,8 @@ interface Directory extends Node
      *
      * @param string $name Directory basename or relative directory pathname
      *
-     * @throws InvalidPath for invalid name syntax specified by concrete
-     *                     environment implementations
+     * @throws InvalidNodeName for invalid name syntax specified by concrete
+     *                         environment implementations
      *
      * @return self Relative directory instance
      *
@@ -60,7 +60,7 @@ interface Directory extends Node
      * Converts relative instance for existing directory to root directory.
      * For root directory instances same object is returned.
      *
-     * @throws DirectoryDoesNotExist for not existing directories
+     * @throws RootDirectoryNotFound for not existing directories
      *
      * @return self Root directory instance
      *

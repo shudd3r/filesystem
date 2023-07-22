@@ -66,7 +66,7 @@ class LocalDirectoryTest extends TestCase
     public function test_subdirectory_for_invalid_path_throws_Filesystem_Exception(): void
     {
         $procedure = fn () => $this->directory()->subdirectory('foo//bar');
-        $this->assertExceptionType(Exception\InvalidPath::class, $procedure);
+        $this->assertExceptionType(Exception\InvalidNodeName::class, $procedure);
     }
 
     public function test_file_for_valid_path_returns_File(): void
@@ -79,7 +79,7 @@ class LocalDirectoryTest extends TestCase
     public function test_file_for_invalid_path_throws_Filesystem_Exception(): void
     {
         $procedure = fn () => $this->directory()->file('');
-        $this->assertExceptionType(Exception\InvalidPath::class, $procedure);
+        $this->assertExceptionType(Exception\InvalidNodeName::class, $procedure);
     }
 
     public function test_files_returns_all_files_iterator(): void
@@ -140,7 +140,7 @@ class LocalDirectoryTest extends TestCase
     public function test_converting_not_existing_subdirectory_to_root_throws_exception(): void
     {
         $relative = $this->directory()->subdirectory('dir/foo');
-        $this->expectException(Exception\DirectoryDoesNotExist::class);
+        $this->expectException(Exception\RootDirectoryNotFound::class);
         $relative->asRoot();
     }
 
@@ -190,18 +190,18 @@ class LocalDirectoryTest extends TestCase
         self::$temp->symlink('', 'foo/dead.link');
 
         $unreachablePaths = [
-            'foo/bar.file',
-            'foo/bar.file/path',
-            'file.link',
-            'file.link/path',
-            'foo/dead.link',
-            'foo/dead.link/path'
+            'foo/bar.file'       => Exception\UnexpectedNodeType::class,
+            'foo/bar.file/path'  => Exception\UnexpectedLeafNode::class,
+            'file.link'          => Exception\UnexpectedNodeType::class,
+            'file.link/path'     => Exception\UnexpectedLeafNode::class,
+            'foo/dead.link'      => Exception\UnexpectedNodeType::class,
+            'foo/dead.link/path' => Exception\UnexpectedLeafNode::class
         ];
 
         $directory = $this->directory();
-        foreach ($unreachablePaths as $name) {
+        foreach ($unreachablePaths as $name => $expectedException) {
             $check = fn () => $directory->subdirectory($name)->validated();
-            $this->assertExceptionType(Exception\UnreachablePath::class, $check, $name);
+            $this->assertExceptionType($expectedException, $check, $name);
         }
     }
 
