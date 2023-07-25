@@ -19,17 +19,11 @@ use Shudd3r\Filesystem\Exception;
  * directories, files or symlinks are not controlled by single process
  * (possible race conditions).
  */
-class UnreachablePath extends Exception
+class UnexpectedLeafNode extends Exception
 {
-    public static function for(string $path, string $collision, bool $expectedFile = false): self
+    public static function for(string $name, string $collision): self
     {
-        if (str_ends_with(DIRECTORY_SEPARATOR . $path, $collision)) {
-            $requested = $expectedFile ? 'file' : 'directory';
-            $type      = $expectedFile ? 'directory' : 'file';
-            return new self(sprintf('Requested %s `%s` is a %s (or invalid symlink)', $requested, $path, $type));
-        }
-
         $message = 'Name collision for requested path `%s` (non directory node at `%s`)';
-        return new self(sprintf($message, $path, $collision));
+        return new self(sprintf($message, $name, $collision));
     }
 }

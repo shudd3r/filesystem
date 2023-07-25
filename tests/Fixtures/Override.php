@@ -9,14 +9,17 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Exception;
+namespace Shudd3r\Filesystem\Tests\Fixtures;
 
-use Shudd3r\Filesystem\Exception;
+include_once __DIR__ . '/native-functions.php';
 
 
-/**
- * Unchecked exception thrown for invalid path formats (developer error).
- */
-class InvalidPath extends Exception
+class Override
 {
+    public static array $file = [];
+
+    public static function reset(): void
+    {
+        self::$file = [];
+    }
 }

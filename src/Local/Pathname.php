@@ -11,44 +11,143 @@
 
 namespace Shudd3r\Filesystem\Local;
 
-use Shudd3r\Filesystem\Local\PathName\FileName;
+use Shudd3r\Filesystem\Exception\InvalidNodeName;
+use Shudd3r\Filesystem\Exception\RootDirectoryNotFound;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
+use FilesystemIterator;
+use Iterator;
 
 
-/**
- * Base class for validated & normalized local filesystem paths.
- *
- * This type cannot be instantiated on its own.
- */
-abstract class Pathname
+final class Pathname
 {
-    protected string $root;
-    protected string $name;
+    private string $root;
+    private string $name;
+    private string $path;
 
-    protected function __construct(string $root, string $name = '')
+    private function __construct(string $root, string $name = '')
     {
         $this->root = $root;
         $this->name = $name;
+        $this->path = $name ? $root . DIRECTORY_SEPARATOR . $name : $root;
     }
 
     /**
-     * @return string Absolute pathname within local filesystem
+     * @param string $path Real, absolute path to existing directory
+     */
+    public static function root(string $path): ?self
+    {
+        $path   = rtrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
+        $isReal = $path === realpath($path) && is_dir($path);
+        return $isReal ? new self($path) : null;
+    }
+
+    /**
+     * @return string absolute pathname within local filesystem
      */
     public function absolute(): string
     {
-        return $this->name ? $this->root . DIRECTORY_SEPARATOR . $this->name : $this->root;
+        return $this->path;
     }
 
     /**
-     * @return string Path name relative to its root directory
+     * @return string path name relative to its root directory
      */
     public function relative(): string
     {
         return $this->name;
     }
 
-    protected function filename(string $name): FileName
+    /**
+     * Forward and backward slashes at the beginning and the end of name
+     * will be silently removed, and either empty or dot path segments are
+     * not allowed.
+     *
+     * @param string $name Child node relative pathname
+     *
+     * @throws InvalidNodeName
+     *
+     * @return self with added or expanded relative path
+     */
+    public function forChildNode(string $name): self
     {
-        $name = $this->name ? $this->name . DIRECTORY_SEPARATOR . $name : $name;
-        return new FileName($this->root, $name);
+        return new self($this->root, $this->validName($name));
+    }
+
+    /**
+     * @return string absolute path name of closest existing ancestor node
+     */
+    public function closestAncestor(): string
+    {
+        $path = dirname($this->path);
+        while (!file_exists($path) && !is_link($path)) {
+            $path = dirname($path);
+        }
+        return $path;
+    }
+
+    /**
+     * @param callable|null $filter fn(string) => bool
+     *
+     * @return Iterator
+     */
+    public function descendantPaths(callable $filter = null): Iterator
+    {
+        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
+        $nodes = new RecursiveDirectoryIterator($this->path, $flags);
+        $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($nodes as $node) {
+            if ($filter && !$filter($node)) { continue; }
+            yield new self($this->root, substr($node, strlen($this->root) + 1));
+        }
+    }
+
+    /**
+     * @throws RootDirectoryNotFound for not existing directory
+     *
+     * @return self without relative path
+     */
+    public function asRoot(): self
+    {
+        if (!$this->name) { return $this; }
+        if (!is_dir($this->path)) {
+            throw RootDirectoryNotFound::forRoot($this->root, $this->name);
+        }
+        return new self($this->path);
+    }
+
+    private function validName(string $name): string
+    {
+        $name = trim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $name), DIRECTORY_SEPARATOR);
+        if (!$name) {
+            throw new InvalidNodeName('Empty name for child node');
+        }
+
+        if ($this->hasSegment($name, '')) {
+            $message = 'Empty path segments not allowed - `%s` given';
+            throw new InvalidNodeName(sprintf($message, $name));
+        }
+
+        if ($this->hasSegment($name, '..', '.')) {
+            $message = 'Dot segments not allowed - `%s` given';
+            throw new InvalidNodeName(sprintf($message, $name));
+        }
+
+        return $this->name ? $this->name . DIRECTORY_SEPARATOR . $name : $name;
+    }
+
+    private function hasSegment(string $name, string ...$segments): bool
+    {
+        $name = $this->pathFragment($name);
+        foreach ($segments as $segment) {
+            $fragmentFound = strpos($name, $this->pathFragment($segment)) !== false;
+            if ($fragmentFound) { return true; }
+        }
+        return false;
+    }
+
+    private function pathFragment(string $segment): string
+    {
+        return DIRECTORY_SEPARATOR . $segment . DIRECTORY_SEPARATOR;
     }
 }

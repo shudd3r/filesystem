@@ -12,50 +12,23 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Directory;
-use Shudd3r\Filesystem\Local\PathName\DirectoryName;
 use Shudd3r\Filesystem\Generic\FileList;
 use Shudd3r\Filesystem\Generic\FileGenerator;
 use Shudd3r\Filesystem\Files;
-use RecursiveIteratorIterator;
-use RecursiveDirectoryIterator;
-use FilesystemIterator;
 use Generator;
-use Iterator;
 
 
-class LocalDirectory implements Directory
+class LocalDirectory extends LocalNode implements Directory
 {
-    private DirectoryName $path;
-
-    /**
-     * DirectoryName value object ensures that path to directory either
-     * already exists or is potentially valid (is not currently a file
-     * nor a file symlink).
-     *
-     * @param DirectoryName $path
-     */
-    public function __construct(DirectoryName $path)
-    {
-        $this->path = $path;
-    }
+    protected bool $isFile = false;
 
     /**
      * @param string $path Real pathname to existing directory
      */
     public static function root(string $path): ?self
     {
-        $path = DirectoryName::forRootPath($path);
+        $path = Pathname::root($path);
         return $path ? new self($path) : null;
-    }
-
-    public function pathname(): string
-    {
-        return $this->path->absolute();
-    }
-
-    public function name(): string
-    {
-        return $this->path->relative();
     }
 
     public function exists(): bool
@@ -63,43 +36,24 @@ class LocalDirectory implements Directory
         return is_dir($this->pathname());
     }
 
-    public function remove(): void
-    {
-        if (!$this->exists()) { return; }
-
-        $isWinOS = DIRECTORY_SEPARATOR === '\\';
-        foreach ($this->childNodes() as $pathname) {
-            $isFile = $isWinOS ? is_file($pathname) : is_file($pathname) || is_link($pathname);
-            if ($isFile || is_dir($pathname)) {
-                $isFile ? unlink($pathname) : rmdir($pathname);
-                continue;
-            }
-            @unlink($pathname) || rmdir($pathname);
-        }
-
-        rmdir($this->pathname());
-    }
-
     /**
-     * Superfluous path separators at the beginning or the end of
-     * the name are ignored, but only canonical paths are allowed.
-     * For empty or dot path segments `InvalidPath` exception is
-     * thrown.
+     * Only canonical paths are allowed, and superfluous path separators
+     * at the beginning or the end of the name will be trimmed. For empty
+     * or dot path segments `InvalidPath` exception is thrown.
      */
     public function file(string $name): LocalFile
     {
-        return new LocalFile($this->path->file($name));
+        return new LocalFile($this->pathname->forChildNode($name));
     }
 
     /**
-     * Superfluous path separators at the beginning or the end of
-     * the name are ignored, but only canonical paths are allowed.
-     * For empty or dot path segments `InvalidPath` exception is
-     * thrown.
+     * Only canonical paths are allowed, and superfluous path separators
+     * at the beginning or the end of the name will be trimmed. For empty
+     * or dot path segments `InvalidPath` exception is thrown.
      */
     public function subdirectory(string $name): self
     {
-        return new self($this->path->directory($name));
+        return new self($this->pathname->forChildNode($name));
     }
 
     public function files(): Files
@@ -109,23 +63,37 @@ class LocalDirectory implements Directory
 
     public function asRoot(): self
     {
-        return $this->path->relative() ? new self($this->path->asRoot()) : $this;
+        return $this->pathname->relative() ? new self($this->pathname->asRoot()) : $this;
+    }
+
+    protected function removeNode(): void
+    {
+        foreach ($this->pathname->descendantPaths() as $pathname) {
+            $this->delete($pathname->absolute());
+        }
+        rmdir($this->pathname());
     }
 
     private function generateFiles(): Generator
     {
-        $pathLength = strlen($this->path->absolute()) + 1;
-        $relative   = fn (string $path) => substr($path, $pathLength);
-        foreach ($this->childNodes() as $pathname) {
-            if (!is_file($pathname)) { continue; }
-            yield new LocalFile($this->path->file($relative($pathname)));
+        $filter = fn (string $path) => is_file($path);
+        foreach ($this->pathname->descendantPaths($filter) as $pathname) {
+            yield new LocalFile($pathname);
         }
     }
 
-    private function childNodes(): Iterator
+    private function delete(string $path): void
     {
-        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
-        $nodes = new RecursiveDirectoryIterator($this->pathname(), $flags);
-        return new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
+        $isWinOS = DIRECTORY_SEPARATOR === '\\';
+        $isFile  = $isWinOS ? is_file($path) : is_file($path) || is_link($path);
+
+        $staleWindowsLink = !$isFile && !is_dir($path);
+        if ($staleWindowsLink) {
+            // Cannot determine if it should be removed as file or directory
+            @unlink($path) || rmdir($path);
+            return;
+        }
+
+        $isFile ? unlink($path) : rmdir($path);
     }
 }

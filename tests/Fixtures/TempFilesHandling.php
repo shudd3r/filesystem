@@ -31,5 +31,11 @@ trait TempFilesHandling
     protected function tearDown(): void
     {
         self::$temp->clear();
+        Override::reset();
+    }
+
+    public static function override(string $function, string $pathname, $value): void
+    {
+        Override::$file[$pathname][$function] = $value;
     }
 }

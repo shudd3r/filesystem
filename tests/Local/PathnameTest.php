@@ -21,6 +21,28 @@ class PathnameTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
 
+    public static function invalidNames(): array
+    {
+        return [
+            'empty name'         => [''],
+            'resolved empty'     => ['//\\'],
+            'empty segment'      => ['foo/bar//baz.txt'],
+            'dot segment'        => ['./foo/bar/baz'],
+            'double dot segment' => ['foo/baz/../dir']
+        ];
+    }
+
+    public static function acceptedNameVariations(): array
+    {
+        return [
+            ['/bar/baz'],
+            ['bar/baz'],
+            ['\bar\baz'],
+            ['\\\\\\bar/baz\\'],
+            ['\bar/baz\\']
+        ];
+    }
+
     public function test_instance_can_only_be_created_with_real_directory_path(): void
     {
         foreach ($this->invalidInstancePaths() as $type => $path) {
@@ -30,84 +52,38 @@ class PathnameTest extends TestCase
         $path = self::$temp->directory('existing/directory');
         $this->assertSame($path, realpath($path));
         $this->assertTrue(is_dir($path));
-        $this->assertInstanceOf(Pathname\DirectoryName::class, $this->path($path));
+        $this->assertInstanceOf(Pathname::class, $this->path($path));
     }
 
-    public function test_file_for_existing_pathname_returns_FileName(): void
+    public function test_creating_child_node_instance(): void
     {
-        self::$temp->file('foo/bar.txt');
-        $this->assertFileName('foo/bar.txt');
+        $name = 'foo/bar/baz.txt';
+        $this->assertSame(self::$temp->name($name), $this->path()->forChildNode($name)->absolute());
+        $this->assertSame(self::$temp->normalized($name), $this->path()->forChildNode($name)->relative());
     }
 
-    public function test_file_for_not_existing_pathname_returns_FileName(): void
+    /** @dataProvider invalidNames */
+    public function test_invalid_child_node_name_throws_Exception(string $name): void
     {
-        $this->assertFileName('foo/bar.txt');
-    }
-
-    public function test_file_for_linked_path_returns_FileName(): void
-    {
-        self::$temp->symlink(self::$temp->file('foo/bar.txt'), 'link/file.lnk');
-        $this->assertFileName('link\file.lnk');
-
-        self::$temp->symlink(self::$temp->directory('foo'), 'path.lnk');
-        $this->assertFileName('path.lnk/bar.txt');
-        $this->assertFileName('path.lnk/possible.file');
-    }
-
-    public function test_file_for_invalid_or_colliding_name_throws_FilesystemException(): void
-    {
-        foreach ($this->invalidNames(true) as $type => [$relativePath, $collision]) {
-            $procedure = fn () => $this->path()->file($relativePath);
-            $exception = $collision ? Exception\UnreachablePath::class : Exception\InvalidPath::class;
-            $this->assertExceptionType($exception, $procedure, "Failed for `$type`");
-        }
-    }
-
-    public function test_directory_for_existing_pathname_returns_DirectoryName(): void
-    {
-        self::$temp->directory('foo/bar/baz');
-        $this->assertDirectoryName('foo/bar/baz');
-    }
-
-    public function test_directory_for_not_existing_pathname_returns_DirectoryName(): void
-    {
-        $this->assertDirectoryName('foo/bar/baz');
-    }
-
-    public function test_directory_for_linked_path_returns_DirectoryName(): void
-    {
-        self::$temp->symlink(self::$temp->directory('foo/bar/baz'), 'link/dir.lnk');
-        $this->assertDirectoryName('link/dir.lnk');
-
-        self::$temp->symlink(self::$temp->directory('foo/bar'), 'path.lnk');
-        $this->assertDirectoryName('path.lnk/baz');
-        $this->assertDirectoryName('path.lnk/possible.dir');
-    }
-
-    public function test_directory_for_invalid_or_colliding_name_throws_FilesystemException(): void
-    {
-        foreach ($this->invalidNames(false) as $type => [$name, $collision]) {
-            $procedure = fn () => $this->path()->directory($name);
-            $exception = $collision ? Exception\UnreachablePath::class : Exception\InvalidPath::class;
-            $this->assertExceptionType($exception, $procedure, "Failed for `$type`");
-        }
+        $this->expectException(Exception\InvalidNodeName::class);
+        $this->path()->forChildNode($name);
     }
 
     public function test_converting_relative_name_to_root_returns_root_directory_name(): void
     {
         $path = self::$temp->directory('foo/bar');
-        $this->assertEquals($this->path($path), $newRoot = $this->path()->directory('foo/bar')->asRoot());
+        $this->assertEquals($this->path($path), $newRoot = $this->path()->forChildNode('foo/bar')->asRoot());
         $this->assertSame($newRoot, $newRoot->asRoot());
     }
 
     public function test_converting_relative_name_for_not_existing_directory_throws_exception(): void
     {
-        $directory = $this->path()->directory('foo/bar');
-        $this->expectException(Exception\DirectoryDoesNotExist::class);
+        $directory = $this->path()->forChildNode('foo/bar');
+        $this->expectException(Exception\RootDirectoryNotFound::class);
         $directory->asRoot();
     }
 
-    public function test_path_separator_normalization(): void
+    public function test_instance_path_normalization(): void
     {
         $rootName = self::$temp->directory();
         $expected = self::$temp->directory('foo/bar');
@@ -115,12 +91,36 @@ class PathnameTest extends TestCase
         $this->assertEquals($expected, $this->path(str_replace('/', '\\', $rootName) . '\foo\bar')->absolute());
         $this->assertEquals($expected, $this->path($rootName . '\foo/bar/')->absolute());
         $this->assertEquals($expected, $this->path($rootName . '/foo\bar\\')->absolute());
+    }
 
-        $this->assertNormalizedName('/bar/baz');
-        $this->assertNormalizedName('bar/baz');
-        $this->assertNormalizedName('\bar\baz');
-        $this->assertNormalizedName('\\\\\\bar/baz\\');
-        $this->assertNormalizedName('\bar/baz\\');
+    /** @dataProvider acceptedNameVariations */
+    public function test_child_node_name_separator_normalization(string $name): void
+    {
+        $this->assertSame(self::$temp->name($name), $this->path()->forChildNode($name)->absolute());
+        $this->assertSame(self::$temp->normalized($name), $this->path()->forChildNode($name)->relative());
+    }
+
+    public function test_closestAncestor_method_returns_longest_path_fragment_existing_in_filesystem(): void
+    {
+        $file      = self::$temp->file('foo/bar/file.txt');
+        $directory = self::$temp->directory('foo/bar/dir name');
+        $fileLink  = self::$temp->symlink($file, 'linked/file.txt');
+        $dirLink   = self::$temp->symlink(dirname($directory), 'linked/dir');
+        $linkedDir = self::$temp->name('linked/dir/dir name');
+        $deadLink  = self::$temp->symlink('', 'linked/stale');
+
+        $this->assertAncestor($file, 'foo/bar/file.txt/expand/path/file.txt');
+        $this->assertAncestor($directory, 'foo/bar/dir name/expanded/sub');
+        $this->assertAncestor($fileLink, 'linked/file.txt/as/directory');
+        $this->assertAncestor($dirLink, 'linked/dir/not/exist');
+        $this->assertAncestor($linkedDir, 'linked/dir/dir name/not/exists');
+        $this->assertAncestor($deadLink, 'linked/stale/not/exists');
+    }
+
+    private function assertAncestor(string $path, string $nodeName): void
+    {
+        $node = $this->path()->forChildNode($nodeName);
+        $this->assertSame($path, $node->closestAncestor());
     }
 
     private function invalidInstancePaths(): array
@@ -138,66 +138,8 @@ class PathnameTest extends TestCase
         ];
     }
 
-    private function invalidNames(bool $forFile): array
+    private function path(string $pathname = null): ?Pathname
     {
-        $directory = self::$temp->directory('foo/bar');
-        $file      = self::$temp->file('foo/bar/baz.txt');
-        self::$temp->symlink($file, 'file/name.lnk');
-        self::$temp->symlink($directory, 'dir/name.lnk');
-        self::$temp->symlink('', 'dead/name.lnk');
-
-        return [
-            'empty name'              => ['', false],
-            'resolved empty'          => ['//\\', false],
-            'empty segment'           => ['foo/bar//baz.txt', false],
-            'dot segment'             => ['./foo/bar/baz', false],
-            'double dot segment'      => ['foo/baz/../dir', false],
-            'file <=> directory'      => [$forFile ? 'foo/bar' : 'foo/bar/baz.txt', true],
-            'link file <=> directory' => [$forFile ? 'dir/name.lnk' : 'file/name.lnk', true],
-            'file on path'            => ['foo/bar/baz.txt/file.or.dir', true],
-            'file symlink on path'    => ['file/name.lnk/baz', true],
-            'dead symlink'            => ['dead/name.lnk', true],
-            'dead symlink on path'    => ['dead/name.lnk/baz', true]
-        ];
-    }
-
-    private function assertNormalizedName(string $name): void
-    {
-        $instance     = $this->path();
-        $expectedPath = self::$temp->name($name);
-        $expectedName = self::$temp->normalized($name);
-        $this->assertSame($expectedPath, $instance->directory($name)->absolute());
-        $this->assertSame($expectedPath, $instance->file($name)->absolute());
-        $this->assertSame($expectedName, $instance->file($name)->relative());
-    }
-
-    private function assertDirectoryName(string $name): void
-    {
-        $this->assertInstanceOf(Pathname\DirectoryName::class, $path = $this->path()->directory($name));
-        $this->assertSame(self::$temp->name($name), $path->absolute());
-        $this->assertSame(self::$temp->normalized($name), $path->relative());
-    }
-
-    private function assertFileName(string $name): void
-    {
-        $this->assertInstanceOf(Pathname\FileName::class, $path = $this->path()->file($name));
-        $this->assertSame(self::$temp->name($name), $path->absolute());
-    }
-
-    private function assertExceptionType(string $expectedException, callable $procedure, string $fail): void
-    {
-        try {
-            $procedure();
-        } catch (Exception $exception) {
-            $this->assertInstanceOf($expectedException, $exception, $fail);
-            return;
-        }
-
-        $this->fail($fail);
-    }
-
-    private function path(string $pathname = null): ?Pathname\DirectoryName
-    {
-        return Pathname\DirectoryName::forRootPath($pathname ?? self::$temp->directory());
+        return Pathname::root($pathname ?? self::$temp->directory());
     }
 }

@@ -12,54 +12,22 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\File;
-use Shudd3r\Filesystem\Local\PathName\FileName;
 
 
-class LocalFile implements File
+class LocalFile extends LocalNode implements File
 {
-    private string $absolutePath;
-    private string $relativePath;
-
-    /**
-     * FileName value object ensures that path to file either already
-     * exists or is potentially valid (is not currently a directory
-     * nor directory symlink).
-     *
-     * @param FileName $fileName
-     */
-    public function __construct(FileName $fileName)
-    {
-        $this->absolutePath = $fileName->absolute();
-        $this->relativePath = $fileName->relative();
-    }
-
-    public function pathname(): string
-    {
-        return $this->absolutePath;
-    }
-
-    public function name(): string
-    {
-        return $this->relativePath;
-    }
-
     public function exists(): bool
     {
-        return is_file($this->absolutePath);
-    }
-
-    public function remove(): void
-    {
-        $this->exists() && unlink($this->absolutePath);
+        return is_file($this->pathname->absolute());
     }
 
     public function contents(): string
     {
-        if (!$this->exists()) { return ''; }
+        if (!$this->validated(self::READ)->exists()) { return ''; }
 
-        $file = fopen($this->absolutePath, 'rb');
+        $file = fopen($this->pathname->absolute(), 'rb');
         flock($file, LOCK_SH);
-        $contents = file_get_contents($this->absolutePath);
+        $contents = file_get_contents($this->pathname->absolute());
         flock($file, LOCK_UN);
         fclose($file);
 
@@ -68,24 +36,29 @@ class LocalFile implements File
 
     public function write(string $contents): void
     {
-        $this->save($contents, LOCK_EX);
+        $this->validated(self::WRITE)->save($contents, LOCK_EX);
     }
 
     public function append(string $contents): void
     {
-        $this->save($contents, FILE_APPEND);
+        $this->validated(self::WRITE)->save($contents, FILE_APPEND);
+    }
+
+    protected function removeNode(): void
+    {
+        unlink($this->pathname->absolute());
     }
 
     private function save(string $contents, int $flags): void
     {
         if ($create = !$this->exists()) { $this->createDirectory(); }
-        file_put_contents($this->absolutePath, $contents, $flags);
-        if ($create) { chmod($this->absolutePath, 0644); }
+        file_put_contents($this->pathname->absolute(), $contents, $flags);
+        if ($create) { chmod($this->pathname->absolute(), 0644); }
     }
 
     private function createDirectory(): void
     {
-        $directoryPath = dirname($this->absolutePath);
+        $directoryPath = dirname($this->pathname->absolute());
         if (is_dir($directoryPath)) { return; }
         mkdir($directoryPath, 0755, true);
     }

@@ -21,16 +21,6 @@ class LocalFileTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
 
-    public function test_pathname_returns_absolute_path_to_file(): void
-    {
-        $this->assertSame(self::$temp->name('foo/bar/baz.txt'), $this->file('foo/bar/baz.txt')->pathname());
-    }
-
-    public function test_name_returns_pathname_relative_to_root_directory(): void
-    {
-        $this->assertSame(self::$temp->normalized('foo/bar/baz.txt'), $this->file('foo/bar/baz.txt')->name());
-    }
-
     public function test_exists_for_existing_file_returns_true(): void
     {
         self::$temp->symlink(self::$temp->file('foo/bar/baz.txt'), 'file.lnk');
@@ -40,7 +30,10 @@ class LocalFileTest extends TestCase
 
     public function test_exists_for_not_existing_file_returns_false(): void
     {
+        self::$temp->symlink(self::$temp->directory('foo/bar/dir'), 'dir.lnk');
         $this->assertFalse($this->file('foo/bar/baz.txt')->exists());
+        $this->assertFalse($this->file('foo/bar/dir')->exists());
+        $this->assertFalse($this->file('dir.lnk')->exists());
     }
 
     public function test_contents_returns_file_contents(): void
@@ -108,7 +101,7 @@ class LocalFileTest extends TestCase
         $this->assertTrue(is_dir(self::$temp->name('foo/baz')));
     }
 
-    public function test_remove_method(): void
+    public function test_remove_method_deletes_file(): void
     {
         $path = self::$temp->file('foo/bar.txt');
         $file = $this->file('foo/bar.txt');
@@ -121,6 +114,6 @@ class LocalFileTest extends TestCase
 
     private function file(string $filename): LocalFile
     {
-        return new LocalFile(Pathname\DirectoryName::forRootPath(self::$temp->directory())->file($filename));
+        return new LocalFile(Pathname::root(self::$temp->directory())->forChildNode($filename));
     }
 }

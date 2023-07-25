@@ -14,11 +14,9 @@ namespace Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Exception;
 
 
-class DirectoryDoesNotExist extends Exception
+/**
+ * Unchecked exception thrown for invalid path formats (developer error).
+ */
+class InvalidNodeName extends Exception
 {
-    public static function forRoot(string $path, string $name): self
-    {
-        $message = 'Root instance for not existing directory is not allowed. Create `%s` directory in `%s` first';
-        return new self(sprintf($message, $name, $path));
-    }
 }
