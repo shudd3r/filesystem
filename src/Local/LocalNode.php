@@ -45,6 +45,7 @@ abstract class LocalNode implements Node
     public function isReadable(): bool
     {
         if ($this->exists()) { return is_readable($this->pathname()); }
+        if (file_exists($this->pathname())) { return false; }
         $ancestor = $this->pathname->closestAncestor();
         return is_dir($ancestor) && is_readable($ancestor);
     }
@@ -52,6 +53,7 @@ abstract class LocalNode implements Node
     public function isWritable(): bool
     {
         if ($this->exists()) { return is_writable($this->pathname()); }
+        if (file_exists($this->pathname())) { return false; }
         $ancestor = $this->pathname->closestAncestor();
         return is_dir($ancestor) && is_writable($ancestor);
     }
@@ -59,6 +61,9 @@ abstract class LocalNode implements Node
     public function isRemovable(): bool
     {
         if (!$this->name()) { return false; }
+        if (!$this->exists() && file_exists($this->pathname())) {
+            return false;
+        }
         $existingNodeAccess = !$this->exists() || is_writable($this->pathname()) && is_readable($this->pathname());
         if (!$existingNodeAccess) { return false; }
         $ancestor = $this->pathname->closestAncestor();

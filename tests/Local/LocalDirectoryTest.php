@@ -184,6 +184,11 @@ class LocalDirectoryTest extends TestCase
     {
         self::$temp->file('foo/file');
 
+        $directory = $this->directory()->subdirectory('foo/file');
+        $this->assertFalse($directory->isReadable());
+        $this->assertFalse($directory->isWritable());
+        $this->assertFalse($directory->isRemovable());
+
         $directory = $this->directory()->subdirectory('foo/file/baz');
         $this->assertFalse($directory->isReadable());
         $this->assertFalse($directory->isWritable());
