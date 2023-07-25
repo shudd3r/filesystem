@@ -26,6 +26,8 @@ trait PathValidation
         if ($flags & self::WRITE && !is_writable($path)) {
             throw Exception\FailedPermissionCheck::forWrite($pathname->relative(), $path, $forFile);
         }
+
+        if ($flags & self::REMOVE) { $this->verifyRemove($pathname, $forFile); }
     }
 
     private function validPath(Pathname $pathname, bool $forFile): string
@@ -43,5 +45,17 @@ trait PathValidation
         }
 
         return $ancestorPath;
+    }
+
+    private function verifyRemove(Pathname $pathname, bool $forFile): void
+    {
+        if (!$pathname->relative()) {
+            throw Exception\FailedPermissionCheck::forRootRemove($pathname->absolute());
+        }
+
+        $path = $pathname->closestAncestor();
+        if (!is_writable($path)) {
+            throw Exception\FailedPermissionCheck::forRemove($pathname->relative(), $path, $forFile);
+        }
     }
 }

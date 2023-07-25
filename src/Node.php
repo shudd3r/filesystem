@@ -18,8 +18,9 @@ use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
 
 interface Node
 {
-    public const READ  = 1;
-    public const WRITE = 2;
+    public const READ   = 1;
+    public const WRITE  = 2;
+    public const REMOVE = 4;
 
     /**
      * @return string Absolute pathname within filesystem
@@ -63,13 +64,13 @@ interface Node
      * For example: subdirectory instantiated with a file path or node with
      * path that expands through existing file.
      *
-     * Node::READ and Node::WRITE flags may be used to assert preconditions
-     * for read & write permissions.
+     * Node::READ, Node::WRITE and Node::REMOVE flags may be used to assert
+     * preconditions for corresponding permissions.
      *
-     * For more detailed error messages this method MIGHT be implicitly
-     * called before each read & write action with corresponding flag.
+     * For more detailed error messages this method MIGHT be implicitly called
+     * before each read, write or remove action with corresponding flag.
      *
-     * @param int $flags Node::READ|Node::WRITE to assert permissions
+     * @param int $flags Node::READ|Node::WRITE|Node::REMOVE
      *
      * @throws UnexpectedNodeType|UnexpectedLeafNode|FailedPermissionCheck
      *
@@ -80,7 +81,10 @@ interface Node
     /**
      * Removes node and its child nodes from filesystem.
      *
-     * @throws UnexpectedNodeType|UnexpectedLeafNode|FailedPermissionCheck
+     * Removing node from directory without write permissions or root node
+     * itself is not allowed and Exception will be thrown.
+     *
+     * @throws FailedPermissionCheck
      */
     public function remove(): void;
 }

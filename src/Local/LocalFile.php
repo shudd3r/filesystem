@@ -64,7 +64,9 @@ class LocalFile implements File
 
     public function remove(): void
     {
-        $this->exists() && unlink($this->filename);
+        if (!$this->exists()) { return; }
+        $this->validated(self::REMOVE);
+        unlink($this->filename);
     }
 
     public function contents(): string

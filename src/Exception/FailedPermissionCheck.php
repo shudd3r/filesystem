@@ -27,4 +27,16 @@ class FailedPermissionCheck extends Exception
         $type = $isFile ? 'File' : 'Directory';
         return new self(sprintf('%s `%s` is not writable in `%s`', $type, $name, $path));
     }
+
+    public static function forRemove(string $name, string $path, bool $isFile): self
+    {
+        $type    = $isFile ? 'File' : 'Directory';
+        $message = '%s `%s` cannot be removed - directory write permission required for `%s`';
+        return new self(sprintf($message, $type, $name, $path));
+    }
+
+    public static function forRootRemove(string $path): self
+    {
+        return new self(sprintf('Root directory `%s` cannot be removed', $path));
+    }
 }

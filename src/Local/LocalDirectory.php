@@ -77,7 +77,7 @@ class LocalDirectory implements Directory
     {
         if (!$this->exists()) { return; }
 
-        $this->validated(self::WRITE)->removeDescendants();
+        $this->validated(self::REMOVE)->removeDescendants();
         rmdir($this->pathname());
     }
 

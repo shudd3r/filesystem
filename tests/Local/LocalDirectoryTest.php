@@ -213,6 +213,27 @@ class LocalDirectoryTest extends TestCase
         $this->assertFalse(is_dir(self::$temp->name('foo')));
     }
 
+    public function test_root_directory_cannot_be_removed(): void
+    {
+        $root   = $this->directory();
+        $remove = fn () => $root->remove();
+        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $remove);
+
+        self::$temp->directory('foo/bar');
+        $subRoot = $root->subdirectory('foo/bar')->asRoot();
+        $remove  = fn () => $subRoot->remove();
+        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $remove);
+    }
+
+    public function test_subdirectory_of_non_writable_directory_cannot_be_removed(): void
+    {
+        $path = self::$temp->directory('foo/bar');
+        $this->override('is_writable', dirname($path), false);
+        $directory = $this->directory()->subdirectory('foo/bar');
+        $remove    = fn () => $directory->remove();
+        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $remove);
+    }
+
     private function assertFiles(array $files, Files $fileIterator): void
     {
         /** @var LocalFile $file */

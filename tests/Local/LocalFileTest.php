@@ -212,6 +212,15 @@ class LocalFileTest extends TestCase
         $this->assertFalse($file->exists());
     }
 
+    public function test_file_cannot_be_removed_from_directory_without_write_permission(): void
+    {
+        $filename = self::$temp->file('foo/bar.txt');
+        $this->override('is_writable', dirname($filename), false);
+        $file   = $this->file('foo/bar.txt');
+        $remove = fn () => $file->remove();
+        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $remove);
+    }
+
     private function file(string $filename): LocalFile
     {
         return new LocalFile(Pathname::root(self::$temp->directory())->forChildNode($filename));
