@@ -23,11 +23,13 @@ final class Pathname
 {
     private string $root;
     private string $name;
+    private string $path;
 
     private function __construct(string $root, string $name = '')
     {
         $this->root = $root;
         $this->name = $name;
+        $this->path = $name ? $root . DIRECTORY_SEPARATOR . $name : $root;
     }
 
     /**
@@ -45,7 +47,7 @@ final class Pathname
      */
     public function absolute(): string
     {
-        return $this->name ? $this->root . DIRECTORY_SEPARATOR . $this->name : $this->root;
+        return $this->path;
     }
 
     /**
@@ -77,7 +79,7 @@ final class Pathname
      */
     public function closestAncestor(): string
     {
-        $path = dirname($this->absolute());
+        $path = dirname($this->path);
         while (!file_exists($path) && !is_link($path)) {
             $path = dirname($path);
         }
@@ -92,7 +94,7 @@ final class Pathname
     public function descendantPaths(callable $filter = null): Iterator
     {
         $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
-        $nodes = new RecursiveDirectoryIterator($this->absolute(), $flags);
+        $nodes = new RecursiveDirectoryIterator($this->path, $flags);
         $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
         foreach ($nodes as $node) {
             if ($filter && !$filter($node)) { continue; }
@@ -108,11 +110,10 @@ final class Pathname
     public function asRoot(): self
     {
         if (!$this->name) { return $this; }
-        $pathname = $this->absolute();
-        if (!is_dir($pathname)) {
+        if (!is_dir($this->path)) {
             throw RootDirectoryNotFound::forRoot($this->root, $this->name);
         }
-        return new self($pathname);
+        return new self($this->path);
     }
 
     private function validName(string $name): string

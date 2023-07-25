@@ -14,72 +14,27 @@ namespace Shudd3r\Filesystem\Local;
 use Shudd3r\Filesystem\File;
 
 
-class LocalFile implements File
+class LocalFile extends LocalNode implements File
 {
-    use PathValidation;
-
-    private Pathname $pathname;
-    private string   $filename;
-
-    /**
-     * File represented by this instance doesn't need to exist within
-     * local filesystem.
-     */
-    public function __construct(Pathname $pathname)
-    {
-        $this->pathname = $pathname;
-        $this->filename = $pathname->absolute();
-    }
-
-    public function pathname(): string
-    {
-        return $this->filename;
-    }
-
-    public function name(): string
-    {
-        return $this->pathname->relative();
-    }
-
     public function exists(): bool
     {
-        return is_file($this->filename);
-    }
-
-    public function validated(int $flags = 0): self
-    {
-        $this->verifyPath($this->pathname, $flags, true);
-        return $this;
-    }
-
-    public function isReadable(): bool
-    {
-        if ($this->exists()) { return is_readable($this->filename); }
-        $ancestor = $this->pathname->closestAncestor();
-        return is_dir($ancestor) && is_readable($ancestor);
-    }
-
-    public function isWritable(): bool
-    {
-        if ($this->exists()) { return is_writable($this->filename); }
-        $ancestor = $this->pathname->closestAncestor();
-        return is_dir($ancestor) && is_writable($ancestor);
+        return is_file($this->pathname->absolute());
     }
 
     public function remove(): void
     {
         if (!$this->exists()) { return; }
         $this->validated(self::REMOVE);
-        unlink($this->filename);
+        unlink($this->pathname->absolute());
     }
 
     public function contents(): string
     {
         if (!$this->validated(self::READ)->exists()) { return ''; }
 
-        $file = fopen($this->filename, 'rb');
+        $file = fopen($this->pathname->absolute(), 'rb');
         flock($file, LOCK_SH);
-        $contents = file_get_contents($this->filename);
+        $contents = file_get_contents($this->pathname->absolute());
         flock($file, LOCK_UN);
         fclose($file);
 
@@ -99,13 +54,13 @@ class LocalFile implements File
     private function save(string $contents, int $flags): void
     {
         if ($create = !$this->exists()) { $this->createDirectory(); }
-        file_put_contents($this->filename, $contents, $flags);
-        if ($create) { chmod($this->filename, 0644); }
+        file_put_contents($this->pathname->absolute(), $contents, $flags);
+        if ($create) { chmod($this->pathname->absolute(), 0644); }
     }
 
     private function createDirectory(): void
     {
-        $directoryPath = dirname($this->filename);
+        $directoryPath = dirname($this->pathname->absolute());
         if (is_dir($directoryPath)) { return; }
         mkdir($directoryPath, 0755, true);
     }

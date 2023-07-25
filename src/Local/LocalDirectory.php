@@ -18,21 +18,9 @@ use Shudd3r\Filesystem\Files;
 use Generator;
 
 
-class LocalDirectory implements Directory
+class LocalDirectory extends LocalNode implements Directory
 {
-    use PathValidation;
-
-    private Pathname $pathname;
-
-    /**
-     * Directory represented by this instance doesn't need to exist within
-     * local filesystem, unless it's a root directory (created with Pathname
-     * without relative path).
-     */
-    public function __construct(Pathname $pathname)
-    {
-        $this->pathname = $pathname;
-    }
+    protected bool $isFile = false;
 
     /**
      * @param string $path Real pathname to existing directory
@@ -43,39 +31,9 @@ class LocalDirectory implements Directory
         return $path ? new self($path) : null;
     }
 
-    public function pathname(): string
-    {
-        return $this->pathname->absolute();
-    }
-
-    public function name(): string
-    {
-        return $this->pathname->relative();
-    }
-
     public function exists(): bool
     {
         return is_dir($this->pathname());
-    }
-
-    public function isReadable(): bool
-    {
-        if ($this->exists()) { return is_readable($this->pathname()); }
-        $ancestor = $this->pathname->closestAncestor();
-        return is_dir($ancestor) && is_readable($ancestor);
-    }
-
-    public function isWritable(): bool
-    {
-        if ($this->exists()) { return is_writable($this->pathname()); }
-        $ancestor = $this->pathname->closestAncestor();
-        return is_dir($ancestor) && is_writable($ancestor);
-    }
-
-    public function validated(int $flags = 0): self
-    {
-        $this->verifyPath($this->pathname, $flags, false);
-        return $this;
     }
 
     public function remove(): void
