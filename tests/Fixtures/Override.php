@@ -11,6 +11,8 @@
 
 namespace Shudd3r\Filesystem\Tests\Fixtures;
 
+include_once __DIR__ . '/native-functions.php';
+
 
 class Override
 {
