@@ -53,6 +53,14 @@ interface Node
     public function isWritable(): bool;
 
     /**
+     * Attempt to remove not removable node MUST throw Exception unless it
+     * doesn't exist.
+     *
+     * @return bool True if node can be removed
+     */
+    public function isRemovable(): bool;
+
+    /**
      * Returns validated node or throws Exception. This method should allow
      * developers to control when **checked Exceptions** should be thrown
      * and handled.

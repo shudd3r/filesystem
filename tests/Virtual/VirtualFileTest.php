@@ -71,6 +71,7 @@ class VirtualFileTest extends TestCase
     {
         $this->assertTrue($this->file('file.txt')->isReadable());
         $this->assertTrue($this->file('not a file.txt')->isWritable());
+        $this->assertTrue($this->file('not a file.txt')->isRemovable());
     }
 
     public function test_instance_validation(): void

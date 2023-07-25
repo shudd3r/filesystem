@@ -144,43 +144,50 @@ class LocalDirectoryTest extends TestCase
         $relative->asRoot();
     }
 
-    public function test_readable_and_writable_status_for_existing_directory(): void
+    public function test_permissions_status_for_existing_directory(): void
     {
-        $pathname = self::$temp->directory('foo');
+        $pathname  = self::$temp->directory('foo');
+        $directory = $this->directory()->subdirectory('foo');
 
-        $directory = $this->directory($pathname);
         $this->assertTrue($directory->isReadable());
         $this->assertTrue($directory->isWritable());
+        $this->assertTrue($directory->isRemovable());
         self::override('is_readable', $pathname, false);
         $this->assertFalse($directory->isReadable());
         $this->assertTrue($directory->isWritable());
+        $this->assertFalse($directory->isRemovable());
         self::override('is_writable', $pathname, false);
         $this->assertFalse($directory->isReadable());
         $this->assertFalse($directory->isWritable());
+        $this->assertFalse($directory->isRemovable());
     }
 
-    public function test_readable_and_writable_status_for_not_existing_directories_depends_on_ancestor_permissions(): void
+    public function test_permissions_status_for_not_existing_directories_depends_on_ancestor_permissions(): void
     {
-        $existing = self::$temp->directory('foo');
-
+        $existing  = self::$temp->directory('foo');
         $directory = $this->directory($existing)->subdirectory('bar/dir');
+
         $this->assertTrue($directory->isReadable());
         $this->assertTrue($directory->isWritable());
+        $this->assertTrue($directory->isRemovable());
         self::override('is_readable', $existing, false);
         $this->assertFalse($directory->isReadable());
         $this->assertTrue($directory->isWritable());
+        $this->assertTrue($directory->isRemovable());
         self::override('is_writable', $existing, false);
         $this->assertFalse($directory->isReadable());
         $this->assertFalse($directory->isWritable());
+        $this->assertFalse($directory->isRemovable());
     }
 
-    public function test_readable_and_writable_status_for_invalid_file_path_returns_false(): void
+    public function test_permissions_status_for_invalid_file_path_returns_false(): void
     {
         self::$temp->file('foo/file');
 
         $directory = $this->directory()->subdirectory('foo/file/baz');
         $this->assertFalse($directory->isReadable());
         $this->assertFalse($directory->isWritable());
+        $this->assertFalse($directory->isRemovable());
     }
 
     public function test_instance_validation_for_unreachable_paths(): void
@@ -215,13 +222,15 @@ class LocalDirectoryTest extends TestCase
 
     public function test_root_directory_cannot_be_removed(): void
     {
-        $root   = $this->directory();
+        $root = $this->directory();
+        $this->assertFalse($root->isRemovable());
         $remove = fn () => $root->remove();
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $remove);
 
         self::$temp->directory('foo/bar');
         $subRoot = $root->subdirectory('foo/bar')->asRoot();
-        $remove  = fn () => $subRoot->remove();
+        $this->assertFalse($subRoot->isRemovable());
+        $remove = fn () => $subRoot->remove();
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $remove);
     }
 

@@ -56,6 +56,15 @@ abstract class LocalNode implements Node
         return is_dir($ancestor) && is_writable($ancestor);
     }
 
+    public function isRemovable(): bool
+    {
+        if (!$this->name()) { return false; }
+        $existingNodeAccess = !$this->exists() || is_writable($this->pathname()) && is_readable($this->pathname());
+        if (!$existingNodeAccess) { return false; }
+        $ancestor = $this->pathname->closestAncestor();
+        return is_dir($ancestor) && is_writable($ancestor);
+    }
+
     public function validated(int $flags = 0): self
     {
         $path = $this->validPath();
