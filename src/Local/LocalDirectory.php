@@ -89,9 +89,11 @@ class LocalDirectory extends LocalNode implements Directory
 
         $staleWindowsLink = !$isFile && !is_dir($path);
         if ($staleWindowsLink) {
+            // @codeCoverageIgnoreStart
             // Cannot determine if it should be removed as file or directory
             @unlink($path) || rmdir($path);
             return;
+            // @codeCoverageIgnoreEnd
         }
 
         $isFile ? unlink($path) : rmdir($path);
