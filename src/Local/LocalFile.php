@@ -21,13 +21,6 @@ class LocalFile extends LocalNode implements File
         return is_file($this->pathname->absolute());
     }
 
-    public function remove(): void
-    {
-        if (!$this->exists()) { return; }
-        $this->validated(self::REMOVE);
-        unlink($this->pathname->absolute());
-    }
-
     public function contents(): string
     {
         if (!$this->validated(self::READ)->exists()) { return ''; }
@@ -49,6 +42,11 @@ class LocalFile extends LocalNode implements File
     public function append(string $contents): void
     {
         $this->validated(self::WRITE)->save($contents, FILE_APPEND);
+    }
+
+    protected function removeNode(): void
+    {
+        unlink($this->pathname->absolute());
     }
 
     private function save(string $contents, int $flags): void

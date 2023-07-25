@@ -81,7 +81,13 @@ abstract class LocalNode implements Node
         return $this;
     }
 
-    abstract public function remove(): void;
+    public function remove(): void
+    {
+        if (!$this->exists()) { return; }
+        $this->validated(self::REMOVE)->removeNode();
+    }
+
+    abstract protected function removeNode(): void;
 
     private function validPath(): string
     {

@@ -36,14 +36,6 @@ class LocalDirectory extends LocalNode implements Directory
         return is_dir($this->pathname());
     }
 
-    public function remove(): void
-    {
-        if (!$this->exists()) { return; }
-
-        $this->validated(self::REMOVE)->removeDescendants();
-        rmdir($this->pathname());
-    }
-
     /**
      * Only canonical paths are allowed, and superfluous path separators
      * at the beginning or the end of the name will be trimmed. For empty
@@ -74,6 +66,14 @@ class LocalDirectory extends LocalNode implements Directory
         return $this->pathname->relative() ? new self($this->pathname->asRoot()) : $this;
     }
 
+    protected function removeNode(): void
+    {
+        foreach ($this->pathname->descendantPaths() as $pathname) {
+            $this->delete($pathname->absolute());
+        }
+        rmdir($this->pathname());
+    }
+
     private function generateFiles(): Generator
     {
         $filter = fn (string $path) => is_file($path);
@@ -82,14 +82,7 @@ class LocalDirectory extends LocalNode implements Directory
         }
     }
 
-    private function removeDescendants(): void
-    {
-        foreach ($this->pathname->descendantPaths() as $pathname) {
-            $this->removeNode($pathname->absolute());
-        }
-    }
-
-    private function removeNode(string $path): void
+    private function delete(string $path): void
     {
         $isWinOS = DIRECTORY_SEPARATOR === '\\';
         $isFile  = $isWinOS ? is_file($path) : is_file($path) || is_link($path);
