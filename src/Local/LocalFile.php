@@ -21,6 +21,10 @@ class LocalFile implements File
     private Pathname $pathname;
     private string   $filename;
 
+    /**
+     * File represented by this instance doesn't need to exist within
+     * local filesystem.
+     */
     public function __construct(Pathname $pathname)
     {
         $this->pathname = $pathname;

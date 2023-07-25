@@ -39,16 +39,14 @@ interface Node
     public function exists(): bool;
 
     /**
-     * Attempt to read node that is not readable SHOULD return empty string
-     * or empty collection instead of throwing Exception.
+     * Attempt to read not readable node SHOULD throw Exception.
      *
      * @return bool True if node contents or its child nodes can be read
      */
     public function isReadable(): bool;
 
     /**
-     * Attempt to create, modify or remove not writable node MUST throw
-     * Exception.
+     * Attempt to create or modify not writable node MUST throw Exception.
      *
      * @return bool True if node can be created, modified or removed
      */

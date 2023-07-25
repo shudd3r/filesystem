@@ -22,11 +22,16 @@ class LocalDirectory implements Directory
 {
     use PathValidation;
 
-    private Pathname $path;
+    private Pathname $pathname;
 
-    public function __construct(Pathname $path)
+    /**
+     * Directory represented by this instance doesn't need to exist within
+     * local filesystem, unless it's a root directory (created with Pathname
+     * without relative path).
+     */
+    public function __construct(Pathname $pathname)
     {
-        $this->path = $path;
+        $this->pathname = $pathname;
     }
 
     /**
@@ -40,12 +45,12 @@ class LocalDirectory implements Directory
 
     public function pathname(): string
     {
-        return $this->path->absolute();
+        return $this->pathname->absolute();
     }
 
     public function name(): string
     {
-        return $this->path->relative();
+        return $this->pathname->relative();
     }
 
     public function exists(): bool
@@ -56,20 +61,20 @@ class LocalDirectory implements Directory
     public function isReadable(): bool
     {
         if ($this->exists()) { return is_readable($this->pathname()); }
-        $ancestor = $this->path->closestAncestor();
+        $ancestor = $this->pathname->closestAncestor();
         return is_dir($ancestor) && is_readable($ancestor);
     }
 
     public function isWritable(): bool
     {
         if ($this->exists()) { return is_writable($this->pathname()); }
-        $ancestor = $this->path->closestAncestor();
+        $ancestor = $this->pathname->closestAncestor();
         return is_dir($ancestor) && is_writable($ancestor);
     }
 
     public function validated(int $flags = 0): self
     {
-        $this->verifyPath($this->path, $flags, false);
+        $this->verifyPath($this->pathname, $flags, false);
         return $this;
     }
 
@@ -82,25 +87,23 @@ class LocalDirectory implements Directory
     }
 
     /**
-     * Superfluous path separators at the beginning or the end of
-     * the name are ignored, but only canonical paths are allowed.
-     * For empty or dot path segments `InvalidPath` exception is
-     * thrown.
+     * Only canonical paths are allowed, and superfluous path separators
+     * at the beginning or the end of the name will be trimmed. For empty
+     * or dot path segments `InvalidPath` exception is thrown.
      */
     public function file(string $name): LocalFile
     {
-        return new LocalFile($this->path->forChildNode($name));
+        return new LocalFile($this->pathname->forChildNode($name));
     }
 
     /**
-     * Superfluous path separators at the beginning or the end of
-     * the name are ignored, but only canonical paths are allowed.
-     * For empty or dot path segments `InvalidPath` exception is
-     * thrown.
+     * Only canonical paths are allowed, and superfluous path separators
+     * at the beginning or the end of the name will be trimmed. For empty
+     * or dot path segments `InvalidPath` exception is thrown.
      */
     public function subdirectory(string $name): self
     {
-        return new self($this->path->forChildNode($name));
+        return new self($this->pathname->forChildNode($name));
     }
 
     public function files(): Files
@@ -110,20 +113,20 @@ class LocalDirectory implements Directory
 
     public function asRoot(): self
     {
-        return $this->path->relative() ? new self($this->path->asRoot()) : $this;
+        return $this->pathname->relative() ? new self($this->pathname->asRoot()) : $this;
     }
 
     private function generateFiles(): Generator
     {
         $filter = fn (string $path) => is_file($path);
-        foreach ($this->path->descendantPaths($filter) as $pathname) {
+        foreach ($this->pathname->descendantPaths($filter) as $pathname) {
             yield new LocalFile($pathname);
         }
     }
 
     private function removeDescendants(): void
     {
-        foreach ($this->path->descendantPaths() as $pathname) {
+        foreach ($this->pathname->descendantPaths() as $pathname) {
             $this->removeNode($pathname->absolute());
         }
     }
