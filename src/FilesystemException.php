@@ -20,4 +20,10 @@ class FilesystemException extends Exception
     {
         return $node instanceof File ? 'file' : 'directory';
     }
+
+    protected static function nodeRoot(Node $node): string
+    {
+        $nameLength = strlen($node->name()) + 1;
+        return substr($node->pathname(), 0, -$nameLength);
+    }
 }
