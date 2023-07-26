@@ -19,6 +19,7 @@ use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
 
 interface Node
 {
+    public const PATH   = 0;
     public const READ   = 1;
     public const WRITE  = 2;
     public const REMOVE = 4;
@@ -68,7 +69,7 @@ interface Node
      * and handled.
      *
      * Since not existing nodes might be instantiated, this method will always
-     * check for invalid node types or otherwise inaccessible paths.
+     * check for invalid node types or otherwise inaccessible paths (Node::PATH).
      * For example: subdirectory instantiated with a file path or node with
      * path that expands through existing file.
      *
@@ -90,7 +91,7 @@ interface Node
      *
      * @return self Validated node
      */
-    public function validated(int $flags = 0): self;
+    public function validated(int $flags = self::PATH): self;
 
     /**
      * Removes node and its child nodes from filesystem.

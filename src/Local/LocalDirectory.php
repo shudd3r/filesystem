@@ -20,13 +20,24 @@ use Generator;
 
 class LocalDirectory extends LocalNode implements Directory
 {
+    private ?int $assert;
+
+    public function __construct(Pathname $pathname, int $assert = null)
+    {
+        $this->assert = $assert;
+        parent::__construct($pathname);
+    }
+
     /**
-     * @param string $path Real path to existing directory
+     * @param string $path   Real path to existing directory
+     * @param ?int   $assert Flags for derived Nodes assertions
+     *
+     * @see Node::validated()
      */
-    public static function root(string $path): ?self
+    public static function root(string $path, int $assert = null): ?self
     {
         $path = Pathname::root($path);
-        return $path ? new self($path) : null;
+        return $path ? new self($path, $assert) : null;
     }
 
     public function exists(): bool
@@ -36,12 +47,14 @@ class LocalDirectory extends LocalNode implements Directory
 
     public function file(string $name): LocalFile
     {
-        return new LocalFile($this->pathname->forChildNode($name));
+        $file = new LocalFile($this->pathname->forChildNode($name));
+        return isset($this->assert) ? $file->validated($this->assert) : $file;
     }
 
     public function subdirectory(string $name): self
     {
-        return new self($this->pathname->forChildNode($name));
+        $directory = new self($this->pathname->forChildNode($name), $this->assert);
+        return isset($this->assert) ? $directory->validated($this->assert) : $directory;
     }
 
     public function files(): Files
@@ -51,7 +64,7 @@ class LocalDirectory extends LocalNode implements Directory
 
     public function asRoot(): self
     {
-        return $this->pathname->relative() ? new self($this->pathname->asRoot()) : $this;
+        return $this->pathname->relative() ? new self($this->pathname->asRoot(), $this->assert) : $this;
     }
 
     protected function removeNode(): void
