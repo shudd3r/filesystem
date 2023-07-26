@@ -176,7 +176,7 @@ class LocalDirectoryTest extends TestCase
         $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $root->file('foo.file'));
         $this->assertInstanceOf(Node::class, $root->file('foo/bar.txt'));
 
-        self::override('is_writable', $file, false);
+        self::override('is_writable', false, $file);
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $root->file('foo/bar.txt'));
     }
 

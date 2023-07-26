@@ -13,12 +13,12 @@ namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Tests\Fixtures\Override;
 
-function is_readable(string $pathname): bool
+function is_readable(string $filename): bool
 {
-    return Override::$file[$pathname]['is_readable'] ?? \is_readable($pathname);
+    return Override::call('is_readable', $filename) ?? \is_readable($filename);
 }
 
-function is_writable(string $pathname): bool
+function is_writable(string $filename): bool
 {
-    return Override::$file[$pathname]['is_writable'] ?? \is_writable($pathname);
+    return Override::call('is_writable', $filename) ?? \is_writable($filename);
 }

@@ -54,12 +54,12 @@ class LocalNodeTest extends TestCase
         $this->assertTrue($node->isWritable());
         $this->assertTrue($node->isRemovable());
 
-        self::override('is_readable', $path, false);
+        self::override('is_readable', false, $path);
         $this->assertFalse($node->isReadable());
         $this->assertTrue($node->isWritable());
         $this->assertFalse($node->isRemovable());
 
-        self::override('is_writable', $path, false);
+        self::override('is_writable', false, $path);
         $this->assertFalse($node->isReadable());
         $this->assertFalse($node->isWritable());
         $this->assertFalse($node->isRemovable());
@@ -74,12 +74,12 @@ class LocalNodeTest extends TestCase
         $this->assertTrue($node->isWritable());
         $this->assertTrue($node->isRemovable());
 
-        self::override('is_readable', $path, false);
+        self::override('is_readable', false, $path);
         $this->assertFalse($node->isReadable());
         $this->assertTrue($node->isWritable());
         $this->assertTrue($node->isRemovable());
 
-        self::override('is_writable', $path, false);
+        self::override('is_writable', false, $path);
         $this->assertFalse($node->isReadable());
         $this->assertFalse($node->isWritable());
         $this->assertFalse($node->isRemovable());
@@ -132,12 +132,12 @@ class LocalNodeTest extends TestCase
         $this->assertSame($node, $node->validated(Node::READ | Node::WRITE | Node::REMOVE));
 
         $directory = self::$temp->directory('foo');
-        self::override('is_readable', $directory, false);
+        self::override('is_readable', false, $directory);
         $check = fn () => $node->validated(Node::READ);
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
         $this->assertSame($node, $node->validated(Node::WRITE));
 
-        self::override('is_writable', $directory, false);
+        self::override('is_writable', false, $directory);
         $check = fn () => $node->validated(Node::WRITE);
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
 
@@ -145,13 +145,13 @@ class LocalNodeTest extends TestCase
         $node = $this->node('foo/bar.txt');
         $this->assertSame($node, $node->validated(Node::READ | Node::WRITE));
 
-        self::override('is_writable', $file, false);
+        self::override('is_writable', false, $file);
         $check = fn () => $node->validated(Node::WRITE | Node::READ);
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
         $this->assertSame($node, $node->validated(Node::READ));
 
-        self::override('is_readable', $file, false);
-        self::override('is_writable', $file, true);
+        self::override('is_readable', false, $file);
+        self::override('is_writable', true, $file);
         $check = fn () => $node->validated(Node::WRITE | Node::READ);
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
         $this->assertSame($node, $node->validated(Node::WRITE));
@@ -181,7 +181,7 @@ class LocalNodeTest extends TestCase
     public function test_node_of_non_writable_directory_cannot_be_removed(): void
     {
         $path = self::$temp->directory('foo/bar');
-        self::override('is_writable', dirname($path), false);
+        self::override('is_writable', false, dirname($path));
         $node   = $this->node('foo/bar');
         $remove = fn () => $node->remove();
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $remove);
