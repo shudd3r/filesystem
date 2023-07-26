@@ -15,6 +15,7 @@ use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
 use Shudd3r\Filesystem\Exception\UnexpectedLeafNode;
 use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
+use Shudd3r\Filesystem\Exception\NodeNotFound;
 
 
 abstract class LocalNode implements Node
@@ -78,6 +79,10 @@ abstract class LocalNode implements Node
     public function validated(int $flags = 0): self
     {
         $path = $this->validPath();
+        if ($flags & self::EXISTS && !$this->exists()) {
+            throw NodeNotFound::forNode($this);
+        }
+
         if ($flags & self::READ && !is_readable($path)) {
             throw FailedPermissionCheck::forNodeRead($this);
         }

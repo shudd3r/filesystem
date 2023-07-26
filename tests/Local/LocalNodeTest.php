@@ -157,6 +157,12 @@ class LocalNodeTest extends TestCase
         $this->assertSame($node, $node->validated(Node::WRITE));
     }
 
+    public function test_validation_for_not_existing_instance_with_exist_assertion_throws_exception(): void
+    {
+        $node = $this->node('foo/bar.txt', false);
+        $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $node->validated(Node::EXISTS));
+    }
+
     public function test_root_node_cannot_be_removed(): void
     {
         $root = $this->node();
