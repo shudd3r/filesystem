@@ -15,6 +15,7 @@ use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\FileList;
 use Shudd3r\Filesystem\Generic\FileGenerator;
 use Shudd3r\Filesystem\Files;
+use Shudd3r\Filesystem\Exception\IOException;
 use Generator;
 
 
@@ -70,9 +71,13 @@ class LocalDirectory extends LocalNode implements Directory
     protected function removeNode(): void
     {
         foreach ($this->pathname->descendantPaths() as $pathname) {
-            $this->delete($pathname->absolute());
+            if (!$this->delete($pathname->absolute())) {
+                throw IOException\UnableToRemove::directoryNode($this, $pathname->absolute());
+            }
         }
-        rmdir($this->pathname());
+        if (!@rmdir($this->pathname())) {
+            throw IOException\UnableToRemove::node($this);
+        }
     }
 
     private function generateFiles(): Generator
@@ -83,7 +88,7 @@ class LocalDirectory extends LocalNode implements Directory
         }
     }
 
-    private function delete(string $path): void
+    private function delete(string $path): bool
     {
         $isWinOS = DIRECTORY_SEPARATOR === '\\';
         $isFile  = $isWinOS ? is_file($path) : is_file($path) || is_link($path);
@@ -92,11 +97,10 @@ class LocalDirectory extends LocalNode implements Directory
         if ($staleWindowsLink) {
             // @codeCoverageIgnoreStart
             // Cannot determine if it should be removed as file or directory
-            @unlink($path) || rmdir($path);
-            return;
+            return @unlink($path) || @rmdir($path);
             // @codeCoverageIgnoreEnd
         }
 
-        $isFile ? unlink($path) : rmdir($path);
+        return $isFile ? @unlink($path) : @rmdir($path);
     }
 }

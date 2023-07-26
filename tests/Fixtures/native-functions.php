@@ -48,6 +48,11 @@ function unlink(string $filename): bool
     return Override::call('unlink', $filename) ?? \unlink($filename);
 }
 
+function rmdir(string $directory): bool
+{
+    return Override::call('rmdir', $directory) ?? \rmdir($directory);
+}
+
 /** @return false|resource */
 function fopen(string $filename, string $mode)
 {

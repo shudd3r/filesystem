@@ -23,7 +23,7 @@ use Shudd3r\Filesystem\Tests\Fixtures;
 class LocalNodeTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
-    use Fixtures\ExceptionAssertion;
+    use Fixtures\ExceptionAssertions;
 
     public function test_root_node_name_is_empty(): void
     {

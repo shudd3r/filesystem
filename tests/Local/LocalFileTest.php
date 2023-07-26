@@ -25,7 +25,7 @@ use Shudd3r\Filesystem\Tests\Fixtures;
 class LocalFileTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
-    use Fixtures\ExceptionAssertion;
+    use Fixtures\ExceptionAssertions;
 
     public function test_exists_for_existing_file_returns_true(): void
     {
@@ -147,16 +147,6 @@ class LocalFileTest extends TestCase
         $this->assertIOException(UnableToReadContents::class, $read, 'fopen');
         $this->assertIOException(UnableToReadContents::class, $read, 'flock');
         $this->assertIOException(UnableToReadContents::class, $read, 'file_get_contents');
-    }
-
-    private function assertIOException(string $exception, callable $procedure, string $override): void
-    {
-        $this->override($override, function () {
-            trigger_error('emulated warning', E_USER_WARNING);
-            return false;
-        });
-        $this->assertExceptionType($exception, $procedure);
-        $this->override($override, null);
     }
 
     private function file(string $filename): LocalFile

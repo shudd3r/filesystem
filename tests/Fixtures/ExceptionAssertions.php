@@ -14,8 +14,18 @@ namespace Shudd3r\Filesystem\Tests\Fixtures;
 use Shudd3r\Filesystem\FilesystemException;
 
 
-trait ExceptionAssertion
+trait ExceptionAssertions
 {
+    private function assertIOException(string $exception, callable $procedure, string $override, $argValue = null): void
+    {
+        $this->override($override, function () {
+            trigger_error('emulated warning', E_USER_WARNING);
+            return false;
+        }, $argValue);
+        $this->assertExceptionType($exception, $procedure);
+        $this->override($override, null);
+    }
+
     private function assertExceptionType(string $expected, callable $procedure, string $case = ''): void
     {
         $title = $case ? 'Case "' . $case . '": ' : '';

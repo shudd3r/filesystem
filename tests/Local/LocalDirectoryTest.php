@@ -24,7 +24,7 @@ use Shudd3r\Filesystem\Tests\Fixtures;
 class LocalDirectoryTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
-    use Fixtures\ExceptionAssertion;
+    use Fixtures\ExceptionAssertions;
 
     public function test_static_constructor_for_not_real_directory_path_returns_null(): void
     {
@@ -178,6 +178,19 @@ class LocalDirectoryTest extends TestCase
 
         self::override('is_writable', false, $file);
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $root->file('foo/bar.txt'));
+    }
+
+    public function test_runtime_remove_directory_failures(): void
+    {
+        $dirNode   = self::$temp->directory('foo');
+        $fileNode  = self::$temp->file('foo/bar/baz.txt');
+        $subNode   = self::$temp->directory('foo/bar/sub');
+        $directory = $this->directory()->subdirectory('foo');
+        $remove    = fn () => $directory->remove();
+
+        $this->assertIOException(Exception\IOException\UnableToRemove::class, $remove, 'unlink', $fileNode);
+        $this->assertIOException(Exception\IOException\UnableToRemove::class, $remove, 'rmdir', $subNode);
+        $this->assertIOException(Exception\IOException\UnableToRemove::class, $remove, 'rmdir', $dirNode);
     }
 
     private function assertFiles(array $files, Files $fileIterator): void
