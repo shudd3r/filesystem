@@ -11,9 +11,13 @@
 
 namespace Shudd3r\Filesystem;
 
-use Exception as StandardException;
+use Exception;
 
 
-class Exception extends StandardException
+class FilesystemException extends Exception
 {
+    protected static function nodeType(Node $node): string
+    {
+        return $node instanceof File ? 'file' : 'directory';
+    }
 }

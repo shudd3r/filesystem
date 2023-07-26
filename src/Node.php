@@ -78,7 +78,9 @@ interface Node
      *
      * @param int $flags Node::READ|Node::WRITE|Node::REMOVE
      *
-     * @throws UnexpectedNodeType|UnexpectedLeafNode|FailedPermissionCheck
+     * @throws UnexpectedNodeType    when different node type with given name exists
+     * @throws UnexpectedLeafNode    when file (or file link) exists on node's path
+     * @throws FailedPermissionCheck when asserted permissions are denied
      *
      * @return self Validated node
      */
@@ -90,7 +92,7 @@ interface Node
      * Removing node from directory without write permissions or root node
      * itself is not allowed and Exception will be thrown.
      *
-     * @throws FailedPermissionCheck
+     * @throws FilesystemException
      */
     public function remove(): void;
 }

@@ -119,19 +119,13 @@ final class Pathname
     private function validName(string $name): string
     {
         $name = trim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $name), DIRECTORY_SEPARATOR);
-        if (!$name) {
-            throw new InvalidNodeName('Empty name for child node');
-        }
+        if (!$name) { throw InvalidNodeName::forEmptyName(); }
 
-        if ($this->hasSegment($name, '')) {
-            $message = 'Empty path segments not allowed - `%s` given';
-            throw new InvalidNodeName(sprintf($message, $name));
-        }
+        $emptySegment = $this->hasSegment($name, '');
+        if ($emptySegment) { throw InvalidNodeName::forEmptySegment($name); }
 
-        if ($this->hasSegment($name, '..', '.')) {
-            $message = 'Dot segments not allowed - `%s` given';
-            throw new InvalidNodeName(sprintf($message, $name));
-        }
+        $dotSegment = $this->hasSegment($name, '..', '.');
+        if ($dotSegment) { throw InvalidNodeName::forDotSegment($name); }
 
         return $this->name ? $this->name . DIRECTORY_SEPARATOR . $name : $name;
     }

@@ -11,12 +11,23 @@
 
 namespace Shudd3r\Filesystem\Exception;
 
-use Shudd3r\Filesystem\Exception;
+use Shudd3r\Filesystem\FilesystemException;
 
 
-/**
- * Unchecked exception thrown for invalid path formats (developer error).
- */
-class InvalidNodeName extends Exception
+class InvalidNodeName extends FilesystemException
 {
+    public static function forEmptyName(): self
+    {
+        return new self('Empty name for child node given');
+    }
+
+    public static function forEmptySegment(string $name): self
+    {
+        return new self(sprintf('Empty path segments not allowed - `%s` given', $name));
+    }
+
+    public static function forDotSegment(string $name): self
+    {
+        return new self(sprintf('Dot segments not allowed - `%s` given', $name));
+    }
 }

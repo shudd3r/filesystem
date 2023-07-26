@@ -11,19 +11,15 @@
 
 namespace Shudd3r\Filesystem\Exception;
 
-use Shudd3r\Filesystem\Exception;
+use Shudd3r\Filesystem\FilesystemException;
+use Shudd3r\Filesystem\Node;
 
 
-/**
- * This exception should be handled in concurrent environments where
- * directories, files or symlinks are not controlled by single process
- * (possible race conditions).
- */
-class UnexpectedLeafNode extends Exception
+class UnexpectedLeafNode extends FilesystemException
 {
-    public static function for(string $name, string $collision): self
+    public static function forNode(Node $node, string $collision): self
     {
-        $message = 'Name collision for requested path `%s` (non directory node at `%s`)';
-        return new self(sprintf($message, $name, $collision));
+        $message = 'Name collision for %s path `%s` - non directory node at `%s`';
+        return new self(sprintf($message, self::nodeType($node), $node->name(), $collision));
     }
 }

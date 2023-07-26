@@ -11,15 +11,11 @@
 
 namespace Shudd3r\Filesystem;
 
-use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
-use Shudd3r\Filesystem\Exception\UnexpectedLeafNode;
-use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
-
 
 interface File extends Node
 {
     /**
-     * @throws UnexpectedNodeType|UnexpectedLeafNode|FailedPermissionCheck
+     *@throws FilesystemException
      *
      * @return string Contents of this file or empty string if file does not exist
      */
@@ -31,7 +27,7 @@ interface File extends Node
      *
      * @param string $contents
      *
-     * @throws UnexpectedNodeType|UnexpectedLeafNode|FailedPermissionCheck
+     * @throws FilesystemException
      */
     public function write(string $contents): void;
 
@@ -41,7 +37,7 @@ interface File extends Node
      *
      * @param string $contents
      *
-     * @throws UnexpectedNodeType|UnexpectedLeafNode|FailedPermissionCheck
+     * @throws FilesystemException
      */
     public function append(string $contents): void;
 }

@@ -20,10 +20,8 @@ use Generator;
 
 class LocalDirectory extends LocalNode implements Directory
 {
-    protected bool $isFile = false;
-
     /**
-     * @param string $path Real pathname to existing directory
+     * @param string $path Real path to existing directory
      */
     public static function root(string $path): ?self
     {
@@ -36,21 +34,11 @@ class LocalDirectory extends LocalNode implements Directory
         return is_dir($this->pathname());
     }
 
-    /**
-     * Only canonical paths are allowed, and superfluous path separators
-     * at the beginning or the end of the name will be trimmed. For empty
-     * or dot path segments `InvalidPath` exception is thrown.
-     */
     public function file(string $name): LocalFile
     {
         return new LocalFile($this->pathname->forChildNode($name));
     }
 
-    /**
-     * Only canonical paths are allowed, and superfluous path separators
-     * at the beginning or the end of the name will be trimmed. For empty
-     * or dot path segments `InvalidPath` exception is thrown.
-     */
     public function subdirectory(string $name): self
     {
         return new self($this->pathname->forChildNode($name));
