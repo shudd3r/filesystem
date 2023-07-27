@@ -9,11 +9,11 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem;
+namespace Shudd3r\Filesystem\Exception;
 
-use Exception as StandardException;
+use Shudd3r\Filesystem\FilesystemException;
 
 
-class Exception extends StandardException
+class IOException extends FilesystemException
 {
 }

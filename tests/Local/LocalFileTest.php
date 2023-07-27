@@ -12,6 +12,11 @@
 namespace Shudd3r\Filesystem\Tests\Local;
 
 use PHPUnit\Framework\TestCase;
+use Shudd3r\Filesystem\Exception\IOException\UnableToCreate;
+use Shudd3r\Filesystem\Exception\IOException\UnableToReadContents;
+use Shudd3r\Filesystem\Exception\IOException\UnableToRemove;
+use Shudd3r\Filesystem\Exception\IOException\UnableToSetPermissions;
+use Shudd3r\Filesystem\Exception\IOException\UnableToWriteContents;
 use Shudd3r\Filesystem\Local\LocalFile;
 use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Tests\Fixtures;
@@ -20,6 +25,7 @@ use Shudd3r\Filesystem\Tests\Fixtures;
 class LocalFileTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
+    use Fixtures\ExceptionAssertions;
 
     public function test_exists_for_existing_file_returns_true(): void
     {
@@ -110,6 +116,37 @@ class LocalFileTest extends TestCase
         $file->remove();
         $this->assertFileDoesNotExist($path);
         $this->assertFalse($file->exists());
+    }
+
+    public function test_runtime_file_write_failures(): void
+    {
+        $file  = $this->file('foo/bar/baz.txt');
+        $write = fn () => $file->write('something');
+
+        $this->assertIOException(UnableToCreate::class, $write, 'mkdir');
+        $this->assertIOException(UnableToCreate::class, $write, 'file_put_contents');
+        $this->assertIOException(UnableToSetPermissions::class, $write, 'chmod');
+        $this->assertIOException(UnableToWriteContents::class, $write, 'file_put_contents');
+    }
+
+    public function test_runtime_remove_file_failures(): void
+    {
+        self::$temp->file('foo/bar/baz.txt', 'contents');
+        $file   = $this->file('foo/bar/baz.txt');
+        $remove = fn () => $file->remove();
+
+        $this->assertIOException(UnableToRemove::class, $remove, 'unlink');
+    }
+
+    public function test_runtime_read_file_failures(): void
+    {
+        self::$temp->file('foo/bar/baz.txt', 'contents');
+        $file = $this->file('foo/bar/baz.txt');
+        $read = fn () => $file->contents();
+
+        $this->assertIOException(UnableToReadContents::class, $read, 'fopen');
+        $this->assertIOException(UnableToReadContents::class, $read, 'flock');
+        $this->assertIOException(UnableToReadContents::class, $read, 'file_get_contents');
     }
 
     private function file(string $filename): LocalFile

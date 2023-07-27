@@ -12,6 +12,7 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\File;
+use Shudd3r\Filesystem\Exception\IOException;
 
 
 class LocalFile extends LocalNode implements File
@@ -25,11 +26,15 @@ class LocalFile extends LocalNode implements File
     {
         if (!$this->validated(self::READ)->exists()) { return ''; }
 
-        $file = fopen($this->pathname->absolute(), 'rb');
-        flock($file, LOCK_SH);
-        $contents = file_get_contents($this->pathname->absolute());
-        flock($file, LOCK_UN);
-        fclose($file);
+        $file     = @fopen($this->pathname->absolute(), 'rb');
+        $lock     = $file && @flock($file, LOCK_SH);
+        $contents = $lock ? @file_get_contents($this->pathname->absolute()) : false;
+        $lock && flock($file, LOCK_UN);
+        $file && fclose($file);
+
+        if ($contents === false) {
+            throw IOException\UnableToReadContents::fromFile($this);
+        }
 
         return $contents;
     }
@@ -46,20 +51,29 @@ class LocalFile extends LocalNode implements File
 
     protected function removeNode(): void
     {
-        unlink($this->pathname->absolute());
+        if (!@unlink($this->pathname->absolute())) {
+            throw IOException\UnableToRemove::node($this);
+        }
     }
 
     private function save(string $contents, int $flags): void
     {
         if ($create = !$this->exists()) { $this->createDirectory(); }
-        file_put_contents($this->pathname->absolute(), $contents, $flags);
-        if ($create) { chmod($this->pathname->absolute(), 0644); }
+        if (@file_put_contents($this->pathname->absolute(), $contents, $flags) === false) {
+            throw $create ? IOException\UnableToCreate::node($this) : IOException\UnableToWriteContents::toFile($this);
+        }
+        if (!$create) { return; }
+        if (!@chmod($this->pathname->absolute(), 0644)) {
+            throw IOException\UnableToSetPermissions::forNode($this);
+        }
     }
 
     private function createDirectory(): void
     {
         $directoryPath = dirname($this->pathname->absolute());
         if (is_dir($directoryPath)) { return; }
-        mkdir($directoryPath, 0755, true);
+        if (!@mkdir($directoryPath, 0755, true)) {
+            throw IOException\UnableToCreate::directories($this);
+        }
     }
 }

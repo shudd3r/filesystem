@@ -34,8 +34,8 @@ trait TempFilesHandling
         Override::reset();
     }
 
-    public static function override(string $function, string $pathname, $value): void
+    public static function override(string $function, $value, $argValue = null): void
     {
-        Override::$file[$pathname][$function] = $value;
+        Override::set($function, $value, $argValue);
     }
 }

@@ -11,6 +11,7 @@
 
 namespace Shudd3r\Filesystem;
 
+use Shudd3r\Filesystem\Exception\NodeNotFound;
 use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
 use Shudd3r\Filesystem\Exception\UnexpectedLeafNode;
 use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
@@ -18,9 +19,11 @@ use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
 
 interface Node
 {
+    public const PATH   = 0;
     public const READ   = 1;
     public const WRITE  = 2;
     public const REMOVE = 4;
+    public const EXISTS = 8;
 
     /**
      * @return string Absolute pathname within filesystem
@@ -66,23 +69,29 @@ interface Node
      * and handled.
      *
      * Since not existing nodes might be instantiated, this method will always
-     * check for invalid node types or otherwise inaccessible paths.
+     * check for invalid node types or otherwise inaccessible paths (Node::PATH).
      * For example: subdirectory instantiated with a file path or node with
      * path that expands through existing file.
      *
-     * Node::READ, Node::WRITE and Node::REMOVE flags may be used to assert
-     * preconditions for corresponding permissions.
+     * Following flags may be used to assert preconditions:
+     * - Node::READ
+     * - Node::WRITE
+     * - Node::REMOVE
+     * - Node::EXISTS
      *
      * For more detailed error messages this method MIGHT be implicitly called
      * before each read, write or remove action with corresponding flag.
      *
-     * @param int $flags Node::READ|Node::WRITE|Node::REMOVE
+     * @param int $flags Additional precondition checks
      *
-     * @throws UnexpectedNodeType|UnexpectedLeafNode|FailedPermissionCheck
+     * @throws UnexpectedNodeType    when different node type with given name exists
+     * @throws UnexpectedLeafNode    when file (or file link) exists on node's path
+     * @throws FailedPermissionCheck when asserted permissions are denied
+     * @throws NodeNotFound          when asserted node does not exist
      *
      * @return self Validated node
      */
-    public function validated(int $flags = 0): self;
+    public function validated(int $flags = self::PATH): self;
 
     /**
      * Removes node and its child nodes from filesystem.
@@ -90,7 +99,7 @@ interface Node
      * Removing node from directory without write permissions or root node
      * itself is not allowed and Exception will be thrown.
      *
-     * @throws FailedPermissionCheck
+     * @throws FilesystemException
      */
     public function remove(): void;
 }

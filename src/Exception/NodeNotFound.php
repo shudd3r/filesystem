@@ -15,11 +15,11 @@ use Shudd3r\Filesystem\FilesystemException;
 use Shudd3r\Filesystem\Node;
 
 
-class UnexpectedLeafNode extends FilesystemException
+class NodeNotFound extends FilesystemException
 {
-    public static function forNode(Node $node, string $collision): self
+    public static function forNode(Node $node): self
     {
-        $message = 'Name collision for %s path `%s` - non directory node at `%s`';
-        return new self(sprintf($message, self::nodeType($node), $node->name(), $collision));
+        $message = '%s `%s` not found in `%s`';
+        return new self(sprintf($message, ucfirst(self::nodeType($node)), $node->name(), $node->pathname()));
     }
 }

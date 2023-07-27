@@ -16,6 +16,7 @@ use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Local\LocalFile;
 use Shudd3r\Filesystem\Files;
+use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Tests\Fixtures;
 
@@ -23,7 +24,7 @@ use Shudd3r\Filesystem\Tests\Fixtures;
 class LocalDirectoryTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
-    use Fixtures\ExceptionAssertion;
+    use Fixtures\ExceptionAssertions;
 
     public function test_static_constructor_for_not_real_directory_path_returns_null(): void
     {
@@ -161,6 +162,37 @@ class LocalDirectoryTest extends TestCase
         $this->assertDirectoryDoesNotExist(self::$temp->name('foo'));
     }
 
+    public function test_root_instantiated_with_assert_flags_throws_exceptions_for_derived_nodes(): void
+    {
+        $file = self::$temp->file('foo/bar.txt');
+
+        $root = $this->directory(null, Node::PATH);
+        $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $root->subdirectory('foo/bar.txt'));
+        $this->assertExceptionType(Exception\UnexpectedLeafNode::class, fn () => $root->file('foo/bar.txt/file.txt'));
+        $this->assertInstanceOf(Node::class, $root->file('foo.file'));
+
+        $root = $this->directory(null, Node::EXISTS | Node::WRITE);
+        $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $root->subdirectory('foo/bar.txt'));
+        $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $root->file('foo.file'));
+        $this->assertInstanceOf(Node::class, $root->file('foo/bar.txt'));
+
+        self::override('is_writable', false, $file);
+        $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $root->file('foo/bar.txt'));
+    }
+
+    public function test_runtime_remove_directory_failures(): void
+    {
+        $dirNode   = self::$temp->directory('foo');
+        $fileNode  = self::$temp->file('foo/bar/baz.txt');
+        $subNode   = self::$temp->directory('foo/bar/sub');
+        $directory = $this->directory()->subdirectory('foo');
+        $remove    = fn () => $directory->remove();
+
+        $this->assertIOException(Exception\IOException\UnableToRemove::class, $remove, 'unlink', $fileNode);
+        $this->assertIOException(Exception\IOException\UnableToRemove::class, $remove, 'rmdir', $subNode);
+        $this->assertIOException(Exception\IOException\UnableToRemove::class, $remove, 'rmdir', $dirNode);
+    }
+
     private function assertFiles(array $files, Files $fileIterator): void
     {
         /** @var LocalFile $file */
@@ -184,8 +216,8 @@ class LocalDirectoryTest extends TestCase
         return $files;
     }
 
-    private function directory(string $name = null): ?LocalDirectory
+    private function directory(string $name = null, int $flags = null): ?LocalDirectory
     {
-        return LocalDirectory::root($name ?? self::$temp->directory());
+        return LocalDirectory::root($name ?? self::$temp->directory(), $flags);
     }
 }

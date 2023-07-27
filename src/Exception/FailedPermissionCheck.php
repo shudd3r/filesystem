@@ -11,32 +11,32 @@
 
 namespace Shudd3r\Filesystem\Exception;
 
-use Shudd3r\Filesystem\Exception;
+use Shudd3r\Filesystem\FilesystemException;
+use Shudd3r\Filesystem\Node;
 
 
-class FailedPermissionCheck extends Exception
+class FailedPermissionCheck extends FilesystemException
 {
-    public static function forRead(string $name, string $path, bool $isFile): self
+    public static function forNodeRead(Node $node): self
     {
-        $type = $isFile ? 'File' : 'Directory';
-        return new self(sprintf('%s `%s` is not readable in `%s`', $type, $name, $path));
+        $message = '%s `%s` is not readable in `%s`';
+        return new self(sprintf($message, ucfirst(self::nodeType($node)), $node->name(), $node->pathname()));
     }
 
-    public static function forWrite(string $name, string $path, bool $isFile): self
+    public static function forNodeWrite(Node $node): self
     {
-        $type = $isFile ? 'File' : 'Directory';
-        return new self(sprintf('%s `%s` is not writable in `%s`', $type, $name, $path));
+        $message = '%s `%s` is not writable in `%s`';
+        return new self(sprintf($message, ucfirst(self::nodeType($node)), $node->name(), $node->pathname()));
     }
 
-    public static function forRemove(string $name, string $path, bool $isFile): self
+    public static function forNodeRemove(Node $node, string $path): self
     {
-        $type    = $isFile ? 'File' : 'Directory';
         $message = '%s `%s` cannot be removed - directory write permission required for `%s`';
-        return new self(sprintf($message, $type, $name, $path));
+        return new self(sprintf($message, ucfirst(self::nodeType($node)), $node->name(), $path));
     }
 
-    public static function forRootRemove(string $path): self
+    public static function forRootRemove(Node $node): self
     {
-        return new self(sprintf('Root directory `%s` cannot be removed', $path));
+        return new self(sprintf('Root directory `%s` cannot be removed', $node->pathname()));
     }
 }

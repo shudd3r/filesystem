@@ -11,21 +11,17 @@
 
 namespace Shudd3r\Filesystem\Exception;
 
-use Shudd3r\Filesystem\Exception;
+use Shudd3r\Filesystem\FilesystemException;
+use Shudd3r\Filesystem\Node;
 
 
-/**
- * This exception should be handled in concurrent environments where
- * directories, files or symlinks are not controlled by single process
- * (possible race conditions).
- */
-class UnexpectedNodeType extends Exception
+class UnexpectedNodeType extends FilesystemException
 {
-    public static function for(string $name, string $collision, bool $expectedFile): self
+    public static function forNode(Node $node): self
     {
-        $requested = $expectedFile ? 'file' : 'directory';
-        $type      = $expectedFile ? 'directory' : 'file';
-        $message   = 'Requested %s `%s` is a %s (or invalid symlink) in `%s`';
-        return new self(sprintf($message, $requested, $name, $type, $collision));
+        $type    = self::nodeType($node);
+        $found   = $type === 'file' ? 'directory' : 'file';
+        $message = 'Requested %s `%s` is a %s (symlink) at `%s`';
+        return new self(sprintf($message, $type, $node->name(), $found, $node->pathname()));
     }
 }

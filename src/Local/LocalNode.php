@@ -12,13 +12,15 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Node;
-use Shudd3r\Filesystem\Exception;
+use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
+use Shudd3r\Filesystem\Exception\UnexpectedLeafNode;
+use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
+use Shudd3r\Filesystem\Exception\NodeNotFound;
 
 
 abstract class LocalNode implements Node
 {
     protected Pathname $pathname;
-    protected bool     $isFile = true;
 
     /**
      * Node represented by this instance doesn't need to exist within local
@@ -77,12 +79,16 @@ abstract class LocalNode implements Node
     public function validated(int $flags = 0): self
     {
         $path = $this->validPath();
+        if ($flags & self::EXISTS && !$this->exists()) {
+            throw NodeNotFound::forNode($this);
+        }
+
         if ($flags & self::READ && !is_readable($path)) {
-            throw Exception\FailedPermissionCheck::forRead($this->pathname->relative(), $path, $this->isFile);
+            throw FailedPermissionCheck::forNodeRead($this);
         }
 
         if ($flags & self::WRITE && !is_writable($path)) {
-            throw Exception\FailedPermissionCheck::forWrite($this->pathname->relative(), $path, $this->isFile);
+            throw FailedPermissionCheck::forNodeWrite($this);
         }
 
         if ($flags & self::REMOVE) { $this->verifyRemove(); }
@@ -104,12 +110,12 @@ abstract class LocalNode implements Node
         if ($this->exists()) { return $path; }
 
         if (file_exists($path) || is_link($path)) {
-            throw Exception\UnexpectedNodeType::for($this->pathname->relative(), $path, $this->isFile);
+            throw UnexpectedNodeType::forNode($this);
         }
 
         $ancestorPath = $this->pathname->closestAncestor();
         if (!is_dir($ancestorPath)) {
-            throw Exception\UnexpectedLeafNode::for($this->pathname->relative(), $ancestorPath);
+            throw UnexpectedLeafNode::forNode($this, $ancestorPath);
         }
 
         return $ancestorPath;
@@ -118,12 +124,12 @@ abstract class LocalNode implements Node
     private function verifyRemove(): void
     {
         if (!$this->pathname->relative()) {
-            throw Exception\FailedPermissionCheck::forRootRemove($this->pathname->absolute());
+            throw FailedPermissionCheck::forRootRemove($this);
         }
 
         $path = $this->pathname->closestAncestor();
         if (!is_writable($path)) {
-            throw Exception\FailedPermissionCheck::forRemove($this->pathname->relative(), $path, $this->isFile);
+            throw FailedPermissionCheck::forNodeRemove($this, $path);
         }
     }
 }

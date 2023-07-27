@@ -11,10 +11,10 @@
 
 namespace Shudd3r\Filesystem\Exception;
 
-use Shudd3r\Filesystem\Exception;
+use Shudd3r\Filesystem\FilesystemException;
 
 
-class RootDirectoryNotFound extends Exception
+class RootDirectoryNotFound extends FilesystemException
 {
     public static function forRoot(string $path, string $name): self
     {

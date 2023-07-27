@@ -13,12 +13,60 @@ namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Tests\Fixtures\Override;
 
-function is_readable(string $pathname): bool
+function is_readable(string $filename): bool
 {
-    return Override::$file[$pathname]['is_readable'] ?? \is_readable($pathname);
+    return Override::call('is_readable', $filename) ?? \is_readable($filename);
 }
 
-function is_writable(string $pathname): bool
+function is_writable(string $filename): bool
 {
-    return Override::$file[$pathname]['is_writable'] ?? \is_writable($pathname);
+    return Override::call('is_writable', $filename) ?? \is_writable($filename);
+}
+
+function chmod(string $filename, int $permissions): bool
+{
+    return Override::call('chmod', $filename) ?? \chmod($filename, $permissions);
+}
+
+/**
+ * @param mixed $data
+ *
+ * @return false|int
+ */
+function file_put_contents(string $filename, $data, int $flags = 0)
+{
+    return Override::call('file_put_contents', $filename) ?? \file_put_contents($filename, $data, $flags);
+}
+
+function mkdir(string $directory, int $permissions = 0777, bool $recursive = false): bool
+{
+    return Override::call('mkdir', $directory) ?? \mkdir($directory, $permissions, $recursive);
+}
+
+function unlink(string $filename): bool
+{
+    return Override::call('unlink', $filename) ?? \unlink($filename);
+}
+
+function rmdir(string $directory): bool
+{
+    return Override::call('rmdir', $directory) ?? \rmdir($directory);
+}
+
+/** @return false|resource */
+function fopen(string $filename, string $mode)
+{
+    return Override::call('fopen', $filename) ?? \fopen($filename, $mode);
+}
+
+/** @param resource $stream */
+function flock($stream, int $operation): bool
+{
+    return Override::call('flock', $operation) ?? \flock($stream, $operation);
+}
+
+/** @return false|string */
+function file_get_contents(string $filename)
+{
+    return Override::call('file_get_contents', $filename) ?? \file_get_contents($filename);
 }

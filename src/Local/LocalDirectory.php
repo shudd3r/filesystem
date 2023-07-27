@@ -15,20 +15,30 @@ use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\FileList;
 use Shudd3r\Filesystem\Generic\FileGenerator;
 use Shudd3r\Filesystem\Files;
+use Shudd3r\Filesystem\Exception\IOException;
 use Generator;
 
 
 class LocalDirectory extends LocalNode implements Directory
 {
-    protected bool $isFile = false;
+    private ?int $assert;
+
+    public function __construct(Pathname $pathname, int $assert = null)
+    {
+        $this->assert = $assert;
+        parent::__construct($pathname);
+    }
 
     /**
-     * @param string $path Real pathname to existing directory
+     * @param string $path   Real path to existing directory
+     * @param ?int   $assert Flags for derived Nodes assertions
+     *
+     * @see Node::validated()
      */
-    public static function root(string $path): ?self
+    public static function root(string $path, int $assert = null): ?self
     {
         $path = Pathname::root($path);
-        return $path ? new self($path) : null;
+        return $path ? new self($path, $assert) : null;
     }
 
     public function exists(): bool
@@ -36,24 +46,16 @@ class LocalDirectory extends LocalNode implements Directory
         return is_dir($this->pathname());
     }
 
-    /**
-     * Only canonical paths are allowed, and superfluous path separators
-     * at the beginning or the end of the name will be trimmed. For empty
-     * or dot path segments `InvalidPath` exception is thrown.
-     */
     public function file(string $name): LocalFile
     {
-        return new LocalFile($this->pathname->forChildNode($name));
+        $file = new LocalFile($this->pathname->forChildNode($name));
+        return isset($this->assert) ? $file->validated($this->assert) : $file;
     }
 
-    /**
-     * Only canonical paths are allowed, and superfluous path separators
-     * at the beginning or the end of the name will be trimmed. For empty
-     * or dot path segments `InvalidPath` exception is thrown.
-     */
     public function subdirectory(string $name): self
     {
-        return new self($this->pathname->forChildNode($name));
+        $directory = new self($this->pathname->forChildNode($name), $this->assert);
+        return isset($this->assert) ? $directory->validated($this->assert) : $directory;
     }
 
     public function files(): Files
@@ -63,15 +65,19 @@ class LocalDirectory extends LocalNode implements Directory
 
     public function asRoot(): self
     {
-        return $this->pathname->relative() ? new self($this->pathname->asRoot()) : $this;
+        return $this->pathname->relative() ? new self($this->pathname->asRoot(), $this->assert) : $this;
     }
 
     protected function removeNode(): void
     {
         foreach ($this->pathname->descendantPaths() as $pathname) {
-            $this->delete($pathname->absolute());
+            if (!$this->delete($pathname->absolute())) {
+                throw IOException\UnableToRemove::directoryNode($this, $pathname->absolute());
+            }
         }
-        rmdir($this->pathname());
+        if (!@rmdir($this->pathname())) {
+            throw IOException\UnableToRemove::node($this);
+        }
     }
 
     private function generateFiles(): Generator
@@ -82,7 +88,7 @@ class LocalDirectory extends LocalNode implements Directory
         }
     }
 
-    private function delete(string $path): void
+    private function delete(string $path): bool
     {
         $isWinOS = DIRECTORY_SEPARATOR === '\\';
         $isFile  = $isWinOS ? is_file($path) : is_file($path) || is_link($path);
@@ -91,11 +97,10 @@ class LocalDirectory extends LocalNode implements Directory
         if ($staleWindowsLink) {
             // @codeCoverageIgnoreStart
             // Cannot determine if it should be removed as file or directory
-            @unlink($path) || rmdir($path);
-            return;
+            return @unlink($path) || @rmdir($path);
             // @codeCoverageIgnoreEnd
         }
 
-        $isFile ? unlink($path) : rmdir($path);
+        return $isFile ? @unlink($path) : @rmdir($path);
     }
 }
