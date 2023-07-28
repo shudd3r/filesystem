@@ -59,13 +59,13 @@ final class Pathname
     }
 
     /**
-     * Forward and backward slashes at the beginning and the end of name
-     * will be silently removed, and either empty or dot path segments are
-     * not allowed.
+     * Either forward `/` or backward `\` slashes are accepted for path
+     * separators, and both leading & trailing slashes will be ignored.
+     * For either empty or dot-path segments Exception will be thrown.
      *
-     * @param string $name Child node relative pathname
+     * @param string $name Canonical relative pathname for child node. Either
      *
-     * @throws InvalidNodeName
+     * @throws InvalidNodeName when name contains empty or dot-path segments
      *
      * @return self with added or expanded relative path
      */

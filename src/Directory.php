@@ -32,15 +32,14 @@ interface Directory extends Files, Node
      * Concrete implementations MAY specify different syntax accepted for
      * subdirectory name. If phpDoc does not include implementation specific
      * constraints, following rules should be assumed (RECOMMENDED):
-     * - Only canonical paths are be allowed,
-     * - No empty or dot-path segments,
-     * - Path separators are changed to system separators,
-     * - Superfluous path separators at both ends of the name are trimmed.
+     * - Only canonical paths are allowed (no empty or dot-path segments),
+     * - Either forward `/` or backward `\` slash separators are accepted,
+     * - Both leading and trailing separators are ignored.
      *
      * @param string $name Directory basename or relative directory pathname
      *
      * @throws InvalidNodeName     when given subdirectory name with invalid syntax
-     * @throws FilesystemException when asserted preconditions fail
+     * @throws FilesystemException when asserted precondition fails
      *
      * @return self Relative directory instance
      *

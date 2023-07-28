@@ -26,15 +26,18 @@ interface Node
     public const EXISTS = 8;
 
     /**
-     * @return string Absolute pathname with platform-specific path separators
+     * @return string Absolute filesystem pathname using platform-specific
+     *                path separators
      */
     public function pathname(): string;
 
     /**
-     * @return string Pathname relative to its root directory, and empty
-     *                string for root directory node. Path separators are
-     *                normalized to forward slashes "/", and name does not
-     *                contain neither leading nor trailing slash
+     * Name is a normalized path relative to root directory, and for root
+     * directory nodes empty string is returned. It's path separators are
+     * normalized to forward slash `/`, and neither leading nor trailing
+     * separators are present.
+     *
+     * @return string Normalized node pathname relative to its root directory
      */
     public function name(): string;
 
