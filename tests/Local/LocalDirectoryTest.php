@@ -28,7 +28,7 @@ class LocalDirectoryTest extends TestCase
 
     public function test_static_constructor_for_not_real_directory_path_returns_null(): void
     {
-        $path = self::$temp->name('not/exists');
+        $path = self::$temp->pathname('not/exists');
         $this->assertNull(LocalDirectory::root($path));
 
         $path = self::$temp->file('foo/file.path');
@@ -107,20 +107,20 @@ class LocalDirectoryTest extends TestCase
         $this->assertFiles($expected, $files);
 
         $expected['bar.txt'] = self::$temp->file('bar.txt');
-        self::$temp->remove(self::$temp->name('bar/baz.txt'));
-        unset($expected[self::$temp->normalized('bar/baz.txt')]);
+        self::$temp->remove(self::$temp->pathname('bar/baz.txt'));
+        unset($expected['bar/baz.txt']);
         $this->assertFiles($expected, $files);
     }
 
     public function test_file_names_from_subdirectory_are_relative_to_root_directory(): void
     {
         $root    = $this->directory();
-        $dirname = self::$temp->normalized('foo/bar');
+        $dirname = 'foo/bar';
 
-        $expected = self::$temp->normalized('foo/bar/baz/file.txt');
+        $expected = 'foo/bar/baz/file.txt';
         $this->assertSame($expected, $root->subdirectory($dirname)->file('baz/file.txt')->name());
 
-        $expected = $root->pathname() . DIRECTORY_SEPARATOR . $expected;
+        $expected = $root->pathname() . DIRECTORY_SEPARATOR . self::$temp->relative($expected);
         $this->assertSame($expected, $root->subdirectory($dirname)->file('baz/file.txt')->pathname());
 
         $files    = $this->files(['foo/file.txt', 'foo/bar/file.txt', 'foo/bar/baz/file.txt', 'root.file']);
@@ -137,10 +137,10 @@ class LocalDirectoryTest extends TestCase
         $newRoot = $relative->asRoot();
         $this->assertSame($relative->pathname(), $newRoot->pathname());
 
-        $this->assertSame(self::$temp->normalized('dir/foo'), $relative->name());
+        $this->assertSame('dir/foo', $relative->name());
         $this->assertSame('', $newRoot->name());
 
-        $this->assertSame(self::$temp->normalized('dir/foo/file.txt'), $relative->file('file.txt')->name());
+        $this->assertSame('dir/foo/file.txt', $relative->file('file.txt')->name());
         $this->assertSame('file.txt', $newRoot->file('file.txt')->name());
 
         $this->assertEquals($this->directory($rootPath), $newRoot);
@@ -159,7 +159,7 @@ class LocalDirectoryTest extends TestCase
         self::$temp->symlink(self::$temp->file('foo/bar/baz.txt'), 'foo/link.file');
         self::$temp->symlink(self::$temp->directory('foo/bar/dir/sub'), 'foo/bar/sub.link');
         $this->directory()->subdirectory('foo')->remove();
-        $this->assertDirectoryDoesNotExist(self::$temp->name('foo'));
+        $this->assertDirectoryDoesNotExist(self::$temp->pathname('foo'));
     }
 
     public function test_root_instantiated_with_assert_flags_throws_exceptions_for_derived_nodes(): void
@@ -210,7 +210,7 @@ class LocalDirectoryTest extends TestCase
     {
         $files = [];
         foreach ($filenames as &$name) {
-            $name = self::$temp->normalized($name);
+            $name = trim(str_replace('\\', '/', $name), '/');
             $files[$name] = self::$temp->file($name);
         }
         return $files;

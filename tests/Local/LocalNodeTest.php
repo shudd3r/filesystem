@@ -30,10 +30,9 @@ class LocalNodeTest extends TestCase
         $this->assertEmpty($this->node()->name());
     }
 
-    public function test_node_name_returns_relative_pathname(): void
+    public function test_node_name_returns_normalized_relative_pathname(): void
     {
-        $normalizedName = self::$temp->normalized('foo/bar');
-        $this->assertSame($normalizedName, $this->node('foo/bar')->name());
+        $this->assertSame('foo/bar/baz', $this->node('\foo/bar\baz//')->name());
     }
 
     public function test_pathname_returns_absolute_node_path(): void
@@ -41,7 +40,7 @@ class LocalNodeTest extends TestCase
         $rootPath = self::$temp->directory();
         $this->assertSame($rootPath, $this->node()->pathname());
 
-        $nodePath = self::$temp->name('foo/bar');
+        $nodePath = self::$temp->pathname('foo/bar');
         $this->assertSame($nodePath, $this->node('foo/bar', false)->pathname());
     }
 

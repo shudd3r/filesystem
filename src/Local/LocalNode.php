@@ -39,7 +39,7 @@ abstract class LocalNode implements Node
 
     public function name(): string
     {
-        return $this->pathname->relative();
+        return str_replace('\\', '/', $this->pathname->relative());
     }
 
     abstract public function exists(): bool;

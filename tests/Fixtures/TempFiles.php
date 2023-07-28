@@ -25,7 +25,7 @@ class TempFiles
     public function __construct(string $testName = null)
     {
         $tmpName = getenv('DEV_TESTS_DIRECTORY') . '/' . ($testName ?? 'test' . bin2hex(random_bytes(3)));
-        $this->root = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . $this->normalized($tmpName);
+        $this->root = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . $this->relative($tmpName);
         is_dir($this->root) || mkdir($this->root, 0700, true);
     }
 
@@ -48,13 +48,13 @@ class TempFiles
     public function file(string $filename, string $contents = ''): string
     {
         $this->directory(dirname($filename));
-        file_put_contents($filename = $this->name($filename), $contents);
+        file_put_contents($filename = $this->pathname($filename), $contents);
         return $filename;
     }
 
     public function directory(string $directory = '.'): string
     {
-        $directory = $directory === '.' ? $this->root : $this->name($directory);
+        $directory = $directory === '.' ? $this->root : $this->pathname($directory);
         if (!is_dir($directory)) {
             mkdir($directory, 0700, true);
         }
@@ -73,9 +73,9 @@ class TempFiles
             throw new InvalidArgumentException();
         }
 
-        $this->directory($this->normalized(dirname($name)));
+        $this->directory($this->relative(dirname($name)));
 
-        if (!symlink($target, $name = $this->name($name))) {
+        if (!symlink($target, $name = $this->pathname($name))) {
             throw new RuntimeException();
         }
 
@@ -96,14 +96,14 @@ class TempFiles
         @unlink($pathname) || rmdir($pathname);
     }
 
-    public function name(string $nodeName): string
+    public function pathname(string $nodeName): string
     {
         if ($nodeName === '.') { return $this->root; }
-        $path = $this->normalized($nodeName);
+        $path = $this->relative($nodeName);
         return $this->root . DIRECTORY_SEPARATOR . $path;
     }
 
-    public function normalized(string $path): string
+    public function relative(string $path): string
     {
         return trim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
     }

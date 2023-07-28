@@ -59,7 +59,7 @@ class LocalFileTest extends TestCase
         $this->assertFalse($file->exists());
 
         $file->write($contents = 'Written contents...');
-        $this->assertSame($contents, file_get_contents(self::$temp->name('foo.txt')));
+        $this->assertSame($contents, file_get_contents(self::$temp->pathname('foo.txt')));
         $this->assertSame($contents, $file->contents());
     }
 
@@ -95,16 +95,16 @@ class LocalFileTest extends TestCase
     public function test_creating_file_with_directory_structure(): void
     {
         $file = $this->file('foo/bar/baz.txt');
-        $this->assertFalse(is_dir(self::$temp->name('foo')));
+        $this->assertFalse(is_dir(self::$temp->pathname('foo')));
         $file->write('');
         $this->assertTrue($file->exists());
-        $this->assertTrue(is_dir(self::$temp->name('foo')));
+        $this->assertTrue(is_dir(self::$temp->pathname('foo')));
 
         $file = $this->file('foo/baz/file.txt');
-        $this->assertFalse(is_dir(self::$temp->name('foo/baz')));
+        $this->assertFalse(is_dir(self::$temp->pathname('foo/baz')));
         $file->append('...contents');
         $this->assertTrue($file->exists());
-        $this->assertTrue(is_dir(self::$temp->name('foo/baz')));
+        $this->assertTrue(is_dir(self::$temp->pathname('foo/baz')));
     }
 
     public function test_remove_method_deletes_file(): void

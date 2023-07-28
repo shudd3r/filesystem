@@ -58,8 +58,8 @@ class PathnameTest extends TestCase
     public function test_creating_child_node_instance(): void
     {
         $name = 'foo/bar/baz.txt';
-        $this->assertSame(self::$temp->name($name), $this->path()->forChildNode($name)->absolute());
-        $this->assertSame(self::$temp->normalized($name), $this->path()->forChildNode($name)->relative());
+        $this->assertSame(self::$temp->pathname($name), $this->path()->forChildNode($name)->absolute());
+        $this->assertSame(self::$temp->relative($name), $this->path()->forChildNode($name)->relative());
     }
 
     /** @dataProvider invalidNames */
@@ -96,8 +96,8 @@ class PathnameTest extends TestCase
     /** @dataProvider acceptedNameVariations */
     public function test_child_node_name_separator_normalization(string $name): void
     {
-        $this->assertSame(self::$temp->name($name), $this->path()->forChildNode($name)->absolute());
-        $this->assertSame(self::$temp->normalized($name), $this->path()->forChildNode($name)->relative());
+        $this->assertSame(self::$temp->pathname($name), $this->path()->forChildNode($name)->absolute());
+        $this->assertSame(self::$temp->relative($name), $this->path()->forChildNode($name)->relative());
     }
 
     public function test_closestAncestor_method_returns_longest_path_fragment_existing_in_filesystem(): void
@@ -106,7 +106,7 @@ class PathnameTest extends TestCase
         $directory = self::$temp->directory('foo/bar/dir name');
         $fileLink  = self::$temp->symlink($file, 'linked/file.txt');
         $dirLink   = self::$temp->symlink(dirname($directory), 'linked/dir');
-        $linkedDir = self::$temp->name('linked/dir/dir name');
+        $linkedDir = self::$temp->pathname('linked/dir/dir name');
         $deadLink  = self::$temp->symlink('', 'linked/stale');
 
         $this->assertAncestor($file, 'foo/bar/file.txt/expand/path/file.txt');
@@ -128,11 +128,11 @@ class PathnameTest extends TestCase
         chdir(self::$temp->directory());
         return [
             'file path'         => self::$temp->file('foo/bar/baz.txt'),
-            'not existing path' => self::$temp->name('not/exists'),
+            'not existing path' => self::$temp->pathname('not/exists'),
             'invalid symlink'   => self::$temp->symlink('', 'link'),
-            'valid symlink'     => self::$temp->symlink(self::$temp->name('foo/bar'), 'link'),
-            'relative path'     => self::$temp->normalized('./foo/bar'),
-            'step-up path'      => self::$temp->name('foo/bar/..'),
+            'valid symlink'     => self::$temp->symlink(self::$temp->pathname('foo/bar'), 'link'),
+            'relative path'     => self::$temp->relative('./foo/bar'),
+            'step-up path'      => self::$temp->pathname('foo/bar/..'),
             'empty path'        => '',
             'dot path'          => '.'
         ];
