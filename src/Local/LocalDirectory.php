@@ -12,9 +12,8 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Directory;
-use Shudd3r\Filesystem\Generic\FileList;
+use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Generic\FileGenerator;
-use Shudd3r\Filesystem\Files;
 use Shudd3r\Filesystem\Exception\IOException;
 use Generator;
 
@@ -58,9 +57,9 @@ class LocalDirectory extends LocalNode implements Directory
         return isset($this->assert) ? $directory->validated($this->assert) : $directory;
     }
 
-    public function files(): Files
+    public function files(): FileIterator
     {
-        return new FileList(new FileGenerator(fn () => $this->generateFiles()));
+        return new FileIterator(new FileGenerator(fn () => $this->generateFiles()));
     }
 
     public function asRoot(): self

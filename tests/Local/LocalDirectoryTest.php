@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Local\LocalFile;
-use Shudd3r\Filesystem\Files;
+use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Tests\Fixtures;
@@ -193,7 +193,7 @@ class LocalDirectoryTest extends TestCase
         $this->assertIOException(Exception\IOException\UnableToRemove::class, $remove, 'rmdir', $dirNode);
     }
 
-    private function assertFiles(array $files, Files $fileIterator): void
+    private function assertFiles(array $files, FileIterator $fileIterator): void
     {
         /** @var LocalFile $file */
         foreach ($fileIterator as $file) {

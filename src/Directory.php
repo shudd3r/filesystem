@@ -11,6 +11,7 @@
 
 namespace Shudd3r\Filesystem;
 
+use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Exception\InvalidNodeName;
 use Shudd3r\Filesystem\Exception\RootDirectoryNotFound;
 
@@ -77,9 +78,9 @@ interface Directory extends Node
     public function subdirectory(string $name): self;
 
     /**
-     * @return Files Iterator of all files in directory and its subdirectories
+     * @return FileIterator Iterator of all files in directory and its subdirectories
      */
-    public function files(): Files;
+    public function files(): FileIterator;
 
     /**
      * Converts relative instance for existing directory to root directory.

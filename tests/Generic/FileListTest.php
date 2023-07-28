@@ -12,7 +12,7 @@
 namespace Shudd3r\Filesystem\Tests\Generic;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Generic\FileList;
+use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Filesystem\File;
 
@@ -29,7 +29,7 @@ class FileListTest extends TestCase
     public function test_instantiation_from_array_and_ArrayIterator_instance_returns_same_array(): void
     {
         $this->assertSame(self::$example, $this->files()->list());
-        $this->assertSame(self::$example, FileList::fromArray(self::$example)->list());
+        $this->assertSame(self::$example, FileIterator::fromArray(self::$example)->list());
     }
 
     public function test_find_returns_null_when_no_file_is_found(): void
@@ -74,8 +74,8 @@ class FileListTest extends TestCase
         return $fileArray;
     }
 
-    private static function files(): FileList
+    private static function files(): FileIterator
     {
-        return FileList::fromArray(self::$example);
+        return FileIterator::fromArray(self::$example);
     }
 }

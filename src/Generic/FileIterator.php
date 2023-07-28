@@ -11,16 +11,14 @@
 
 namespace Shudd3r\Filesystem\Generic;
 
-use Shudd3r\Filesystem\Files;
 use Shudd3r\Filesystem\File;
 use IteratorAggregate;
 use Traversable;
 use ArrayIterator;
-use Iterator;
 use Closure;
 
 
-class FileList implements Files, IteratorAggregate
+class FileIterator implements IteratorAggregate
 {
     private Traversable $files;
     private ?Closure    $filter;
@@ -43,42 +41,61 @@ class FileList implements Files, IteratorAggregate
         return new self(new ArrayIterator($files));
     }
 
-    public function find(callable $callback): ?File
+    /**
+     * @param callable $match fn(File) => bool
+     */
+    public function find(callable $match): ?File
     {
         foreach ($this as $file) {
-            if ($callback($file)) { return $file; }
+            if ($match($file)) { return $file; }
         }
         return null;
     }
 
-    public function select(callable $callback): Files
+    /**
+     * @param callable $accept fn(File) => bool
+     */
+    public function select(callable $accept): self
     {
-        $callback = $this->filter ? fn (File $file) => ($this->filter)($file) && $callback($file) : $callback;
-        return new self($this->files, $callback);
+        $accept = $this->filter ? fn (File $file) => ($this->filter)($file) && $accept($file) : $accept;
+        return new self($this->files, $accept);
     }
 
-    public function forEach(callable $callback): void
+    /**
+     * @param callable $fileAction fn(File) => void
+     */
+    public function forEach(callable $fileAction): void
     {
         foreach ($this as $file) {
-            $callback($file);
+            $fileAction($file);
         }
     }
 
-    public function map(callable $callback = null): array
+    /**
+     * @template Type
+     *
+     * @param callable|null $transformFile fn(File) => Type
+     *
+     * @return array<Type>
+     */
+    public function map(callable $transformFile = null): array
     {
         $items = [];
         foreach ($this as $file) {
-            $items[] = $callback ? $callback($file) : $file;
+            $items[] = $transformFile ? $transformFile($file) : $file;
         }
         return $items;
     }
 
+    /**
+     * @return array<File>
+     */
     public function list(): array
     {
         return $this->map();
     }
 
-    public function getIterator(): Iterator
+    public function getIterator(): Traversable
     {
         foreach ($this->files as $file) {
             if ($this->filter && !($this->filter)($file)) { continue; }
