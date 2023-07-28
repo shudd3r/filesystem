@@ -21,7 +21,7 @@ class UnexpectedNodeType extends FilesystemException
     {
         $type    = self::nodeType($node);
         $found   = $type === 'file' ? 'directory' : 'file';
-        $message = 'Requested %s `%s` is a %s (symlink) at `%s`';
-        return new self(sprintf($message, $type, $node->name(), $found, $node->pathname()));
+        $message = 'Requested `%s` %s is a %s (symlink) at `%s`';
+        return new self(sprintf($message, $node->name(), $type, $found, $node->pathname()));
     }
 }

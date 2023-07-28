@@ -19,7 +19,7 @@ class UnexpectedLeafNode extends FilesystemException
 {
     public static function forNode(Node $node, string $collision): self
     {
-        $message = 'Name collision for %s path `%s` - non directory node at `%s`';
-        return new self(sprintf($message, self::nodeType($node), $node->name(), $collision));
+        $message = 'Name collision for `%s` %s path - non directory node at `%s`';
+        return new self(sprintf($message, $node->name(), self::nodeType($node), $collision));
     }
 }

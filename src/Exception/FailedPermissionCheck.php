@@ -31,7 +31,7 @@ class FailedPermissionCheck extends FilesystemException
 
     public static function forNodeRemove(Node $node, string $path): self
     {
-        $message = '%s `%s` cannot be removed - directory write permission required for `%s`';
+        $message = '%s `%s` is not removable - write permission required for `%s`';
         return new self(sprintf($message, ucfirst(self::nodeType($node)), $node->name(), $path));
     }
 

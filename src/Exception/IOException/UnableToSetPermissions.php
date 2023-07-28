@@ -19,7 +19,7 @@ class UnableToSetPermissions extends IOException
 {
     public static function forNode(Node $node): self
     {
-        $message = 'Unable to set permissions for `%s` %s in `%s`';
+        $message = 'Could not set permissions for `%s` %s in `%s`';
         return new self(sprintf($message, basename($node->name()), self::nodeType($node), dirname($node->pathname())));
     }
 }
