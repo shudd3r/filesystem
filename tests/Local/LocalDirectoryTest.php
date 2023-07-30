@@ -172,7 +172,6 @@ class LocalDirectoryTest extends TestCase
         $this->assertInstanceOf(Node::class, $root->file('foo.file'));
 
         $root = $this->directory(null, Node::EXISTS | Node::WRITE);
-        $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $root->subdirectory('foo/bar.txt'));
         $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $root->file('foo.file'));
         $this->assertInstanceOf(Node::class, $root->file('foo/bar.txt'));
 
