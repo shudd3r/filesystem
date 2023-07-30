@@ -24,4 +24,12 @@ class UnexpectedNodeType extends FilesystemException
         $message = 'Requested `%s` %s is a %s (symlink) at `%s`';
         return new self(sprintf($message, $node->name(), $type, $found, $node->pathname()));
     }
+
+    public static function forLink(Node $link, Node $target): self
+    {
+        $type    = self::nodeType($target);
+        $current = $type === 'file' ? 'directory' : 'file';
+        $message = 'Cannot change %s node target into %s directly for `%s` link in `%s`';
+        return new self(sprintf($message, $current, $type, $link->name(), $link->pathname()));
+    }
 }

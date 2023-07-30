@@ -12,14 +12,19 @@
 namespace Shudd3r\Filesystem\Tests\Local;
 
 use PHPUnit\Framework\TestCase;
+use Shudd3r\Filesystem\Exception\NodeNotFound;
+use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
 use Shudd3r\Filesystem\Local\LocalLink;
 use Shudd3r\Filesystem\Local\Pathname;
+use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Tests\Fixtures;
+use Shudd3r\Filesystem\Tests\Doubles;
 
 
 class LocalLinkTest extends TestCase
 {
     use Fixtures\TempFilesHandling;
+    use Fixtures\ExceptionAssertions;
 
     public function test_exists_method(): void
     {
@@ -27,24 +32,6 @@ class LocalLinkTest extends TestCase
         $this->assertFalse($link->exists());
         self::$temp->symlink('', 'foo/bar');
         $this->assertTrue($link->exists());
-    }
-
-    public function test_target_node_type_checking(): void
-    {
-        self::$temp->symlink(self::$temp->file('foo.txt'), 'file.lnk');
-        $fileLink = $this->link('file.lnk');
-        $this->assertTrue($fileLink->isFile());
-        $this->assertFalse($fileLink->isDirectory());
-
-        self::$temp->symlink(self::$temp->directory('foo/bar'), 'dir.lnk');
-        $dirLink = $this->link('dir.lnk');
-        $this->assertFalse($dirLink->isFile());
-        $this->assertTrue($dirLink->isDirectory());
-
-        self::$temp->symlink('', 'stale.lnk');
-        $staleLink = $this->link('stale.lnk');
-        $this->assertFalse($staleLink->isFile());
-        $this->assertFalse($staleLink->isDirectory());
     }
 
     public function test_remove_method_deletes_link(): void
@@ -94,8 +81,90 @@ class LocalLinkTest extends TestCase
         $this->assertSame($deleted, $link->target(true));
     }
 
+    public function test_target_node_type_checking(): void
+    {
+        self::$temp->symlink(self::$temp->file('foo.txt'), 'file.lnk');
+        $fileLink = $this->link('file.lnk');
+        $this->assertTrue($fileLink->isFile());
+        $this->assertFalse($fileLink->isDirectory());
+
+        self::$temp->symlink(self::$temp->directory('foo/bar'), 'dir.lnk');
+        $dirLink = $this->link('dir.lnk');
+        $this->assertFalse($dirLink->isFile());
+        $this->assertTrue($dirLink->isDirectory());
+
+        self::$temp->symlink('', 'stale.lnk');
+        $staleLink = $this->link('stale.lnk');
+        $this->assertFalse($staleLink->isFile());
+        $this->assertFalse($staleLink->isDirectory());
+    }
+
+    public function test_setTarget_to_not_existing_node_throws_exception(): void
+    {
+        $node = $this->node('foo/bar', false);
+        $link = $this->link('bar.lnk');
+        $this->assertExceptionType(NodeNotFound::class, fn () => $link->setTarget($node));
+
+        self::$temp->symlink('', 'foo/stale.lnk');
+        $node = $this->node('foo/stale.lnk');
+        $this->assertExceptionType(NodeNotFound::class, fn () => $link->setTarget($node));
+    }
+
+    public function test_setTarget_for_not_existing_link_creates_link(): void
+    {
+        self::$temp->file('foo/bar/baz.file');
+        $node = $this->node('foo/bar');
+        $link = $this->link('bar.lnk');
+        $this->assertFileDoesNotExist($link->pathname());
+        $link->setTarget($node);
+        $this->assertFileExists($link->pathname());
+        $this->assertTrue(is_link($link->pathname()));
+
+        $link = $this->link('baz.lnk');
+        $this->assertFileDoesNotExist($link->pathname());
+        $link->setTarget($node);
+        $this->assertFileExists($link->pathname());
+        $this->assertTrue(is_link($link->pathname()));
+    }
+
+    public function test_setTarget_for_existing_link_changes_target(): void
+    {
+        $old = self::$temp->file('foo/bar/baz.old');
+        $new = self::$temp->file('foo/bar/baz.new');
+        self::$temp->symlink($old, 'baz.lnk');
+        $link = $this->link('baz.lnk');
+        $link->setTarget($this->node('foo/bar/baz.new'));
+        $this->assertSame($new, $link->target());
+
+        $old = self::$temp->directory('foo/bar.old');
+        $new = self::$temp->directory('foo/bar.new');
+        self::$temp->symlink($old, 'bar.lnk');
+        $link = $this->link('bar.lnk');
+        $link->setTarget($this->node('foo/bar.new'));
+        $this->assertSame($new, $link->target());
+    }
+
+    public function test_changing_target_to_different_type_throws_exception(): void
+    {
+        self::$temp->file('foo/bar.file');
+        self::$temp->symlink(self::$temp->directory('foo/bar.dir'), 'bar.lnk');
+        $node = $this->node('foo/bar.file');
+        $link = $this->link('bar.lnk');
+        $this->assertExceptionType(UnexpectedNodeType::class, fn () => $link->setTarget($node));
+    }
+
     private function link(string $name): LocalLink
     {
-        return new LocalLink(Pathname::root(self::$temp->directory())->forChildNode($name));
+        return new LocalLink($this->pathname($name));
+    }
+
+    private function node(string $name, bool $exists = true): Node
+    {
+        return new Doubles\FakeLocalNode($this->pathname($name), '', $exists);
+    }
+
+    private function pathname(string $name): Pathname
+    {
+        return Pathname::root(self::$temp->directory())->forChildNode($name);
     }
 }

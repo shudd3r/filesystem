@@ -11,6 +11,9 @@
 
 namespace Shudd3r\Filesystem\Local;
 
+use Shudd3r\Filesystem\Node;
+use Shudd3r\Filesystem\Exception\NodeNotFound;
+use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
 use Shudd3r\Filesystem\Exception\IOException;
 
 
@@ -26,6 +29,28 @@ class LocalLink extends LocalNode
         $path = $this->pathname->absolute();
         $show = $includeRemoved || is_file($path) || is_dir($path);
         return $show ? readlink($path) : null;
+    }
+
+    public function setTarget(Node $node): void
+    {
+        $path = $node->validated(self::EXISTS)->pathname();
+        if (!is_dir($path) && !is_file($path)) {
+            throw NodeNotFound::forNode($node);
+        }
+
+        $mismatch = $this->isDirectory() && !is_dir($path) || $this->isFile() && !is_file($path);
+        if ($mismatch) {
+            throw UnexpectedNodeType::forLink($this, $node);
+        }
+
+        $windowsOverwrite = DIRECTORY_SEPARATOR === '\\' && $this->exists();
+        if ($windowsOverwrite) {
+            // @codeCoverageIgnoreStart
+            !$this->validated(self::WRITE)->isFile() && $this->remove();
+            // @codeCoverageIgnoreEnd
+        }
+
+        $this->exists() ? $this->changeTargetPath($path) : symlink($path, $this->pathname->absolute());
     }
 
     public function isDirectory(): bool
@@ -45,5 +70,13 @@ class LocalLink extends LocalNode
         $removed = $isWinOS ? @unlink($path) || @rmdir($path) : @unlink($path);
 
         if (!$removed) { throw IOException\UnableToRemove::node($this); }
+    }
+
+    private function changeTargetPath(string $path): void
+    {
+        $link = $this->pathname->absolute();
+        $temp = $link . '~';
+        symlink($path, $temp);
+        rename($temp, $link);
     }
 }
