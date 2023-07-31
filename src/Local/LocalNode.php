@@ -78,11 +78,11 @@ abstract class LocalNode implements Node
 
     public function validated(int $flags = 0): self
     {
-        $path = $this->validPath();
         if ($flags & self::EXISTS && !$this->exists()) {
             throw NodeNotFound::forNode($this);
         }
 
+        $path = $this->validPath();
         if ($flags & self::READ && !is_readable($path)) {
             throw FailedPermissionCheck::forNodeRead($this);
         }

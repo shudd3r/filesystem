@@ -45,16 +45,22 @@ class LocalDirectory extends LocalNode implements Directory
         return is_dir($this->pathname());
     }
 
-    public function file(string $name): LocalFile
-    {
-        $file = new LocalFile($this->pathname->forChildNode($name));
-        return isset($this->assert) ? $file->validated($this->assert) : $file;
-    }
-
     public function subdirectory(string $name): self
     {
         $directory = new self($this->pathname->forChildNode($name), $this->assert);
         return isset($this->assert) ? $directory->validated($this->assert) : $directory;
+    }
+
+    public function link(string $name): LocalLink
+    {
+        $link = new LocalLink($this->pathname->forChildNode($name));
+        return isset($this->assert) ? $link->validated($this->assert) : $link;
+    }
+
+    public function file(string $name): LocalFile
+    {
+        $file = new LocalFile($this->pathname->forChildNode($name));
+        return isset($this->assert) ? $file->validated($this->assert) : $file;
     }
 
     public function files(): FileIterator

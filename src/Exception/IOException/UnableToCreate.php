@@ -28,4 +28,10 @@ class UnableToCreate extends IOException
         $message = 'Could not create directories for `%s` %s in `%s`';
         return new self(sprintf($message, $node->name(), self::nodeType($node), self::nodeRoot($node)));
     }
+
+    public static function symlink(Node $link, Node $target): self
+    {
+        $message = 'Could not create `%s` symlink for `%s` %s in `%s`';
+        return new self(sprintf($message, $link->name(), $target->name(), self::nodeType($target), $link->pathname()));
+    }
 }
