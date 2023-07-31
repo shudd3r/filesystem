@@ -70,3 +70,13 @@ function file_get_contents(string $filename)
 {
     return Override::call('file_get_contents', $filename) ?? \file_get_contents($filename);
 }
+
+function symlink(string $target, string $link): bool
+{
+    return Override::call('symlink', $target) ?? \symlink($target, $link);
+}
+
+function rename(string $from, string $to): bool
+{
+    return Override::call('rename', $from) ?? \rename($from, $to);
+}

@@ -14,9 +14,9 @@ namespace Shudd3r\Filesystem\Tests\Local;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Exception\NodeNotFound;
 use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
+use Shudd3r\Filesystem\Exception\IOException;
 use Shudd3r\Filesystem\Local\LocalLink;
 use Shudd3r\Filesystem\Local\Pathname;
-use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Tests\Fixtures;
 use Shudd3r\Filesystem\Tests\Doubles;
 
@@ -58,6 +58,13 @@ class LocalLinkTest extends TestCase
         $staleLink->remove();
         $this->assertFalse($staleLink->exists());
         $this->assertFileDoesNotExist($staleLink->pathname());
+    }
+
+    public function test_runtime_remove_failure(): void
+    {
+        self::$temp->symlink(self::$temp->file('foo.txt'), 'file.lnk');
+        $fileLink = $this->link('file.lnk');
+        $this->assertIOException(IOException\UnableToRemove::class, fn () => $fileLink->remove(), 'unlink');
     }
 
     public function test_target_returns_absolute_target_pathname(): void
@@ -153,12 +160,25 @@ class LocalLinkTest extends TestCase
         $this->assertExceptionType(UnexpectedNodeType::class, fn () => $link->setTarget($node));
     }
 
+    public function test_runtime_setTarget_failures(): void
+    {
+        $file = self::$temp->file('foo/bar.txt');
+        $node = $this->node('foo/bar.txt');
+        $link = $this->link('bar.lnk');
+        $this->assertIOException(IOException\UnableToCreate::class, fn () => $link->setTarget($node), 'symlink');
+
+        self::$temp->symlink($file, 'bar.lnk');
+        self::$temp->file('foo/baz.txt');
+        $node = $this->node('foo/baz.txt');
+        $this->assertIOException(IOException\UnableToCreate::class, fn () => $link->setTarget($node), 'rename');
+    }
+
     private function link(string $name): LocalLink
     {
         return new LocalLink($this->pathname($name));
     }
 
-    private function node(string $name, bool $exists = true): Node
+    private function node(string $name, bool $exists = true): Doubles\FakeLocalNode
     {
         return new Doubles\FakeLocalNode($this->pathname($name), '', $exists);
     }

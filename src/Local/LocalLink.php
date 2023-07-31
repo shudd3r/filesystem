@@ -50,7 +50,7 @@ class LocalLink extends LocalNode
             // @codeCoverageIgnoreEnd
         }
 
-        $this->exists() ? $this->changeTargetPath($path) : symlink($path, $this->pathname->absolute());
+        $this->exists() ? $this->changeTargetPath($node) : $this->createLink($node, $this->pathname->absolute());
     }
 
     public function isDirectory(): bool
@@ -72,11 +72,19 @@ class LocalLink extends LocalNode
         if (!$removed) { throw IOException\UnableToRemove::node($this); }
     }
 
-    private function changeTargetPath(string $path): void
+    private function changeTargetPath(Node $target): void
     {
         $link = $this->pathname->absolute();
         $temp = $link . '~';
-        symlink($path, $temp);
-        rename($temp, $link);
+        $this->createLink($target, $temp);
+        if (@rename($temp, $link)) { return; }
+        @unlink($temp) || @rmdir($temp);
+        throw IOException\UnableToCreate::symlink($this, $target);
+    }
+
+    private function createLink(Node $target, string $link): void
+    {
+        if (@symlink($target->pathname(), $link)) { return; }
+        throw IOException\UnableToCreate::symlink($this, $target);
     }
 }
