@@ -11,36 +11,39 @@
 
 namespace Shudd3r\Filesystem\Local;
 
+use Shudd3r\Filesystem\Link;
 use Shudd3r\Filesystem\Node;
-use Shudd3r\Filesystem\Exception\NodeNotFound;
-use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
-use Shudd3r\Filesystem\Exception\IOException;
+use Shudd3r\Filesystem\Exception;
 
 
-class LocalLink extends LocalNode
+class LocalLink extends LocalNode implements Link
 {
     public function exists(): bool
     {
         return is_link($this->pathname->absolute());
     }
 
-    public function target(bool $includeRemoved = false): ?string
+    public function target(bool $showRemoved = false): ?string
     {
         $path = $this->pathname->absolute();
-        $show = $includeRemoved || is_file($path) || is_dir($path);
+        $show = $showRemoved || is_file($path) || is_dir($path);
         return $show ? readlink($path) : null;
     }
 
+    /**
+     * Windows OS WARNING: Directory target change is not atomic operation
+     * and might cause problems during updates on high traffic web servers.
+     */
     public function setTarget(Node $node): void
     {
         $path = $node->validated(self::EXISTS)->pathname();
         if (!is_dir($path) && !is_file($path)) {
-            throw NodeNotFound::forNode($node);
+            throw Exception\NodeNotFound::forNode($node);
         }
 
         $mismatch = $this->isDirectory() && !is_dir($path) || $this->isFile() && !is_file($path);
         if ($mismatch) {
-            throw UnexpectedNodeType::forLink($this, $node);
+            throw Exception\UnexpectedNodeType::forLink($this, $node);
         }
 
         $windowsOverwrite = DIRECTORY_SEPARATOR === '\\' && $this->exists();
@@ -69,7 +72,8 @@ class LocalLink extends LocalNode
         $isWinOS = DIRECTORY_SEPARATOR === '\\';
         $removed = $isWinOS ? @unlink($path) || @rmdir($path) : @unlink($path);
 
-        if (!$removed) { throw IOException\UnableToRemove::node($this); }
+        if ($removed) { return; }
+        throw Exception\IOException\UnableToRemove::node($this);
     }
 
     private function changeTargetPath(Node $target): void
@@ -79,12 +83,12 @@ class LocalLink extends LocalNode
         $this->createLink($target, $temp);
         if (@rename($temp, $link)) { return; }
         @unlink($temp) || @rmdir($temp);
-        throw IOException\UnableToCreate::symlink($this, $target);
+        throw Exception\IOException\UnableToCreate::symlink($this, $target);
     }
 
     private function createLink(Node $target, string $link): void
     {
         if (@symlink($target->pathname(), $link)) { return; }
-        throw IOException\UnableToCreate::symlink($this, $target);
+        throw Exception\IOException\UnableToCreate::symlink($this, $target);
     }
 }
