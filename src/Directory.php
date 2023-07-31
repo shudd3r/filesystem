@@ -51,6 +51,30 @@ interface Directory extends Files, Node
     public function subdirectory(string $name): self;
 
     /**
+     * Unless precondition assertion fails, Link instance MUST be returned
+     * whether link with given name exists within this directory structure
+     * or not.
+     *
+     * Concrete implementations MAY specify different syntax accepted for
+     * link name. If phpDoc does not include implementation specific
+     * constraints, following rules should be assumed (RECOMMENDED):
+     * - Only canonical paths are allowed (no empty or dot-path segments),
+     * - Either forward `/` or backward `\` slash separators are accepted,
+     * - Both leading and trailing separators are ignored.
+     *
+     * @param string $name Link basename or relative link pathname
+     *
+     * @throws InvalidNodeName     when given link name with invalid syntax
+     * @throws FilesystemException when asserted precondition fails
+     *
+     * @return Link
+     *
+     * @see Node::validated() method for explicit precondition checks and
+     * concrete FilesystemException types
+     */
+    public function link(string $name): Link;
+
+    /**
      * Converts relative instance for existing directory to root directory.
      * For root directory instances same object is returned.
      *

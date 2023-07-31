@@ -13,8 +13,9 @@ namespace Shudd3r\Filesystem\Tests\Local;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\LocalDirectory;
-use Shudd3r\Filesystem\Local\Pathname;
+use Shudd3r\Filesystem\Local\LocalLink;
 use Shudd3r\Filesystem\Local\LocalFile;
+use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
@@ -48,19 +49,6 @@ class LocalDirectoryTest extends TestCase
         $this->assertTrue($root->exists());
     }
 
-    public function test_subdirectory_for_valid_path_returns_Directory(): void
-    {
-        $root      = Pathname::root(self::$temp->directory());
-        $directory = new LocalDirectory($root);
-        $this->assertEquals(new LocalDirectory($root->forChildNode('foo/bar')), $directory->subdirectory('foo/bar'));
-    }
-
-    public function test_subdirectory_for_invalid_path_throws_Filesystem_Exception(): void
-    {
-        $procedure = fn () => $this->directory()->subdirectory('foo//bar');
-        $this->assertExceptionType(Exception\InvalidNodeName::class, $procedure);
-    }
-
     public function test_exists_for_existing_directory_returns_true(): void
     {
         self::$temp->symlink(self::$temp->directory('foo/bar/baz.dir'), 'dir.lnk');
@@ -77,6 +65,31 @@ class LocalDirectoryTest extends TestCase
         $this->assertFalse($root->subdirectory('foo/bar/baz.dir')->exists());
         $this->assertFalse($root->subdirectory('foo/bar/baz.file')->exists());
         $this->assertFalse($root->subdirectory('file.lnk')->exists());
+    }
+
+    public function test_subdirectory_for_valid_path_returns_LocalDirectory(): void
+    {
+        $root      = Pathname::root(self::$temp->directory());
+        $directory = new LocalDirectory($root);
+        $this->assertEquals(new LocalDirectory($root->forChildNode('foo/bar')), $directory->subdirectory('foo/bar'));
+    }
+
+    public function test_subdirectory_for_invalid_path_throws_Filesystem_Exception(): void
+    {
+        $procedure = fn () => $this->directory()->subdirectory('foo//bar');
+        $this->assertExceptionType(Exception\InvalidNodeName::class, $procedure);
+    }
+
+    public function test_link_for_valid_path_returns_LocalLink(): void
+    {
+        $directory = $this->directory();
+        $this->assertInstanceOf(LocalLink::class, $directory->link('foo/bar'));
+    }
+
+    public function test_link_for_invalid_path_throws_Filesystem_Exception(): void
+    {
+        $procedure = fn () => $this->directory()->link('foo/bar/../bar');
+        $this->assertExceptionType(Exception\InvalidNodeName::class, $procedure);
     }
 
     public function test_file_for_valid_path_returns_File(): void
