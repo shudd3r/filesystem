@@ -36,22 +36,8 @@ class LocalLink extends LocalNode implements Link
      */
     public function setTarget(Node $node): void
     {
-        $path = $node->validated(self::EXISTS)->pathname();
-        if (!is_dir($path) && !is_file($path)) {
-            throw Exception\NodeNotFound::forNode($node);
-        }
-
-        $mismatch = $this->isDirectory() && !is_dir($path) || $this->isFile() && !is_file($path);
-        if ($mismatch) {
-            throw Exception\UnexpectedNodeType::forLink($this, $node);
-        }
-
-        $windowsOverwrite = DIRECTORY_SEPARATOR === '\\' && $this->exists();
-        if ($windowsOverwrite) {
-            // @codeCoverageIgnoreStart
-            !$this->validated(self::WRITE)->isFile() && $this->remove();
-            // @codeCoverageIgnoreEnd
-        }
+        $this->verifyTargetNode($node);
+        $this->prepareWindowsOverwrite();
 
         $this->exists() ? $this->changeTargetPath($node) : $this->createLink($node, $this->pathname->absolute());
     }
@@ -74,6 +60,28 @@ class LocalLink extends LocalNode implements Link
 
         if ($removed) { return; }
         throw Exception\IOException\UnableToRemove::node($this);
+    }
+
+    private function verifyTargetNode(Node $node): void
+    {
+        $path = $node->validated(self::EXISTS)->pathname();
+        if (!is_dir($path) && !is_file($path)) {
+            throw Exception\NodeNotFound::forNode($node);
+        }
+
+        $mismatch = $this->isDirectory() && !is_dir($path) || $this->isFile() && !is_file($path);
+        if ($mismatch) {
+            throw Exception\UnexpectedNodeType::forLink($this, $node);
+        }
+    }
+
+    private function prepareWindowsOverwrite(): void
+    {
+        $windowsOverwrite = DIRECTORY_SEPARATOR === '\\' && $this->exists();
+        if (!$windowsOverwrite) { return; }
+        // @codeCoverageIgnoreStart
+        !$this->validated(self::WRITE)->isFile() && $this->remove();
+        // @codeCoverageIgnoreEnd
     }
 
     private function changeTargetPath(Node $target): void
