@@ -25,7 +25,7 @@ class FileIterator implements IteratorAggregate
 
     /**
      * @param Traversable<File> $files
-     * @param callable|null     $filter fn(File) => bool
+     * @param ?callable         $filter fn(File) => bool
      */
     public function __construct(Traversable $files, ?callable $filter = null)
     {
@@ -74,7 +74,7 @@ class FileIterator implements IteratorAggregate
     /**
      * @template Type
      *
-     * @param callable|null $transformFile fn(File) => Type
+     * @param ?callable $transformFile fn(File) => Type
      *
      * @return array<Type>
      */

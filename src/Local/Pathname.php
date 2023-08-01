@@ -87,7 +87,7 @@ final class Pathname
     }
 
     /**
-     * @param callable|null $filter fn(string) => bool
+     * @param ?callable $filter fn(string) => bool
      *
      * @return Iterator
      */
