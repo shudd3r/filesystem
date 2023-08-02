@@ -28,6 +28,30 @@ class VirtualFileTest extends TestCase
         $this->assertSame('virtual://' . $name, $this->file($name)->pathname());
     }
 
+    public function test_exists_for_instance_with_null_contents_returns_false(): void
+    {
+        $file = $this->file('file/foo.txt');
+        $this->assertFalse($file->exists());
+        $file->write('contents');
+        $this->assertTrue($file->exists());
+    }
+
+    public function test_remove_method(): void
+    {
+        $file = $this->file('file.txt');
+        $this->assertFalse($file->exists());
+        $file->remove();
+        $this->assertFalse($file->exists());
+        $file->write('contents...');
+        $this->assertTrue($file->exists());
+        $file->remove();
+        $this->assertFalse($file->exists());
+
+        $file = $this->file('file.txt', 'contents...');
+        $file->remove();
+        $this->assertFalse($file->exists());
+    }
+
     public function test_contents_for_file_without_contents_returns_empty_string(): void
     {
         $this->assertSame('', $this->file('file.txt')->contents());
@@ -59,12 +83,11 @@ class VirtualFileTest extends TestCase
         $this->assertSame('...added more', $file->contents());
     }
 
-    public function test_exists_for_instance_with_null_contents_returns_false(): void
+    public function test_copy_duplicates_contents_of_given_file(): void
     {
-        $file = $this->file('file/foo.txt');
-        $this->assertFalse($file->exists());
-        $file->write('contents');
-        $this->assertTrue($file->exists());
+        $file = $this->file('bar.txt');
+        $file->copy($this->file('foo.txt', 'Foo contents'));
+        $this->assertSame('Foo contents', $file->contents());
     }
 
     public function test_permission_checks(): void
@@ -78,22 +101,6 @@ class VirtualFileTest extends TestCase
     {
         $file = $this->file('foo/bar.txt');
         $this->assertSame($file, $file->validated());
-    }
-
-    public function test_remove_method(): void
-    {
-        $file = $this->file('file.txt');
-        $this->assertFalse($file->exists());
-        $file->remove();
-        $this->assertFalse($file->exists());
-        $file->write('contents...');
-        $this->assertTrue($file->exists());
-        $file->remove();
-        $this->assertFalse($file->exists());
-
-        $file = $this->file('file.txt', 'contents...');
-        $file->remove();
-        $this->assertFalse($file->exists());
     }
 
     private function file(string $name, ?string $contents = null): VirtualFile

@@ -46,6 +46,11 @@ class LocalFile extends LocalNode implements File
         $this->validated(self::WRITE)->save($contents, FILE_APPEND);
     }
 
+    public function copy(File $file): void
+    {
+        $this->write($file->contents());
+    }
+
     protected function removeNode(): void
     {
         if (@unlink($this->pathname->absolute())) { return; }

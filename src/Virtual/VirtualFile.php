@@ -86,4 +86,9 @@ class VirtualFile implements File
     {
         $this->contents = $this->contents() . $contents;
     }
+
+    public function copy(File $file): void
+    {
+        $this->contents = $file->contents();
+    }
 }

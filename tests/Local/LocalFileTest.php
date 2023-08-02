@@ -42,6 +42,17 @@ class LocalFileTest extends TestCase
         $this->assertFalse($this->file('dir.lnk')->exists());
     }
 
+    public function test_remove_method_deletes_file(): void
+    {
+        $path = self::$temp->file('foo/bar.txt');
+        $file = $this->file('foo/bar.txt');
+        $this->assertFileExists($path);
+        $this->assertTrue($file->exists());
+        $file->remove();
+        $this->assertFileDoesNotExist($path);
+        $this->assertFalse($file->exists());
+    }
+
     public function test_contents_returns_file_contents(): void
     {
         self::$temp->file('foo.txt', 'contents...');
@@ -107,15 +118,12 @@ class LocalFileTest extends TestCase
         $this->assertTrue(is_dir(self::$temp->pathname('foo/baz')));
     }
 
-    public function test_remove_method_deletes_file(): void
+    public function test_copy_duplicates_contents_of_given_file(): void
     {
-        $path = self::$temp->file('foo/bar.txt');
-        $file = $this->file('foo/bar.txt');
-        $this->assertFileExists($path);
-        $this->assertTrue($file->exists());
-        $file->remove();
-        $this->assertFileDoesNotExist($path);
-        $this->assertFalse($file->exists());
+        self::$temp->file('foo.txt', 'Foo contents');
+        $file = $this->file('bar.txt');
+        $file->copy($this->file('foo.txt'));
+        $this->assertSame('Foo contents', $file->contents());
     }
 
     public function test_runtime_file_write_failures(): void

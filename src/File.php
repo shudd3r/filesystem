@@ -40,4 +40,13 @@ interface File extends Node
      * @throws FilesystemException
      */
     public function append(string $contents): void;
+
+    /**
+     * Copies contents from given File.
+     *
+     * @param File $file
+     *
+     * @throws FilesystemException
+     */
+    public function copy(File $file): void;
 }
