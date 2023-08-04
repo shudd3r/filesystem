@@ -21,7 +21,7 @@ require_once dirname(__DIR__) . '/Fixtures/native-override/generic.php';
 
 class ContentStreamTest extends TestCase
 {
-    use Fixtures\TempFilesHandling;
+    use Fixtures\TestUtilities;
 
     public function test_resource_method_returns_wrapped_stream(): void
     {

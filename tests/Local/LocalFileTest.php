@@ -27,8 +27,7 @@ require_once dirname(__DIR__) . '/Fixtures/native-override/local.php';
 
 class LocalFileTest extends TestCase
 {
-    use Fixtures\TempFilesHandling;
-    use Fixtures\ExceptionAssertions;
+    use Fixtures\TestUtilities;
 
     public function test_exists_for_existing_file_returns_true(): void
     {

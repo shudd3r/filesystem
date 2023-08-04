@@ -26,8 +26,7 @@ require_once dirname(__DIR__) . '/Fixtures/native-override/local.php';
 
 class LocalDirectoryTest extends TestCase
 {
-    use Fixtures\TempFilesHandling;
-    use Fixtures\ExceptionAssertions;
+    use Fixtures\TestUtilities;
 
     public function test_static_constructor_for_not_real_directory_path_returns_null(): void
     {
@@ -190,7 +189,7 @@ class LocalDirectoryTest extends TestCase
         $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $root->file('foo.file'));
         $this->assertInstanceOf(Node::class, $root->file('foo/bar.txt'));
 
-        self::override('is_writable', false, $file);
+        $this->override('is_writable', false, $file);
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $root->file('foo/bar.txt'));
     }
 

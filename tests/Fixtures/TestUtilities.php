@@ -14,8 +14,28 @@ namespace Shudd3r\Filesystem\Tests\Fixtures;
 use Shudd3r\Filesystem\FilesystemException;
 
 
-trait ExceptionAssertions
+trait TestUtilities
 {
+    private static TempFiles $temp;
+    private static string    $cwd;
+
+    public static function setUpBeforeClass(): void
+    {
+        self::$temp = new TempFiles(basename(static::class));
+        self::$cwd  = getcwd();
+    }
+
+    public static function tearDownAfterClass(): void
+    {
+        chdir(self::$cwd);
+    }
+
+    protected function tearDown(): void
+    {
+        self::$temp->clear();
+        Override::reset();
+    }
+
     private function assertIOException(string $exception, callable $procedure, string $override, $argValue = null): void
     {
         $this->override($override, function () {
@@ -38,5 +58,10 @@ trait ExceptionAssertions
         }
 
         $this->fail(sprintf($title . 'No Exception thrown - expected `%s`', $expected));
+    }
+
+    private function override(string $function, $value, $argValue = null): void
+    {
+        Override::set($function, $value, $argValue);
     }
 }
