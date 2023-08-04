@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Tests\Fixtures;
 use InvalidArgumentException;
+use RuntimeException;
 
 require_once dirname(__DIR__) . '/Fixtures/native-override/generic.php';
 
@@ -48,5 +49,30 @@ class ContentStreamTest extends TestCase
         $this->override('get_resource_type', 'not-stream');
         $this->expectException(InvalidArgumentException::class);
         new ContentStream($this->resource());
+    }
+
+    public function test_resource_is_closed_when_object_is_destroyed(): void
+    {
+        $stream = new ContentStream($resource = $this->resource());
+        $this->assertTrue(is_resource($resource));
+        unset($stream);
+        $this->assertFalse(is_resource($resource));
+
+        $isResource = function (ContentStream $stream): bool {
+            return is_resource($stream->resource());
+        };
+
+        $resource = $this->resource();
+        $this->assertTrue($isResource(new ContentStream($resource)), 'Resource should be open in function scope');
+        $this->assertFalse(is_resource($resource), 'Resource should be closed after function is executed');
+    }
+
+    public function test_resource_method_for_resource_closed_in_outside_scope_throws_Exception(): void
+    {
+        $resource = $this->resource();
+        $stream   = new ContentStream($resource);
+        fclose($resource);
+        $this->expectException(RuntimeException::class);
+        $stream->resource();
     }
 }

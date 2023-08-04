@@ -12,6 +12,7 @@
 namespace Shudd3r\Filesystem\Generic;
 
 use InvalidArgumentException;
+use RuntimeException;
 
 
 class ContentStream
@@ -38,9 +39,12 @@ class ContentStream
         $this->stream = $stream;
     }
 
+    /**
+     * Ensure that resource is closed.
+     */
     public function __destruct()
     {
-        fclose($this->stream);
+        is_resource($this->stream) && fclose($this->stream);
     }
 
     /**
@@ -48,6 +52,7 @@ class ContentStream
      */
     public function resource()
     {
-        return $this->stream;
+        if (is_resource($this->stream)) { return $this->stream; }
+        throw new RuntimeException('Stream resource was closed in outside scope');
     }
 }
