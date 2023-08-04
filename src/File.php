@@ -11,13 +11,16 @@
 
 namespace Shudd3r\Filesystem;
 
+use Shudd3r\Filesystem\Generic\ContentStream;
+
 
 interface File extends Node
 {
     /**
      *@throws FilesystemException
      *
-     * @return string Contents of this file or empty string if file does not exist
+     * @return string Contents of this file or empty string if file does
+     *                not exist
      */
     public function contents(): string;
 
@@ -30,6 +33,16 @@ interface File extends Node
      * @throws FilesystemException
      */
     public function write(string $contents): void;
+
+    /**
+     * Replaces existing file contents with contents of given stream or
+     * creates new file with it.
+     *
+     * @param ContentStream $stream
+     *
+     * @throws FilesystemException
+     */
+    public function writeStream(ContentStream $stream): void;
 
     /**
      * Appends given string to existing file contents or creates new file

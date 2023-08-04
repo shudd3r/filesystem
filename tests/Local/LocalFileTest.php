@@ -17,6 +17,7 @@ use Shudd3r\Filesystem\Exception\IOException\UnableToReadContents;
 use Shudd3r\Filesystem\Exception\IOException\UnableToRemove;
 use Shudd3r\Filesystem\Exception\IOException\UnableToSetPermissions;
 use Shudd3r\Filesystem\Exception\IOException\UnableToWriteContents;
+use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Local\LocalFile;
 use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Tests\Fixtures;
@@ -84,6 +85,22 @@ class LocalFileTest extends TestCase
 
         $file->write($newContents = 'New contents');
         $this->assertSame($newContents, file_get_contents($filename));
+    }
+
+    public function test_writeStream_for_not_existing_file_creates_file_with_given_contents(): void
+    {
+        $stream = new ContentStream(fopen(self::$temp->file('foo.txt', $contents = 'foo contents...'), 'rb'));
+        $this->file('bar.txt')->writeStream($stream);
+        $this->assertSame($contents, file_get_contents(self::$temp->pathname('bar.txt')));
+    }
+
+    public function test_writeStream_for_existing_file_replaces_its_contents(): void
+    {
+        self::$temp->file('bar.txt', $old = 'old contents');
+        $this->assertSame($old, file_get_contents(self::$temp->pathname('bar.txt')));
+        $stream = new ContentStream(fopen(self::$temp->file('foo.txt', $new = 'new contents'), 'rb'));
+        $this->file('bar.txt')->writeStream($stream);
+        $this->assertSame($new, file_get_contents(self::$temp->pathname('bar.txt')));
     }
 
     public function test_append_to_not_existing_file_creates_file(): void

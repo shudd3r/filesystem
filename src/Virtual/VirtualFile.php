@@ -12,6 +12,8 @@
 namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\File;
+use Shudd3r\Filesystem\Generic\ContentStream;
+use Shudd3r\Filesystem\Exception\IOException;
 
 
 class VirtualFile implements File
@@ -79,6 +81,20 @@ class VirtualFile implements File
 
     public function write(string $contents): void
     {
+        $this->contents = $contents;
+    }
+
+    public function writeStream(ContentStream $stream): void
+    {
+        $contents = '';
+        while ($chunk = fread($stream->resource(), 8192)) {
+            $contents .= $chunk;
+        }
+
+        if ($chunk === false) {
+            throw IOException\UnableToReadContents::fromStream($stream);
+        }
+
         $this->contents = $contents;
     }
 

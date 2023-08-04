@@ -11,8 +11,13 @@
 
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
-use Shudd3r\Filesystem\Virtual\VirtualFile;
 use PHPUnit\Framework\TestCase;
+use Shudd3r\Filesystem\Virtual\VirtualFile;
+use Shudd3r\Filesystem\Generic\ContentStream;
+use Shudd3r\Filesystem\Exception\IOException;
+use Shudd3r\Filesystem\Tests\Fixtures;
+
+require_once dirname(__DIR__) . '/Fixtures/override-virtual.php';
 
 
 class VirtualFileTest extends TestCase
@@ -63,6 +68,32 @@ class VirtualFileTest extends TestCase
         $file = $this->file('file.txt');
         $file->write('contents...');
         $this->assertSame('contents...', $file->contents());
+    }
+
+    public function test_writeStream_writes_stream_contents_to_file(): void
+    {
+        $resource = fopen('php://memory', 'rb+');
+        fwrite($resource, $contents = 'stream contents...');
+        rewind($resource);
+
+        $file   = $this->file('foo.txt');
+        $stream = new ContentStream($resource);
+        $file->writeStream($stream);
+        $this->assertSame($contents, $file->contents());
+    }
+
+    public function test_writeStream_failed_stream_read_throws_Exception(): void
+    {
+        $resource = fopen('php://memory', 'rb+');
+        fwrite($resource, 'stream contents...');
+        rewind($resource);
+
+        Fixtures\Override::set('fread', false, null);
+
+        $file   = $this->file('foo.txt');
+        $stream = new ContentStream($resource);
+        $this->expectException(IOException::class);
+        $file->writeStream($stream);
     }
 
     public function test_append_to_not_existing_file_creates_file(): void

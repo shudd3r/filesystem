@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem\Exception\IOException;
 
 use Shudd3r\Filesystem\Exception\IOException;
 use Shudd3r\Filesystem\File;
+use Shudd3r\Filesystem\Generic\ContentStream;
 
 
 class UnableToReadContents extends IOException
@@ -21,5 +22,12 @@ class UnableToReadContents extends IOException
     {
         $message = 'Could not read `%s` file contents in `%s`';
         return new self(sprintf($message, $file->name(), self::nodeRoot($file)));
+    }
+
+    public static function fromStream(ContentStream $stream): self
+    {
+        $metaData = stream_get_meta_data($stream->resource());
+        $message  = 'Could not read `%s` stream contents';
+        return new self(sprintf($message, $metaData['uri']));
     }
 }
