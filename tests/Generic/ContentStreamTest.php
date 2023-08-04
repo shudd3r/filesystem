@@ -16,7 +16,7 @@ use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Tests\Fixtures;
 use InvalidArgumentException;
 
-require_once dirname(__DIR__) . '/Fixtures/override-generic.php';
+require_once dirname(__DIR__) . '/Fixtures/native-override/generic.php';
 
 
 class ContentStreamTest extends TestCase

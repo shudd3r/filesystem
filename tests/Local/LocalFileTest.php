@@ -22,7 +22,7 @@ use Shudd3r\Filesystem\Local\LocalFile;
 use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Tests\Fixtures;
 
-require_once dirname(__DIR__) . '/Fixtures/override-local.php';
+require_once dirname(__DIR__) . '/Fixtures/native-override/local.php';
 
 
 class LocalFileTest extends TestCase

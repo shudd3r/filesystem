@@ -21,7 +21,7 @@ use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Tests\Fixtures;
 
-require_once dirname(__DIR__) . '/Fixtures/override-local.php';
+require_once dirname(__DIR__) . '/Fixtures/native-override/local.php';
 
 
 class LocalDirectoryTest extends TestCase

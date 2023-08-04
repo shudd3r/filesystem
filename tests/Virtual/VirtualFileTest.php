@@ -17,7 +17,7 @@ use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Exception\IOException;
 use Shudd3r\Filesystem\Tests\Fixtures;
 
-require_once dirname(__DIR__) . '/Fixtures/override-virtual.php';
+require_once dirname(__DIR__) . '/Fixtures/native-override/virtual.php';
 
 
 class VirtualFileTest extends TestCase
