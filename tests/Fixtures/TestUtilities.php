@@ -60,6 +60,18 @@ trait TestUtilities
         $this->fail(sprintf($title . 'No Exception thrown - expected `%s`', $expected));
     }
 
+    /** @return resource */
+    private function resource(string $contents = '')
+    {
+        $resource = fopen('php://memory', 'rb+');
+        if ($contents) {
+            fwrite($resource, $contents);
+            rewind($resource);
+        }
+
+        return $resource;
+    }
+
     private function override(string $function, $value, $argValue = null): void
     {
         Override::set($function, $value, $argValue);

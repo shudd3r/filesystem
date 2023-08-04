@@ -13,7 +13,17 @@ namespace Shudd3r\Filesystem\Generic;
 
 use Shudd3r\Filesystem\Tests\Fixtures\Override;
 
+function is_resource($resource): bool
+{
+    return Override::call('is_resource') ?? \is_resource($resource);
+}
+
+function stream_get_meta_data($resource): array
+{
+    return Override::call('stream_get_meta_data') ?? \stream_get_meta_data($resource);
+}
+
 function get_resource_type($resource): string
 {
-    return Override::call('get_resource_type', $resource) ?? \get_resource_type($resource);
+    return Override::call('get_resource_type') ?? \get_resource_type($resource);
 }

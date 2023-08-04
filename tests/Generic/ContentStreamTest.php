@@ -25,27 +25,28 @@ class ContentStreamTest extends TestCase
 
     public function test_resource_method_returns_wrapped_stream(): void
     {
-        $resource = fopen(self::$temp->file('foo.txt'), 'r');
-        $stream   = new ContentStream($resource);
+        $stream = new ContentStream($resource = $this->resource());
         $this->assertSame($resource, $stream->resource());
     }
 
     public function test_cannot_instantiate_with_non_resource_argument(): void
     {
+        $this->override('is_resource', false);
         $this->expectException(InvalidArgumentException::class);
-        new ContentStream(3);
+        new ContentStream($this->resource());
     }
 
     public function test_cannot_instantiate_with_not_readable_stream(): void
     {
+        $this->override('stream_get_meta_data', ['mode' => 'w']);
         $this->expectException(InvalidArgumentException::class);
-        new ContentStream(fopen(self::$temp->file('foo.txt'), 'w'));
+        new ContentStream($this->resource());
     }
 
     public function test_cannot_instantiate_with_non_stream_argument(): void
     {
         $this->override('get_resource_type', 'not-stream');
         $this->expectException(InvalidArgumentException::class);
-        new ContentStream(fopen(self::$temp->file('foo.txt'), 'r'));
+        new ContentStream($this->resource());
     }
 }

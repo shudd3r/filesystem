@@ -22,6 +22,8 @@ require_once dirname(__DIR__) . '/Fixtures/native-override/virtual.php';
 
 class VirtualFileTest extends TestCase
 {
+    use Fixtures\TestUtilities;
+
     public function test_name_returns_instance_value(): void
     {
         $this->assertSame('foo/bar/baz.txt', $this->file('foo/bar/baz.txt')->name());
@@ -72,28 +74,16 @@ class VirtualFileTest extends TestCase
 
     public function test_writeStream_writes_stream_contents_to_file(): void
     {
-        $resource = fopen('php://memory', 'rb+');
-        fwrite($resource, $contents = 'stream contents...');
-        rewind($resource);
-
-        $file   = $this->file('foo.txt');
-        $stream = new ContentStream($resource);
-        $file->writeStream($stream);
+        $file = $this->file('foo.txt');
+        $file->writeStream(new ContentStream($this->resource($contents = 'stream contents...')));
         $this->assertSame($contents, $file->contents());
     }
 
-    public function test_writeStream_failed_stream_read_throws_Exception(): void
+    public function test_writeStream_on_failed_stream_read_throws_Exception(): void
     {
-        $resource = fopen('php://memory', 'rb+');
-        fwrite($resource, 'stream contents...');
-        rewind($resource);
-
-        Fixtures\Override::set('fread', false, null);
-
-        $file   = $this->file('foo.txt');
-        $stream = new ContentStream($resource);
-        $this->expectException(IOException::class);
-        $file->writeStream($stream);
+        $this->override('fread', false);
+        $this->expectException(IOException\UnableToReadContents::class);
+        $this->file('foo.txt')->writeStream(new ContentStream($this->resource()));
     }
 
     public function test_append_to_not_existing_file_creates_file(): void

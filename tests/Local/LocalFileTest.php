@@ -88,7 +88,7 @@ class LocalFileTest extends TestCase
 
     public function test_writeStream_for_not_existing_file_creates_file_with_given_contents(): void
     {
-        $stream = new ContentStream(fopen(self::$temp->file('foo.txt', $contents = 'foo contents...'), 'rb'));
+        $stream = new ContentStream($this->resource($contents = 'foo contents...'));
         $this->file('bar.txt')->writeStream($stream);
         $this->assertSame($contents, file_get_contents(self::$temp->pathname('bar.txt')));
     }
@@ -97,7 +97,7 @@ class LocalFileTest extends TestCase
     {
         self::$temp->file('bar.txt', $old = 'old contents');
         $this->assertSame($old, file_get_contents(self::$temp->pathname('bar.txt')));
-        $stream = new ContentStream(fopen(self::$temp->file('foo.txt', $new = 'new contents'), 'rb'));
+        $stream = new ContentStream($this->resource($new = 'new contents'));
         $this->file('bar.txt')->writeStream($stream);
         $this->assertSame($new, file_get_contents(self::$temp->pathname('bar.txt')));
     }
