@@ -39,27 +39,28 @@ class LocalFile extends LocalNode implements File
 
     public function write(string $contents): void
     {
-        $this->validated(self::WRITE)->save($contents, LOCK_EX);
+        $this->save($contents, LOCK_EX);
     }
 
     public function writeStream(ContentStream $stream): void
     {
-        $this->validated(self::WRITE)->save($stream->resource(), LOCK_EX);
+        $this->save($stream->resource(), LOCK_EX);
     }
 
     public function append(string $contents): void
     {
-        $this->validated(self::WRITE)->save($contents, FILE_APPEND);
+        $this->save($contents, FILE_APPEND);
     }
 
     public function copy(File $file): void
     {
-        $this->write($file->contents());
+        $stream = $file->contentStream();
+        $this->save($stream ? $stream->resource() : $file->contents(), LOCK_EX);
     }
 
     public function contentStream(): ?ContentStream
     {
-        if (!$this->exists()) { return null; }
+        if (!$this->exists() || !$this->isReadable()) { return null; }
         $resource = @fopen($this->pathname->absolute(), 'rb');
         return $resource ? new ContentStream($resource) : null;
     }
@@ -72,7 +73,8 @@ class LocalFile extends LocalNode implements File
 
     private function save($contents, int $flags): void
     {
-        $this->exists() ? $this->putContents($contents, $flags) : $this->create($contents, $flags);
+        $exists = $this->validated(self::WRITE)->exists();
+        $exists ? $this->putContents($contents, $flags) : $this->create($contents, $flags);
     }
 
     private function create($contents, int $flags): void
