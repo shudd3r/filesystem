@@ -64,10 +64,24 @@ interface File extends Node
     public function copy(File $file): void;
 
     /**
+     * Moves existing file to given directory with optional name change.
+     * If name is not provided, file's basename MUST be used.
+     *
+     * When moving file between different file systems this method SHOULD
+     * be equivalent to executing sequential copy & remove operations.
+     *
+     * @param Directory $directory
+     * @param ?string   $name
+     *
+     * @throws FilesystemException
+     */
+    public function moveTo(Directory $directory, string $name = null): void;
+
+    /**
      * In situations where required contents are not processed but only
      * transferred, implementations MAY prefer to use (provide or require)
      * ContentStream for optimized performance. If this method returns
-     * null string contents SHOULD be used.
+     * null, string contents SHOULD be used.
      *
      * @return ?ContentStream
      */

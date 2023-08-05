@@ -12,6 +12,7 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\File;
+use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Exception\IOException;
 use Shudd3r\Filesystem\Generic\ContentStream;
 
@@ -56,6 +57,15 @@ class LocalFile extends LocalNode implements File
     {
         $stream = $file->contentStream();
         $this->save($stream ? $stream->resource() : $file->contents(), LOCK_EX);
+    }
+
+    public function moveTo(Directory $directory, string $name = null): void
+    {
+        if (!$this->exists()) { return; }
+
+        $targetFile = $directory->file($name ?? basename($this->pathname->relative()));
+        $targetFile->copy($this);
+        $this->remove();
     }
 
     public function contentStream(): ?ContentStream

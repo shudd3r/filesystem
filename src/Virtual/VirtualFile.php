@@ -12,6 +12,7 @@
 namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\File;
+use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Exception\IOException;
 
@@ -106,6 +107,13 @@ class VirtualFile implements File
     public function copy(File $file): void
     {
         $this->contents = $file->contents();
+    }
+
+    public function moveTo(Directory $directory, string $name = null): void
+    {
+        if (!$this->exists()) { return; }
+        $directory->file($name ?? basename($this->name))->copy($this);
+        $this->remove();
     }
 
     public function contentStream(): ?ContentStream

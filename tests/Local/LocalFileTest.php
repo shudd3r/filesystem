@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\LocalFile;
 use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Generic\ContentStream;
+use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Exception\IOException;
 use Shudd3r\Filesystem\Tests\Fixtures;
 
@@ -132,6 +133,48 @@ class LocalFileTest extends TestCase
         $this->assertSame($contents, $file->contents());
     }
 
+    public function test_moveTo_moves_file_to_given_directory(): void
+    {
+        $target = self::$temp->pathname('bar/file.txt');
+        $file   = $this->file('foo/file.txt', $contents = 'foo contents...');
+        $this->assertFileDoesNotExist($target);
+
+        $file->moveTo($this->directory()->subdirectory('bar'));
+        $this->assertFileExists($target);
+        $this->assertSame($contents, file_get_contents($target));
+        $this->assertFalse($file->exists());
+    }
+
+    public function test_moveTo_with_specified_name_moves_file_with_changed_name(): void
+    {
+        $target = self::$temp->pathname('foo/bar/baz.file');
+        $file   = $this->file('baz.txt', $contents = 'baz contents...');
+
+        $file->moveTo($this->directory(), 'foo/bar/baz.file');
+        $this->assertSame($contents, file_get_contents($target));
+        $this->assertFalse($file->exists());
+    }
+
+    public function test_moveTo_overwrites_existing_file(): void
+    {
+        $target = self::$temp->file('foo/bar/baz.txt', 'old contents');
+        $file   = $this->file('foo.txt', $newContents = 'new contents');
+
+        $file->moveTo($this->directory(), 'foo/bar/baz.txt');
+        $this->assertSame($newContents, file_get_contents($target));
+        $this->assertFalse($file->exists());
+    }
+
+    public function test_moveTo_for_not_existing_file_has_no_effect(): void
+    {
+        $target = self::$temp->file('bar.txt', $oldContents = 'old contents');
+        $file   = $this->file('foo/bar.txt');
+
+        $file->moveTo($this->directory());
+        $this->assertSame($oldContents, file_get_contents($target));
+        $this->assertFalse($file->exists());
+    }
+
     public function test_contentStream_for_not_existing_file_returns_null(): void
     {
         $this->assertNull($this->file('foo.txt')->contentStream());
@@ -177,5 +220,10 @@ class LocalFileTest extends TestCase
     {
         if (isset($contents)) { self::$temp->file($filename, $contents); }
         return new LocalFile(Pathname::root(self::$temp->directory())->forChildNode($filename));
+    }
+
+    private function directory(): LocalDirectory
+    {
+        return new LocalDirectory(Pathname::root(self::$temp->directory()));
     }
 }

@@ -14,6 +14,8 @@ namespace Shudd3r\Filesystem\Tests\Virtual;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Filesystem\Generic\ContentStream;
+use Shudd3r\Filesystem\Local\LocalDirectory;
+use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Exception\IOException;
 use Shudd3r\Filesystem\Tests\Fixtures;
 
@@ -111,6 +113,49 @@ class VirtualFileTest extends TestCase
         $this->assertSame('Foo contents', $file->contents());
     }
 
+    public function test_moveTo_moves_file_to_given_directory(): void
+    {
+        $target = self::$temp->pathname('bar.txt');
+        $file   = $this->file('foo/bar.txt', $contents = 'bar contents...');
+        $this->assertTrue($file->exists());
+        $this->assertFileDoesNotExist($target);
+
+        $file->moveTo($this->directory());
+        $this->assertFileExists($target);
+        $this->assertSame($contents, file_get_contents($target));
+        $this->assertFalse($file->exists());
+    }
+
+    public function test_moveTo_with_specified_name_moves_file_with_changed_name(): void
+    {
+        $target = self::$temp->pathname('foo/bar/baz.file');
+        $file   = $this->file('baz.txt', $contents = 'baz contents...');
+
+        $file->moveTo($this->directory(), 'foo/bar/baz.file');
+        $this->assertSame($contents, file_get_contents($target));
+        $this->assertFalse($file->exists());
+    }
+
+    public function test_moveTo_overwrites_existing_file(): void
+    {
+        $target = self::$temp->file('foo/bar/baz.txt', 'old contents');
+        $file   = $this->file('foo.txt', $newContents = 'new contents...');
+
+        $file->moveTo($this->directory(), 'foo/bar/baz.txt');
+        $this->assertSame($newContents, file_get_contents($target));
+        $this->assertFalse($file->exists());
+    }
+
+    public function test_moveTo_for_not_existing_file_has_no_effect(): void
+    {
+        $target = self::$temp->file('bar.txt', $oldContents = 'old contents');
+        $file   = $this->file('foo/bar.txt');
+
+        $file->moveTo($this->directory());
+        $this->assertSame($oldContents, file_get_contents($target));
+        $this->assertFalse($file->exists());
+    }
+
     public function test_contentStream_returns_null(): void
     {
         $file = $this->file('foo.txt');
@@ -134,5 +179,10 @@ class VirtualFileTest extends TestCase
     private function file(string $name, ?string $contents = null): VirtualFile
     {
         return new VirtualFile($name, $contents);
+    }
+
+    private function directory(): LocalDirectory
+    {
+        return new LocalDirectory(Pathname::root(self::$temp->directory()));
     }
 }
