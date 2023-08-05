@@ -23,8 +23,7 @@ use Shudd3r\Filesystem\Tests\Doubles;
 
 class LocalLinkTest extends TestCase
 {
-    use Fixtures\TempFilesHandling;
-    use Fixtures\ExceptionAssertions;
+    use Fixtures\TestUtilities;
 
     public function test_exists_method(): void
     {

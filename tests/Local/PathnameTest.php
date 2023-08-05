@@ -19,7 +19,7 @@ use Shudd3r\Filesystem\Tests\Fixtures;
 
 class PathnameTest extends TestCase
 {
-    use Fixtures\TempFilesHandling;
+    use Fixtures\TestUtilities;
 
     public static function invalidNames(): array
     {

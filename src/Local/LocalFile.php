@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\File;
 use Shudd3r\Filesystem\Exception\IOException;
+use Shudd3r\Filesystem\Generic\ContentStream;
 
 
 class LocalFile extends LocalNode implements File
@@ -38,12 +39,30 @@ class LocalFile extends LocalNode implements File
 
     public function write(string $contents): void
     {
-        $this->validated(self::WRITE)->save($contents, LOCK_EX);
+        $this->save($contents, LOCK_EX);
+    }
+
+    public function writeStream(ContentStream $stream): void
+    {
+        $this->save($stream->resource(), LOCK_EX);
     }
 
     public function append(string $contents): void
     {
-        $this->validated(self::WRITE)->save($contents, FILE_APPEND);
+        $this->save($contents, FILE_APPEND);
+    }
+
+    public function copy(File $file): void
+    {
+        $stream = $file->contentStream();
+        $this->save($stream ? $stream->resource() : $file->contents(), LOCK_EX);
+    }
+
+    public function contentStream(): ?ContentStream
+    {
+        if (!$this->exists() || !$this->isReadable()) { return null; }
+        $resource = @fopen($this->pathname->absolute(), 'rb');
+        return $resource ? new ContentStream($resource) : null;
     }
 
     protected function removeNode(): void
@@ -52,12 +71,13 @@ class LocalFile extends LocalNode implements File
         throw IOException\UnableToRemove::node($this);
     }
 
-    private function save(string $contents, int $flags): void
+    private function save($contents, int $flags): void
     {
-        $this->exists() ? $this->putContents($contents, $flags) : $this->create($contents, $flags);
+        $exists = $this->validated(self::WRITE)->exists();
+        $exists ? $this->putContents($contents, $flags) : $this->create($contents, $flags);
     }
 
-    private function create(string $contents, int $flags): void
+    private function create($contents, int $flags): void
     {
         $this->createDirectory();
         $this->putContents($contents, $flags, true);
@@ -65,7 +85,7 @@ class LocalFile extends LocalNode implements File
         throw IOException\UnableToSetPermissions::forNode($this);
     }
 
-    private function putContents(string $contents, int $flags, bool $create = false): void
+    private function putContents($contents, int $flags, bool $create = false): void
     {
         $written = @file_put_contents($this->pathname->absolute(), $contents, $flags);
         if ($written !== false) { return; }
