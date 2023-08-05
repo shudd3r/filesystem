@@ -111,6 +111,13 @@ class VirtualFileTest extends TestCase
         $this->assertSame('Foo contents', $file->contents());
     }
 
+    public function test_contentStream_returns_null(): void
+    {
+        $file = $this->file('foo.txt');
+        $file->write('contents');
+        $this->assertNull($file->contentStream());
+    }
+
     public function test_permission_checks(): void
     {
         $this->assertTrue($this->file('file.txt')->isReadable());

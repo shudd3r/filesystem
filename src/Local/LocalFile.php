@@ -57,6 +57,13 @@ class LocalFile extends LocalNode implements File
         $this->write($file->contents());
     }
 
+    public function contentStream(): ?ContentStream
+    {
+        if (!$this->exists()) { return null; }
+        $resource = @fopen($this->pathname->absolute(), 'rb');
+        return $resource ? new ContentStream($resource) : null;
+    }
+
     protected function removeNode(): void
     {
         if (@unlink($this->pathname->absolute())) { return; }

@@ -62,4 +62,14 @@ interface File extends Node
      * @throws FilesystemException
      */
     public function copy(File $file): void;
+
+    /**
+     * In situations where required contents are not processed but only
+     * transferred, implementations MAY prefer to use (provide or require)
+     * ContentStream for optimized performance. If this method returns
+     * null string contents SHOULD be used.
+     *
+     * @return ?ContentStream
+     */
+    public function contentStream(): ?ContentStream;
 }

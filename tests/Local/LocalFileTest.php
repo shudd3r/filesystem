@@ -144,6 +144,19 @@ class LocalFileTest extends TestCase
         $this->assertSame('Foo contents', $file->contents());
     }
 
+    public function test_contentStream_for_not_existing_file_returns_null(): void
+    {
+        $this->assertNull($this->file('foo.txt')->contentStream());
+    }
+
+    public function test_contentStream_for_existing_file_returns_streamable_contents(): void
+    {
+        self::$temp->file('foo.txt', 'foo contents...');
+        $file = $this->file('foo.txt');
+        $this->assertInstanceOf(ContentStream::class, $stream = $file->contentStream());
+        $this->assertSame($file->contents(), fread($stream->resource(), 1024));
+    }
+
     public function test_runtime_file_write_failures(): void
     {
         $file  = $this->file('foo/bar/baz.txt');

@@ -107,4 +107,9 @@ class VirtualFile implements File
     {
         $this->contents = $file->contents();
     }
+
+    public function contentStream(): ?ContentStream
+    {
+        return null;
+    }
 }
