@@ -17,7 +17,7 @@ use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Exception\IOException;
 
 
-class VirtualFile implements File
+class BasicVirtualFile implements File
 {
     private string  $name;
     private ?string $contents;

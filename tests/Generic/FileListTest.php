@@ -13,7 +13,7 @@ namespace Shudd3r\Filesystem\Tests\Generic;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Generic\FileIterator;
-use Shudd3r\Filesystem\Virtual\VirtualFile;
+use Shudd3r\Filesystem\Virtual\BasicVirtualFile as VirtualFile;
 use Shudd3r\Filesystem\File;
 
 

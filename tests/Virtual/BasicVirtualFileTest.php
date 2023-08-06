@@ -12,7 +12,7 @@
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Virtual\VirtualFile;
+use Shudd3r\Filesystem\Virtual\BasicVirtualFile;
 use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Local\Pathname;
@@ -22,7 +22,7 @@ use Shudd3r\Filesystem\Tests\Fixtures;
 require_once dirname(__DIR__) . '/Fixtures/native-override/virtual.php';
 
 
-class VirtualFileTest extends TestCase
+class BasicVirtualFileTest extends TestCase
 {
     use Fixtures\TestUtilities;
 
@@ -176,9 +176,9 @@ class VirtualFileTest extends TestCase
         $this->assertSame($file, $file->validated());
     }
 
-    private function file(string $name, ?string $contents = null): VirtualFile
+    private function file(string $name, ?string $contents = null): BasicVirtualFile
     {
-        return new VirtualFile($name, $contents);
+        return new BasicVirtualFile($name, $contents);
     }
 
     private function directory(): LocalDirectory

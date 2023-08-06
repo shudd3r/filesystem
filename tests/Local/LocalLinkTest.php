@@ -14,7 +14,7 @@ namespace Shudd3r\Filesystem\Tests\Local;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\LocalLink;
 use Shudd3r\Filesystem\Local\Pathname;
-use Shudd3r\Filesystem\Virtual\VirtualFile;
+use Shudd3r\Filesystem\Virtual\BasicVirtualFile as VirtualFile;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Tests\Fixtures;
 use Shudd3r\Filesystem\Tests\Doubles;
