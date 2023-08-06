@@ -30,6 +30,13 @@ class ContentStreamTest extends TestCase
         $this->assertSame($resource, $stream->resource());
     }
 
+    public function test_uri_method_returns_resource_uri(): void
+    {
+        $file   = self::$temp->file('foo/bar.txt');
+        $stream = new ContentStream(fopen($file, 'rb'));
+        $this->assertSame($file, $stream->uri());
+    }
+
     public function test_cannot_instantiate_with_non_resource_argument(): void
     {
         $this->override('is_resource', false);

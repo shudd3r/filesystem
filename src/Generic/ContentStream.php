@@ -20,6 +20,9 @@ class ContentStream
     /** @var resource */
     private $stream;
 
+    /** @var array{ uri: string } */
+    private array $metaData;
+
     /**
      * @param resource $stream Readable stream resource
      */
@@ -30,13 +33,15 @@ class ContentStream
             throw new InvalidArgumentException('Invalid stream resource');
         }
 
-        $mode       = stream_get_meta_data($stream)['mode'];
+        $metaData   = stream_get_meta_data($stream);
+        $mode       = $metaData['mode'];
         $isReadable = $mode[0] === 'r' || strstr($mode, '+');
         if (!$isReadable) {
             throw new InvalidArgumentException('Resource is not readable');
         }
 
-        $this->stream = $stream;
+        $this->stream   = $stream;
+        $this->metaData = $metaData;
     }
 
     /**
@@ -54,5 +59,13 @@ class ContentStream
     {
         if (is_resource($this->stream)) { return $this->stream; }
         throw new RuntimeException('Stream resource was closed in outside scope');
+    }
+
+    /**
+     * @return string URI of wrapped resource
+     */
+    public function uri(): string
+    {
+        return $this->metaData['uri'];
     }
 }
