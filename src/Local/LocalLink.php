@@ -64,6 +64,14 @@ class LocalLink extends LocalNode implements Link
 
     private function verifyTargetNode(Node $node): void
     {
+        if (!$node instanceof LocalNode) {
+            throw Exception\IOException\UnableToCreate::externalLink($this);
+        }
+
+        if ($node instanceof Link) {
+            throw Exception\IOException\UnableToCreate::indirectLink($this);
+        }
+
         $path = $node->validated(self::EXISTS)->pathname();
         if (!is_dir($path) && !is_file($path)) {
             throw Exception\NodeNotFound::forNode($node);
@@ -91,12 +99,12 @@ class LocalLink extends LocalNode implements Link
         $this->createLink($target, $temp);
         if (@rename($temp, $link)) { return; }
         @unlink($temp) || @rmdir($temp);
-        throw Exception\IOException\UnableToCreate::symlink($this, $target);
+        throw Exception\IOException\UnableToCreate::link($this, $target);
     }
 
     private function createLink(Node $target, string $link): void
     {
         if (@symlink($target->pathname(), $link)) { return; }
-        throw Exception\IOException\UnableToCreate::symlink($this, $target);
+        throw Exception\IOException\UnableToCreate::link($this, $target);
     }
 }

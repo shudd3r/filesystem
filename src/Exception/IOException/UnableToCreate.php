@@ -29,9 +29,21 @@ class UnableToCreate extends IOException
         return new self(sprintf($message, $node->name(), self::nodeType($node), self::nodeRoot($node)));
     }
 
-    public static function symlink(Node $link, Node $target): self
+    public static function link(Node $link, Node $target): self
     {
-        $message = 'Could not create `%s` symlink for `%s` %s in `%s`';
+        $message = 'Could not create `%s` link for `%s` %s in `%s`';
         return new self(sprintf($message, $link->name(), $target->name(), self::nodeType($target), $link->pathname()));
+    }
+
+    public static function externalLink(Node $link): self
+    {
+        $message = 'Could not set external filesystem node as `%s` link target in `%s`';
+        return new self(sprintf($message, $link->name(), $link->pathname()));
+    }
+
+    public static function indirectLink(Node $link): self
+    {
+        $message = 'Could not set another link as `%s` link target in `%s`';
+        return new self(sprintf($message, $link->name(), $link->pathname()));
     }
 }

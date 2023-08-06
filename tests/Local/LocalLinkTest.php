@@ -12,11 +12,10 @@
 namespace Shudd3r\Filesystem\Tests\Local;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Exception\NodeNotFound;
-use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
-use Shudd3r\Filesystem\Exception\IOException;
 use Shudd3r\Filesystem\Local\LocalLink;
 use Shudd3r\Filesystem\Local\Pathname;
+use Shudd3r\Filesystem\Virtual\VirtualFile;
+use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Tests\Fixtures;
 use Shudd3r\Filesystem\Tests\Doubles;
 
@@ -63,7 +62,7 @@ class LocalLinkTest extends TestCase
     {
         self::$temp->symlink(self::$temp->file('foo.txt'), 'file.lnk');
         $fileLink = $this->link('file.lnk');
-        $this->assertIOException(IOException\UnableToRemove::class, fn () => $fileLink->remove(), 'unlink');
+        $this->assertIOException(Exception\IOException\UnableToRemove::class, fn () => $fileLink->remove(), 'unlink');
     }
 
     public function test_target_returns_absolute_target_pathname(): void
@@ -105,17 +104,6 @@ class LocalLinkTest extends TestCase
         $this->assertFalse($staleLink->isDirectory());
     }
 
-    public function test_setTarget_to_not_existing_node_throws_exception(): void
-    {
-        $node = $this->node('foo/bar', false);
-        $link = $this->link('bar.lnk');
-        $this->assertExceptionType(NodeNotFound::class, fn () => $link->setTarget($node));
-
-        self::$temp->symlink('', 'foo/stale.lnk');
-        $node = $this->node('foo/stale.lnk');
-        $this->assertExceptionType(NodeNotFound::class, fn () => $link->setTarget($node));
-    }
-
     public function test_setTarget_for_not_existing_link_creates_link(): void
     {
         self::$temp->file('foo/bar/baz.file');
@@ -150,26 +138,54 @@ class LocalLinkTest extends TestCase
         $this->assertSame($new, $link->target());
     }
 
+    public function test_setTarget_to_external_filesystem_throws_exception(): void
+    {
+        $node = new VirtualFile('virtual.file', 'contents');
+        $link = $this->link('foo.lnk');
+        $this->assertExceptionType(Exception\IOException\UnableToCreate::class, fn () => $link->setTarget($node));
+    }
+
+    public function test_setTarget_to_another_link_throws_exception(): void
+    {
+        self::$temp->symlink(self::$temp->file('foo/bar.txt'), 'foo.lnk');
+        $node = $this->link('foo.lnk');
+        $link = $this->link('bar.lnk');
+        $this->assertExceptionType(Exception\IOException\UnableToCreate::class, fn () => $link->setTarget($node));
+    }
+
+    public function test_setTarget_to_not_existing_node_throws_exception(): void
+    {
+        $node = $this->node('foo/bar', false);
+        $link = $this->link('bar.lnk');
+        $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $link->setTarget($node));
+
+        self::$temp->symlink('', 'foo/stale.lnk');
+        $node = $this->node('foo/stale.lnk');
+        $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $link->setTarget($node));
+    }
+
     public function test_changing_target_to_different_type_throws_exception(): void
     {
         self::$temp->file('foo/bar.file');
         self::$temp->symlink(self::$temp->directory('foo/bar.dir'), 'bar.lnk');
         $node = $this->node('foo/bar.file');
         $link = $this->link('bar.lnk');
-        $this->assertExceptionType(UnexpectedNodeType::class, fn () => $link->setTarget($node));
+        $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $link->setTarget($node));
     }
 
     public function test_runtime_setTarget_failures(): void
     {
         $file = self::$temp->file('foo/bar.txt');
-        $node = $this->node('foo/bar.txt');
         $link = $this->link('bar.lnk');
-        $this->assertIOException(IOException\UnableToCreate::class, fn () => $link->setTarget($node), 'symlink');
+
+        $setTarget = fn () => $link->setTarget($this->node('foo/bar.txt'));
+        $this->assertIOException(Exception\IOException\UnableToCreate::class, $setTarget, 'symlink');
 
         self::$temp->symlink($file, 'bar.lnk');
         self::$temp->file('foo/baz.txt');
-        $node = $this->node('foo/baz.txt');
-        $this->assertIOException(IOException\UnableToCreate::class, fn () => $link->setTarget($node), 'rename');
+
+        $setTarget = fn () => $link->setTarget($this->node('foo/baz.txt'));
+        $this->assertIOException(Exception\IOException\UnableToCreate::class, $setTarget, 'rename');
     }
 
     private function link(string $name): LocalLink
