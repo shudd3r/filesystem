@@ -45,6 +45,7 @@ class LocalFile extends LocalNode implements File
 
     public function writeStream(ContentStream $stream): void
     {
+        if ($this->samePath($stream->uri())) { return; }
         $this->save($stream->resource(), LOCK_EX);
     }
 
@@ -55,6 +56,8 @@ class LocalFile extends LocalNode implements File
 
     public function copy(File $file): void
     {
+        if ($this->selfReference($file)) { return; }
+
         $stream = $file->contentStream();
         $this->save($stream ? $stream->resource() : $file->contents(), LOCK_EX);
     }
@@ -64,6 +67,8 @@ class LocalFile extends LocalNode implements File
         if (!$this->exists()) { return; }
 
         $targetFile = $directory->file($name ?? basename($this->pathname->relative()));
+        if ($this->selfReference($targetFile)) { return; }
+
         $targetFile->copy($this);
         $this->remove();
     }
@@ -108,5 +113,15 @@ class LocalFile extends LocalNode implements File
         if (is_dir($directoryPath)) { return; }
         if (@mkdir($directoryPath, 0755, true)) { return; }
         throw IOException\UnableToCreate::directories($this);
+    }
+
+    private function selfReference(File $file): bool
+    {
+        return $file instanceof self && $this->samePath($file->pathname());
+    }
+
+    private function samePath(string $pathname): bool
+    {
+        return is_file($pathname) && realpath($pathname) === realpath($this->pathname->absolute());
     }
 }

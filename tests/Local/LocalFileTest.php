@@ -211,9 +211,24 @@ class LocalFileTest extends TestCase
         $file = $this->file('foo/bar/baz.txt', 'contents');
         $read = fn () => $file->contents();
 
-        $this->assertIOException(IOException\UnableToReadContents::class, $read, 'fopen');
-        $this->assertIOException(IOException\UnableToReadContents::class, $read, 'flock');
-        $this->assertIOException(IOException\UnableToReadContents::class, $read, 'file_get_contents');
+        $exception = IOException\UnableToReadContents::class;
+        $this->assertIOException($exception, $read, 'fopen');
+        $this->assertIOException($exception, $read, 'flock');
+        $this->assertIOException($exception, $read, 'file_get_contents');
+    }
+
+    public function test_self_reference_write_is_ignored(): void
+    {
+        $file = $this->file('foo.txt', $contents = 'contents');
+
+        $file->writeStream($file->contentStream());
+        $this->assertSame($contents, $file->contents());
+
+        $file->copy($file);
+        $this->assertSame($contents, $file->contents());
+
+        $file->moveTo($this->directory());
+        $this->assertSame($contents, $file->contents());
     }
 
     private function file(string $filename, string $contents = null): LocalFile
