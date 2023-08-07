@@ -1,0 +1,169 @@
+<?php declare(strict_types=1);
+
+/*
+ * This file is part of Shudd3r/Filesystem package.
+ *
+ * (c) Shudd3r <q3.shudder@gmail.com>
+ *
+ * This source file is subject to the MIT license that is bundled
+ * with this source code in the file LICENSE.
+ */
+
+namespace Shudd3r\Filesystem\Tests\Virtual;
+
+use PHPUnit\Framework\TestCase;
+use Shudd3r\Filesystem\Virtual\NodeTree;
+use Shudd3r\Filesystem\Virtual\VirtualDirectory;
+use Shudd3r\Filesystem\Virtual\VirtualFile;
+use Shudd3r\Filesystem\Virtual\VirtualLink;
+use Shudd3r\Filesystem\Virtual\VirtualNode;
+use Shudd3r\Filesystem\FilesystemException;
+use Shudd3r\Filesystem\Exception;
+
+
+class VirtualFilesystemTest extends TestCase
+{
+    private const EXAMPLE_STRUCTURE = [
+        'foo' => [
+            'bar' => ['baz.txt' => 'baz contents'],
+            'lnk' => ['link' => true, 'target' => 'virtual://bar.txt']
+        ],
+        'bar.txt' => 'bar contents',
+        'bar.lnk' => ['link' => true, 'target' => 'virtual://foo/bar']
+    ];
+
+    private static NodeTree $tree;
+
+    protected function setUp(): void
+    {
+        self::$tree = new NodeTree(self::EXAMPLE_STRUCTURE);
+    }
+
+    public function test_exists_method(): void
+    {
+        $this->assertExists($this->directory());
+        $this->assertExists($this->file('bar.txt'));
+        $this->assertNotExists($this->directory('bar.txt'));
+        $this->assertExists($this->directory('foo/bar'));
+        $this->assertExists($this->file('foo/bar/baz.txt'));
+        $this->assertNotExists($this->link('foo/bar/baz.txt'));
+        $this->assertExists($this->link('foo/lnk'));
+        $this->assertNotExists($this->directory('foo/bar/baz/directory'));
+        $this->assertNotExists($this->directory('foo/lnk/directory'));
+    }
+
+    public function test_remove_not_existing_node_is_ignored(): void
+    {
+        $tree = new NodeTree(self::EXAMPLE_STRUCTURE);
+        $this->file('foo/bar/baz/file.txt')->remove();
+        $this->assertEquals(self::$tree, $tree);
+
+        $this->directory('foo/bar/baz.txt')->remove();
+        $this->assertEquals(self::$tree, $tree);
+    }
+
+    public function test_remove_existing_node_removes_node(): void
+    {
+        $file = $this->file('foo/bar/baz.txt');
+        $this->assertExists($file);
+        $file->remove();
+        $this->assertNotExists($file);
+
+        $directory    = $this->directory('foo');
+        $subdirectory = $directory->subdirectory('bar');
+        $this->assertExists($subdirectory);
+        $directory->remove();
+        $this->assertNotExists($subdirectory);
+        $this->assertNotExists($directory);
+    }
+
+    public function test_node_permissions(): void
+    {
+        $file = $this->file('foo/bar/baz.txt');
+        $this->assertTrue($file->isReadable());
+        $this->assertTrue($file->isWritable());
+        $this->assertTrue($file->isRemovable());
+    }
+
+    public function test_directory_methods(): void
+    {
+        $directory = $this->directory('foo');
+        $this->assertSame('virtual://foo', $directory->pathname());
+        $this->assertSame('foo', $directory->name());
+        $subdirectory = $directory->subdirectory('bar/baz');
+        $this->assertSame('foo/bar/baz', $subdirectory->name());
+
+        $directory = $directory->asRoot();
+        $this->assertSame('', $directory->name());
+        $subdirectory = $directory->subdirectory('bar/baz');
+        $this->assertSame('bar/baz', $subdirectory->name());
+        $this->assertSame('virtual://foo/bar/baz', $subdirectory->pathname());
+        $this->assertSame($subdirectory, $subdirectory->validated());
+        $this->assertExists($directory->file('bar/baz.txt'));
+        $this->assertExists($directory->link('lnk'));
+
+        $notExistingRoot = fn () => $subdirectory->asRoot();
+        $this->assertExceptionType(Exception\RootDirectoryNotFound::class, $notExistingRoot);
+
+        $validateExisting = fn () => $subdirectory->validated(VirtualNode::EXISTS);
+        $this->assertExceptionType(Exception\NodeNotFound::class, $validateExisting);
+
+        $validatePath = fn () => $directory->subdirectory('bar/baz.txt/dir')->validated();
+        $this->assertExceptionType(Exception\UnexpectedLeafNode::class, $validatePath);
+
+        $validatePath = fn () => $directory->subdirectory('bar/baz.txt')->validated();
+        $this->assertExceptionType(Exception\UnexpectedNodeType::class, $validatePath);
+    }
+
+    public function test_file_contents(): void
+    {
+        $this->assertSame('baz contents', $this->file('foo/bar/baz.txt')->contents());
+    }
+
+    public function test_link_target(): void
+    {
+        $link = $this->link('foo/lnk');
+        $this->assertSame('virtual://bar.txt', $link->target());
+        $this->file('bar.txt')->remove();
+        $this->assertNull($link->target());
+    }
+
+    private function assertExists(VirtualNode $node): void
+    {
+        $this->assertTrue($node->exists());
+    }
+
+    private function assertNotExists(VirtualNode $node): void
+    {
+        $this->assertFalse($node->exists());
+    }
+
+    private function assertExceptionType(string $expected, callable $procedure, string $case = ''): void
+    {
+        $title = $case ? 'Case "' . $case . '": ' : '';
+        try {
+            $procedure();
+        } catch (FilesystemException $ex) {
+            $message = $title . 'Unexpected Exception type - expected `%s` caught `%s`';
+            $this->assertInstanceOf($expected, $ex, sprintf($message, $expected, get_class($ex)));
+            return;
+        }
+
+        $this->fail(sprintf($title . 'No Exception thrown - expected `%s`', $expected));
+    }
+
+    private function directory(string $name = ''): VirtualDirectory
+    {
+        return new VirtualDirectory(self::$tree, 'virtual:/', $name);
+    }
+
+    private function file(string $name): VirtualFile
+    {
+        return new VirtualFile(self::$tree, 'virtual:/', $name);
+    }
+
+    private function link(string $name): VirtualLink
+    {
+        return new VirtualLink(self::$tree, 'virtual:/', $name);
+    }
+}
