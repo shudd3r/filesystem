@@ -29,15 +29,15 @@ class NodeTree
 
     public function remove(VirtualNode $node): void
     {
-        if (!$data = $this->nodeData($node)) { return; }
+        $data   = $this->pathData($node->pathname(), true);
+        $exists = $data['type'] && $node instanceof $data['type'] || $data['type'] === VirtualLink::class;
+        if (!$exists) { return; }
         unset($data['parent'][$data['basename']]);
     }
 
     public function nodeData(VirtualNode $node): ?array
     {
-        $path = $node->pathname();
-        $data = $this->pathData($path);
-
+        $data   = $this->pathData($node->pathname(), $node instanceof VirtualLink);
         $exists = $data['type'] && $node instanceof $data['type'];
         return $exists ? $data : null;
     }
@@ -52,7 +52,7 @@ class NodeTree
      *     valid: bool
      * }
      */
-    public function pathData(string $pathname): array
+    public function pathData(string $pathname, bool $forLink = false): array
     {
         $segments = $this->pathSegments($pathname);
         if (!$segments) {
@@ -71,15 +71,31 @@ class NodeTree
         $path     = $this->root . '/' . $basename;
 
         while ($segments) {
-            $exists = isset($parent[$basename]) && ($parent['link'] ?? false) !== true;
-            if (!$exists) { break; }
+            $isLink = ($parent[$basename]['link'] ?? false) === true;
+            if ($isLink) {
+                $data     = $this->pathData($parent[$basename]['target'], $forLink);
+                $parent   = &$data['parent'];
+                $basename = $data['basename'];
+                continue;
+            }
+
+            if (!isset($parent[$basename])) { break; }
+
             $parent   = &$parent[$basename];
             $basename = array_shift($segments);
             $path .= '/' . $basename;
         }
 
+        $type = isset($parent[$basename]) && !$segments ? $this->nodeType($parent[$basename]) : null;
+        if (!$forLink && $type === VirtualLink::class) {
+            $data     = $this->pathData($parent[$basename]['target']);
+            $parent   = &$data['parent'];
+            $type     = $data['type'];
+            $basename = $data['basename'];
+        }
+
         return [
-            'type'     => isset($parent[$basename]) && !$segments ? $this->nodeType($parent[$basename]) : null,
+            'type'     => $type,
             'basename' => $basename,
             'path'     => $path,
             'parent'   => &$parent,

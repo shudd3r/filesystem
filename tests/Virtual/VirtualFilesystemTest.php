@@ -25,11 +25,11 @@ class VirtualFilesystemTest extends TestCase
 {
     private const EXAMPLE_STRUCTURE = [
         'foo' => [
-            'bar' => ['baz.txt' => 'baz contents'],
-            'lnk' => ['link' => true, 'target' => 'virtual://bar.txt']
+            'bar'      => ['baz.txt' => 'baz contents'],
+            'file.lnk' => ['link' => true, 'target' => 'virtual://bar.txt']
         ],
         'bar.txt' => 'bar contents',
-        'bar.lnk' => ['link' => true, 'target' => 'virtual://foo/bar']
+        'dir.lnk' => ['link' => true, 'target' => 'virtual://foo/bar']
     ];
 
     private static NodeTree $tree;
@@ -47,7 +47,12 @@ class VirtualFilesystemTest extends TestCase
         $this->assertExists($this->directory('foo/bar'));
         $this->assertExists($this->file('foo/bar/baz.txt'));
         $this->assertNotExists($this->link('foo/bar/baz.txt'));
-        $this->assertExists($this->link('foo/lnk'));
+        $this->assertExists($this->link('foo/file.lnk'));
+        $this->assertExists($this->file('foo/file.lnk'));
+        $this->assertExists($this->link('dir.lnk'));
+        $this->assertExists($this->directory('dir.lnk'));
+        $this->assertExists($this->file('dir.lnk/baz.txt'));
+        $this->assertNotExists($this->file('dir.lnk/link'));
         $this->assertNotExists($this->directory('foo/bar/baz/directory'));
         $this->assertNotExists($this->directory('foo/lnk/directory'));
     }
@@ -65,9 +70,13 @@ class VirtualFilesystemTest extends TestCase
     public function test_remove_existing_node_removes_node(): void
     {
         $file = $this->file('foo/bar/baz.txt');
-        $this->assertExists($file);
         $file->remove();
         $this->assertNotExists($file);
+
+        $link = $this->link('foo/lnk');
+        $link->remove();
+        $this->assertNotExists($link);
+        $this->assertExists($this->file('bar.txt'));
 
         $directory    = $this->directory('foo');
         $subdirectory = $directory->subdirectory('bar');
@@ -75,6 +84,21 @@ class VirtualFilesystemTest extends TestCase
         $directory->remove();
         $this->assertNotExists($subdirectory);
         $this->assertNotExists($directory);
+    }
+
+    public function test_remove_linked_node_removes_link(): void
+    {
+        $file = $this->file('foo/lnk');
+        $file->remove();
+        $this->assertNotExists($file);
+        $this->assertNotExists($this->link('foo/lnk'));
+        $this->assertExists($this->file('bar.txt'));
+
+        $directory = $this->directory('bar.lnk');
+        $directory->remove();
+        $this->assertNotExists($directory);
+        $this->assertNotExists($this->link('bar.lnk'));
+        $this->assertExists($this->directory('foo/bar'));
     }
 
     public function test_node_permissions(): void
@@ -100,7 +124,7 @@ class VirtualFilesystemTest extends TestCase
         $this->assertSame('virtual://foo/bar/baz', $subdirectory->pathname());
         $this->assertSame($subdirectory, $subdirectory->validated());
         $this->assertExists($directory->file('bar/baz.txt'));
-        $this->assertExists($directory->link('lnk'));
+        $this->assertExists($directory->link('file.lnk'));
 
         $notExistingRoot = fn () => $subdirectory->asRoot();
         $this->assertExceptionType(Exception\RootDirectoryNotFound::class, $notExistingRoot);
@@ -118,14 +142,16 @@ class VirtualFilesystemTest extends TestCase
     public function test_file_contents(): void
     {
         $this->assertSame('baz contents', $this->file('foo/bar/baz.txt')->contents());
+        $this->assertSame('bar contents', $this->file('foo/file.lnk')->contents());
     }
 
     public function test_link_target(): void
     {
-        $link = $this->link('foo/lnk');
+        $link = $this->link('foo/file.lnk');
         $this->assertSame('virtual://bar.txt', $link->target());
         $this->file('bar.txt')->remove();
         $this->assertNull($link->target());
+        $this->assertSame('virtual://bar.txt', $link->target(true));
     }
 
     private function assertExists(VirtualNode $node): void
