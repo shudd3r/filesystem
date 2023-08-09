@@ -32,7 +32,7 @@ class NodeTree
         $data   = $this->pathData($node->pathname(), true);
         $exists = $data['type'] && $node instanceof $data['type'] || $data['type'] === VirtualLink::class;
         if (!$exists) { return; }
-        unset($data['parent'][$data['basename']]);
+        unset($data['parent'][$data['segments'][0]]);
     }
 
     public function nodeData(VirtualNode $node): ?array
@@ -43,65 +43,36 @@ class NodeTree
     }
 
     /**
-     * @return array{
-     *     type: ?string,
-     *     basename: string,
-     *     path: string,
-     *     parent: array,
-     *     segments: array,
-     *     valid: bool
-     * }
+     * @return array{type: ?string, parent: array, segments: array}
      */
     public function pathData(string $pathname, bool $forLink = false): array
     {
-        $segments = $this->pathSegments($pathname);
-        if (!$segments) {
-            return [
-                'type'     => VirtualDirectory::class,
-                'basename' => '',
-                'path'     => $this->root . '/',
-                'parent'   => &$this->nodes,
-                'segments' => [],
-                'valid'    => true
-            ];
+        if (!$segments = $this->pathSegments($pathname)) {
+            return ['type' => VirtualDirectory::class, 'parent' => &$this->nodes, 'segments' => []];
         }
 
         $parent   = &$this->nodes;
         $basename = array_shift($segments);
-        $path     = $this->root . '/' . $basename;
 
         while ($segments) {
+            $subdirectory = isset($parent[$basename]) && is_array($parent[$basename]);
+            if (!$subdirectory) { break; }
             $isLink = ($parent[$basename]['link'] ?? false) === true;
             if ($isLink) {
                 $data     = $this->pathData($parent[$basename]['target'], $forLink);
                 $parent   = &$data['parent'];
-                $basename = $data['basename'];
+                $basename = $data['segments'][0];
                 continue;
             }
 
-            if (!isset($parent[$basename])) { break; }
-
             $parent   = &$parent[$basename];
             $basename = array_shift($segments);
-            $path .= '/' . $basename;
         }
 
         $type = isset($parent[$basename]) && !$segments ? $this->nodeType($parent[$basename]) : null;
-        if (!$forLink && $type === VirtualLink::class) {
-            $data     = $this->pathData($parent[$basename]['target']);
-            $parent   = &$data['parent'];
-            $type     = $data['type'];
-            $basename = $data['basename'];
-        }
-
-        return [
-            'type'     => $type,
-            'basename' => $basename,
-            'path'     => $path,
-            'parent'   => &$parent,
-            'segments' => $segments,
-            'valid'    => $this->nodeType($parent) === VirtualDirectory::class
-        ];
+        return $forLink || $type !== VirtualLink::class
+            ? ['type' => $type, 'parent' => &$parent, 'segments' => array_merge([$basename], $segments)]
+            : $this->pathData($parent[$basename]['target']);
     }
 
     private function pathSegments(string $pathname): array

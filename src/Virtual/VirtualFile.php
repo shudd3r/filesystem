@@ -17,6 +17,6 @@ class VirtualFile extends VirtualNode
     public function contents(): string
     {
         $data = $this->nodes->nodeData($this);
-        return $data ? $data['parent'][$data['basename']] : '';
+        return $data ? $data['parent'][$data['segments'][0]] : '';
     }
 }

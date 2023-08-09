@@ -62,15 +62,14 @@ abstract class VirtualNode
 
     public function validated(int $flags = self::PATH): self
     {
-        $path = $this->pathname();
-        $data = $this->nodes->pathData($path);
-
+        $data   = $this->nodes->pathData($this->pathname());
         $exists = $data['type'] && $this instanceof $data['type'];
-        if ($flags & self::EXISTS && !$exists) {
+        if ($exists) { return $this; }
+        if ($flags & self::EXISTS) {
             throw new Exception\NodeNotFound();
         }
 
-        $validPath = $exists || (!$data['type'] && $data['valid']);
+        $validPath = !$data['type'] && !isset($data['parent'][$data['segments'][0]]);
         if ($validPath) { return $this; }
         throw $data['type'] ? new Exception\UnexpectedNodeType() : new Exception\UnexpectedLeafNode();
     }

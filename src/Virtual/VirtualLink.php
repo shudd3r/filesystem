@@ -18,7 +18,7 @@ class VirtualLink extends VirtualNode
     {
         $data = $this->nodes->nodeData($this);
         if (!$data) { return null; }
-        $target = $data['parent'][$data['basename']]['target'];
+        $target = $data['parent'][$data['segments'][0]]['target'];
         if ($showRemoved) { return $target; }
 
         $data = $this->nodes->pathData($target);
