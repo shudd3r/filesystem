@@ -11,6 +11,8 @@
 
 namespace Shudd3r\Filesystem\Virtual;
 
+use Shudd3r\Filesystem\Exception;
+
 
 class NodeTree
 {
@@ -24,7 +26,8 @@ class NodeTree
 
     public function exists(VirtualNode $node): bool
     {
-        return $this->nodeData($node) !== null;
+        $type = $this->pathData($node->pathname(), $node instanceof VirtualLink)['type'];
+        return $type && $node instanceof $type;
     }
 
     public function remove(VirtualNode $node): void
@@ -35,17 +38,37 @@ class NodeTree
         unset($data['parent'][$data['segments'][0]]);
     }
 
-    public function nodeData(VirtualNode $node): ?array
+    public function validate(VirtualNode $node, int $flags): void
     {
-        $data   = $this->pathData($node->pathname(), $node instanceof VirtualLink);
+        $data   = $this->pathData($node->pathname());
         $exists = $data['type'] && $node instanceof $data['type'];
-        return $exists ? $data : null;
+        if ($exists) { return; }
+        if ($flags & VirtualNode::EXISTS) {
+            throw new Exception\NodeNotFound();
+        }
+
+        $validPath = !$data['type'] && !isset($data['parent'][$data['segments'][0]]);
+        if ($validPath) { return; }
+        throw $data['type'] ? new Exception\UnexpectedNodeType() : new Exception\UnexpectedLeafNode();
+    }
+
+    public function contentsOf(VirtualFile $file): string
+    {
+        $data = $this->pathData($file->pathname());
+        return $data['type'] === VirtualFile::class ? $data['parent'][$data['segments'][0]] : '';
+    }
+
+    public function targetOf(VirtualLink $link, bool $showRemoved): ?string
+    {
+        $data = $this->pathData($link->pathname(), true);
+        $path = $data['type'] === VirtualLink::class ? $data['parent'][$data['segments'][0]]['target'] : null;
+        return $showRemoved || !$path || $this->pathData($path)['type'] ? $path : null;
     }
 
     /**
      * @return array{type: ?string, parent: array, segments: array}
      */
-    public function pathData(string $pathname, bool $forLink = false): array
+    private function pathData(string $pathname, bool $forLink = false): array
     {
         if (!$segments = $this->pathSegments($pathname)) {
             return ['type' => VirtualDirectory::class, 'parent' => &$this->nodes, 'segments' => []];

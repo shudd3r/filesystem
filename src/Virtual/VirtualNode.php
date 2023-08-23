@@ -11,8 +11,6 @@
 
 namespace Shudd3r\Filesystem\Virtual;
 
-use Shudd3r\Filesystem\Exception;
-
 
 abstract class VirtualNode
 {
@@ -62,16 +60,8 @@ abstract class VirtualNode
 
     public function validated(int $flags = self::PATH): self
     {
-        $data   = $this->nodes->pathData($this->pathname());
-        $exists = $data['type'] && $this instanceof $data['type'];
-        if ($exists) { return $this; }
-        if ($flags & self::EXISTS) {
-            throw new Exception\NodeNotFound();
-        }
-
-        $validPath = !$data['type'] && !isset($data['parent'][$data['segments'][0]]);
-        if ($validPath) { return $this; }
-        throw $data['type'] ? new Exception\UnexpectedNodeType() : new Exception\UnexpectedLeafNode();
+        $this->nodes->validate($this, $flags);
+        return $this;
     }
 
     public function remove(): void
