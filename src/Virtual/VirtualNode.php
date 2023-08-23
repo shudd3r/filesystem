@@ -68,9 +68,4 @@ abstract class VirtualNode
     {
         $this->nodes->remove($this);
     }
-
-    protected function expandedName(string $name): string
-    {
-        return $this->name ? $this->name . '/' . $name : $name;
-    }
 }

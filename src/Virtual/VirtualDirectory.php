@@ -39,4 +39,9 @@ class VirtualDirectory extends VirtualNode
         }
         return new self($this->nodes, $this->pathname(), '');
     }
+
+    private function expandedName(string $name): string
+    {
+        return $this->name ? $this->name . '/' . $name : $name;
+    }
 }
