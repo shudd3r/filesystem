@@ -61,7 +61,7 @@ class NodeTree
     public function targetOf(VirtualLink $link, bool $showRemoved): ?string
     {
         $data = $this->pathData($link->pathname(), true);
-        $path = $data['type'] === VirtualLink::class ? $data['parent'][$data['segments'][0]]['target'] : null;
+        $path = $data['type'] === VirtualLink::class ? $data['parent'][$data['segments'][0]]['/link'] : null;
         return $showRemoved || !$path || $this->pathData($path)['type'] ? $path : null;
     }
 
@@ -80,9 +80,9 @@ class NodeTree
         while ($segments) {
             $subdirectory = isset($parent[$basename]) && is_array($parent[$basename]);
             if (!$subdirectory) { break; }
-            $isLink = ($parent[$basename]['link'] ?? false) === true;
+            $isLink = $parent[$basename]['/link'] ?? null;
             if ($isLink) {
-                $data = $this->pathData($parent[$basename]['target'], $forLink);
+                $data = $this->pathData($parent[$basename]['/link'], $forLink);
                 if ($data['type'] !== VirtualDirectory::class) { break; }
                 $parent   = &$data['parent'];
                 $basename = $data['segments'][0];
@@ -95,7 +95,7 @@ class NodeTree
 
         $type = isset($parent[$basename]) && !$segments ? $this->nodeType($parent[$basename]) : null;
         if (!$forLink && $type === VirtualLink::class) {
-            $data = $this->pathData($parent[$basename]['target']);
+            $data = $this->pathData($parent[$basename]['/link']);
             if ($data['type']) { return $data; }
         }
 
@@ -111,8 +111,6 @@ class NodeTree
     private function nodeType($value): string
     {
         if (!is_array($value)) { return VirtualFile::class; }
-
-        $isLink = $value['link'] ?? null === true;
-        return $isLink ? VirtualLink::class : VirtualDirectory::class;
+        return isset($value['/link']) ? VirtualLink::class : VirtualDirectory::class;
     }
 }

@@ -26,11 +26,11 @@ class VirtualFilesystemTest extends TestCase
     private const EXAMPLE_STRUCTURE = [
         'foo' => [
             'bar'      => ['baz.txt' => 'baz contents'],
-            'file.lnk' => ['link' => true, 'target' => 'virtual://bar.txt']
+            'file.lnk' => ['/link' => 'virtual://bar.txt']
         ],
         'bar.txt' => 'bar contents',
-        'dir.lnk' => ['link' => true, 'target' => 'virtual://foo/bar'],
-        'inv.lnk' => ['link' => true, 'target' => 'virtual://foo/baz']
+        'dir.lnk' => ['/link' => 'virtual://foo/bar'],
+        'inv.lnk' => ['/link' => 'virtual://foo/baz']
     ];
 
     private static NodeTree $tree;
