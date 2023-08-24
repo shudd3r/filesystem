@@ -29,7 +29,8 @@ class VirtualFilesystemTest extends TestCase
             'file.lnk' => ['link' => true, 'target' => 'virtual://bar.txt']
         ],
         'bar.txt' => 'bar contents',
-        'dir.lnk' => ['link' => true, 'target' => 'virtual://foo/bar']
+        'dir.lnk' => ['link' => true, 'target' => 'virtual://foo/bar'],
+        'inv.lnk' => ['link' => true, 'target' => 'virtual://foo/baz']
     ];
 
     private static NodeTree $tree;
@@ -55,6 +56,8 @@ class VirtualFilesystemTest extends TestCase
         $this->assertNotExists($this->file('dir.lnk/link'));
         $this->assertNotExists($this->directory('foo/bar/baz/directory'));
         $this->assertNotExists($this->directory('foo/lnk/directory'));
+        $this->assertExists($this->link('inv.lnk'));
+        $this->assertNotExists($this->file('inv.lnk'));
     }
 
     public function test_remove_not_existing_node_is_ignored(): void
@@ -99,6 +102,10 @@ class VirtualFilesystemTest extends TestCase
         $this->assertNotExists($directory);
         $this->assertNotExists($this->link('bar.lnk'));
         $this->assertExists($this->directory('foo/bar'));
+
+        $file = $this->file('inv.lnk');
+        $file->remove();
+        $this->assertNotExists($this->link('inv.lnk'));
     }
 
     public function test_node_permissions(): void
@@ -152,6 +159,21 @@ class VirtualFilesystemTest extends TestCase
         $this->file('bar.txt')->remove();
         $this->assertNull($link->target());
         $this->assertSame('virtual://bar.txt', $link->target(true));
+    }
+
+    public function test_invalid_link(): void
+    {
+        $validate = fn () => $this->directory('inv.lnk')->validated();
+        $this->assertExceptionType(Exception\UnexpectedNodeType::class, $validate, 'directory');
+
+        $validate = fn () => $this->directory('inv.lnk/subdirectory')->validated();
+        $this->assertExceptionType(Exception\UnexpectedLeafNode::class, $validate, 'subdirectory');
+
+        $validate = fn () => $this->file('inv.lnk')->validated();
+        $this->assertExceptionType(Exception\UnexpectedNodeType::class, $validate, 'file');
+
+        $validate = fn () => $this->file('inv.lnk/foo/file.txt')->validated();
+        $this->assertExceptionType(Exception\UnexpectedLeafNode::class, $validate, 'subdirectory file');
     }
 
     private function assertExists(VirtualNode $node): void

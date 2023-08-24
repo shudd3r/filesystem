@@ -82,7 +82,8 @@ class NodeTree
             if (!$subdirectory) { break; }
             $isLink = ($parent[$basename]['link'] ?? false) === true;
             if ($isLink) {
-                $data     = $this->pathData($parent[$basename]['target'], $forLink);
+                $data = $this->pathData($parent[$basename]['target'], $forLink);
+                if ($data['type'] !== VirtualDirectory::class) { break; }
                 $parent   = &$data['parent'];
                 $basename = $data['segments'][0];
                 continue;
@@ -93,9 +94,12 @@ class NodeTree
         }
 
         $type = isset($parent[$basename]) && !$segments ? $this->nodeType($parent[$basename]) : null;
-        return $forLink || $type !== VirtualLink::class
-            ? ['type' => $type, 'parent' => &$parent, 'segments' => array_merge([$basename], $segments)]
-            : $this->pathData($parent[$basename]['target']);
+        if (!$forLink && $type === VirtualLink::class) {
+            $data = $this->pathData($parent[$basename]['target']);
+            if ($data['type']) { return $data; }
+        }
+
+        return ['type' => $type, 'parent' => &$parent, 'segments' => array_merge([$basename], $segments)];
     }
 
     private function pathSegments(string $pathname): array
