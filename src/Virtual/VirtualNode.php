@@ -21,7 +21,7 @@ abstract class VirtualNode
     protected string   $root;
     protected string   $name;
 
-    public function __construct(NodeTree $nodes, string $root, string $name)
+    public function __construct(NodeTree $nodes, string $root = '', string $name = '')
     {
         $this->nodes = $nodes;
         $this->root  = $root;
@@ -30,7 +30,7 @@ abstract class VirtualNode
 
     public function pathname(): string
     {
-        return $this->root . '/' . $this->name;
+        return NodeTree::ROOT . $this->rootPath();
     }
 
     public function name(): string
@@ -67,5 +67,11 @@ abstract class VirtualNode
     public function remove(): void
     {
         $this->nodes->remove($this);
+    }
+
+    protected function rootPath(): string
+    {
+        if (!$this->root) { return $this->name; }
+        return $this->name ? $this->root . '/' . $this->name : $this->root;
     }
 }

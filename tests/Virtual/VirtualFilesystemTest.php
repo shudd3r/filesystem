@@ -120,6 +120,10 @@ class VirtualFilesystemTest extends TestCase
 
     public function test_directory_methods(): void
     {
+        $directory = $this->directory();
+        $this->assertSame('virtual://', $directory->pathname());
+        $this->assertSame('', $directory->name());
+
         $directory = $this->directory('foo');
         $this->assertSame('virtual://foo', $directory->pathname());
         $this->assertSame('foo', $directory->name());
@@ -151,10 +155,15 @@ class VirtualFilesystemTest extends TestCase
     public function test_directory_file_iteration(): void
     {
         $directory = $this->directory();
-        $this->assertFiles($this->files($directory, ['bar.txt', 'foo/bar/baz.txt']), $directory->files());
+        $expected  = ['bar.txt' => 'virtual://bar.txt', 'foo/bar/baz.txt' => 'virtual://foo/bar/baz.txt'];
+        $this->assertFiles($expected, $directory->files());
 
         $directory = $this->directory('foo');
-        $this->assertFiles($this->files($directory, ['bar/baz.txt']), $directory->files());
+        $expected  = ['foo/bar/baz.txt' => 'virtual://foo/bar/baz.txt'];
+        $this->assertFiles($expected, $directory->files());
+
+        $expected = ['bar/baz.txt' => 'virtual://foo/bar/baz.txt'];
+        $this->assertFiles($expected, $directory->asRoot()->files());
 
         $directory = $this->directory('foo/empty');
         $this->assertFiles([], $directory->files());
@@ -230,29 +239,18 @@ class VirtualFilesystemTest extends TestCase
         $this->assertSame([], $files, 'Some expected files were not found');
     }
 
-    private function files(VirtualDirectory $directory, array $filenames): array
-    {
-        $path  = $directory->pathname();
-        $root  = $path === NodeTree::ROOT . '/' ? NodeTree::ROOT : $path;
-        $files = [];
-        foreach ($filenames as $name) {
-            $files[$name] = $root . '/' . $name;
-        }
-        return $files;
-    }
-
     private function directory(string $name = ''): VirtualDirectory
     {
-        return new VirtualDirectory(self::$tree, NodeTree::ROOT, $name);
+        return new VirtualDirectory(self::$tree, '', $name);
     }
 
     private function file(string $name): VirtualFile
     {
-        return new VirtualFile(self::$tree, NodeTree::ROOT, $name);
+        return new VirtualFile(self::$tree, '', $name);
     }
 
     private function link(string $name): VirtualLink
     {
-        return new VirtualLink(self::$tree, NodeTree::ROOT, $name);
+        return new VirtualLink(self::$tree, '', $name);
     }
 }

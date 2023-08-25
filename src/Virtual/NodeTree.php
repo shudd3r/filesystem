@@ -19,7 +19,7 @@ use Generator;
 
 class NodeTree
 {
-    public const ROOT = 'virtual:/';
+    public const ROOT = 'virtual://';
 
     private array $nodes;
 
@@ -56,7 +56,7 @@ class NodeTree
         throw $data['type'] ? new Exception\UnexpectedNodeType() : new Exception\UnexpectedLeafNode();
     }
 
-    public function directoryFiles(VirtualDirectory $directory): FileIterator
+    public function directoryFiles(VirtualDirectory $directory, string $root): FileIterator
     {
         $path = $directory->pathname();
         $data = $this->pathData($path);
@@ -65,8 +65,7 @@ class NodeTree
         }
 
         $node = $data['parent'][$data['segments'][0]];
-        $root = $path === self::ROOT . '/' ? self::ROOT : $path;
-        return new FileIterator(new FileGenerator(fn () => $this->generateFiles($node, $root)));
+        return new FileIterator(new FileGenerator(fn () => $this->generateFiles($node, $root, $directory->name())));
     }
 
     public function contentsOf(VirtualFile $file): string
@@ -121,7 +120,7 @@ class NodeTree
 
     private function pathSegments(string $pathname): array
     {
-        $path = substr($pathname, strlen(self::ROOT) + 1);
+        $path = substr($pathname, strlen(self::ROOT));
         return $path ? explode('/', $path) : [];
     }
 

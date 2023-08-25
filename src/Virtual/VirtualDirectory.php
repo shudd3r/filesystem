@@ -34,7 +34,7 @@ class VirtualDirectory extends VirtualNode
 
     public function files(): FileIterator
     {
-        return $this->nodes->directoryFiles($this);
+        return $this->nodes->directoryFiles($this, $this->root);
     }
 
     public function asRoot(): VirtualDirectory
@@ -43,7 +43,7 @@ class VirtualDirectory extends VirtualNode
         if (!$this->exists()) {
             throw new Exception\RootDirectoryNotFound();
         }
-        return new self($this->nodes, $this->pathname(), '');
+        return new self($this->nodes, $this->rootPath(), '');
     }
 
     private function expandedName(string $name): string
