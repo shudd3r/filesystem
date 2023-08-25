@@ -11,6 +11,7 @@
 
 namespace Shudd3r\Filesystem\Virtual;
 
+use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Exception;
 
 
@@ -21,14 +22,19 @@ class VirtualDirectory extends VirtualNode
         return new VirtualDirectory($this->nodes, $this->root, $this->expandedName($name));
     }
 
+    public function link(string $name): VirtualLink
+    {
+        return new VirtualLink($this->nodes, $this->root, $this->expandedName($name));
+    }
+
     public function file(string $name): VirtualFile
     {
         return new VirtualFile($this->nodes, $this->root, $this->expandedName($name));
     }
 
-    public function link(string $name): VirtualLink
+    public function files(): FileIterator
     {
-        return new VirtualLink($this->nodes, $this->root, $this->expandedName($name));
+        return $this->nodes->directoryFiles($this);
     }
 
     public function asRoot(): VirtualDirectory

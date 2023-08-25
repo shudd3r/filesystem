@@ -11,17 +11,21 @@
 
 namespace Shudd3r\Filesystem\Virtual;
 
+use Shudd3r\Filesystem\Generic\FileGenerator;
+use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Exception;
+use Generator;
 
 
 class NodeTree
 {
-    private string $root = 'virtual:/';
-    private array  $nodes;
+    public const ROOT = 'virtual:/';
+
+    private array $nodes;
 
     public function __construct(array $nodes = [])
     {
-        $this->nodes = $nodes;
+        $this->nodes = [self::ROOT => $nodes];
     }
 
     public function exists(VirtualNode $node): bool
@@ -52,6 +56,19 @@ class NodeTree
         throw $data['type'] ? new Exception\UnexpectedNodeType() : new Exception\UnexpectedLeafNode();
     }
 
+    public function directoryFiles(VirtualDirectory $directory): FileIterator
+    {
+        $path = $directory->pathname();
+        $data = $this->pathData($path);
+        if ($data['type'] !== VirtualDirectory::class) {
+            return FileIterator::fromArray([]);
+        }
+
+        $node = $data['parent'][$data['segments'][0]];
+        $root = $path === self::ROOT . '/' ? self::ROOT : $path;
+        return new FileIterator(new FileGenerator(fn () => $this->generateFiles($node, $root)));
+    }
+
     public function contentsOf(VirtualFile $file): string
     {
         $data = $this->pathData($file->pathname());
@@ -71,10 +88,10 @@ class NodeTree
     private function pathData(string $pathname, bool $forLink = false): array
     {
         if (!$segments = $this->pathSegments($pathname)) {
-            return ['type' => VirtualDirectory::class, 'parent' => &$this->nodes, 'segments' => []];
+            return ['type' => VirtualDirectory::class, 'parent' => &$this->nodes, 'segments' => [self::ROOT]];
         }
 
-        $parent   = &$this->nodes;
+        $parent   = &$this->nodes[self::ROOT];
         $basename = array_shift($segments);
 
         while ($segments) {
@@ -104,7 +121,7 @@ class NodeTree
 
     private function pathSegments(string $pathname): array
     {
-        $path = substr($pathname, strlen($this->root) + 1);
+        $path = substr($pathname, strlen(self::ROOT) + 1);
         return $path ? explode('/', $path) : [];
     }
 
@@ -112,5 +129,16 @@ class NodeTree
     {
         if (!is_array($value)) { return VirtualFile::class; }
         return isset($value['/link']) ? VirtualLink::class : VirtualDirectory::class;
+    }
+
+    private function generateFiles(array $directory, string $root, string $path = ''): Generator
+    {
+        foreach ($directory as $name => $value) {
+            if ($name === '/link') { continue; }
+            $pathname = $path ? $path . '/' . $name : $name;
+            is_array($value)
+                ? yield from $this->generateFiles($value, $root, $pathname)
+                : yield new VirtualFile($this, $root, $pathname);
+        }
     }
 }

@@ -17,6 +17,7 @@ use Shudd3r\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Filesystem\Virtual\VirtualLink;
 use Shudd3r\Filesystem\Virtual\VirtualNode;
+use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\FilesystemException;
 use Shudd3r\Filesystem\Exception;
 
@@ -26,7 +27,8 @@ class VirtualFilesystemTest extends TestCase
     private const EXAMPLE_STRUCTURE = [
         'foo' => [
             'bar'      => ['baz.txt' => 'baz contents'],
-            'file.lnk' => ['/link' => 'virtual://bar.txt']
+            'file.lnk' => ['/link' => 'virtual://bar.txt'],
+            'empty'    => []
         ],
         'bar.txt' => 'bar contents',
         'dir.lnk' => ['/link' => 'virtual://foo/bar'],
@@ -146,6 +148,21 @@ class VirtualFilesystemTest extends TestCase
         $this->assertExceptionType(Exception\UnexpectedNodeType::class, $validatePath);
     }
 
+    public function test_directory_file_iteration(): void
+    {
+        $directory = $this->directory();
+        $this->assertFiles($this->files($directory, ['bar.txt', 'foo/bar/baz.txt']), $directory->files());
+
+        $directory = $this->directory('foo');
+        $this->assertFiles($this->files($directory, ['bar/baz.txt']), $directory->files());
+
+        $directory = $this->directory('foo/empty');
+        $this->assertFiles([], $directory->files());
+
+        $directory = $this->directory('foo/not-exists');
+        $this->assertFiles([], $directory->files());
+    }
+
     public function test_file_contents(): void
     {
         $this->assertSame('baz contents', $this->file('foo/bar/baz.txt')->contents());
@@ -200,18 +217,42 @@ class VirtualFilesystemTest extends TestCase
         $this->fail(sprintf($title . 'No Exception thrown - expected `%s`', $expected));
     }
 
+    private function assertFiles(array $files, FileIterator $fileIterator): void
+    {
+        /** @var VirtualFile $file */
+        foreach ($fileIterator as $file) {
+            $name = $file->name();
+            $this->assertTrue($file->exists(), sprintf('File `%s` should exist', $name));
+            $this->assertArrayHasKey($name, $files, sprintf('Unexpected file `%s` found', $name));
+            $this->assertSame($files[$name], $file->pathname());
+            unset($files[$name]);
+        }
+        $this->assertSame([], $files, 'Some expected files were not found');
+    }
+
+    private function files(VirtualDirectory $directory, array $filenames): array
+    {
+        $path  = $directory->pathname();
+        $root  = $path === NodeTree::ROOT . '/' ? NodeTree::ROOT : $path;
+        $files = [];
+        foreach ($filenames as $name) {
+            $files[$name] = $root . '/' . $name;
+        }
+        return $files;
+    }
+
     private function directory(string $name = ''): VirtualDirectory
     {
-        return new VirtualDirectory(self::$tree, 'virtual:/', $name);
+        return new VirtualDirectory(self::$tree, NodeTree::ROOT, $name);
     }
 
     private function file(string $name): VirtualFile
     {
-        return new VirtualFile(self::$tree, 'virtual:/', $name);
+        return new VirtualFile(self::$tree, NodeTree::ROOT, $name);
     }
 
     private function link(string $name): VirtualLink
     {
-        return new VirtualLink(self::$tree, 'virtual:/', $name);
+        return new VirtualLink(self::$tree, NodeTree::ROOT, $name);
     }
 }
