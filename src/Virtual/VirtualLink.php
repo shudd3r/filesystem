@@ -16,6 +16,13 @@ class VirtualLink extends VirtualNode
 {
     public function target(bool $showRemoved = false): ?string
     {
-        return $this->nodes->targetOf($this, $showRemoved);
+        $node = $this->nodeData();
+        $show = $this->nodeExists($node) && ($showRemoved || $node->exists());
+        return $show ? NodeData::ROOT . $node->target() : null;
+    }
+
+    protected function nodeExists(NodeData $node): bool
+    {
+        return $node->isLink();
     }
 }

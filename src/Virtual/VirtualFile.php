@@ -16,6 +16,11 @@ class VirtualFile extends VirtualNode
 {
     public function contents(): string
     {
-        return $this->nodes->contentsOf($this);
+        return $this->nodeData()->contents();
+    }
+
+    protected function nodeExists(NodeData $node): bool
+    {
+        return $node->isFile();
     }
 }

@@ -12,7 +12,9 @@
 namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\Generic\FileIterator;
+use Shudd3r\Filesystem\Generic\FileGenerator;
 use Shudd3r\Filesystem\Exception;
+use Generator;
 
 
 class VirtualDirectory extends VirtualNode
@@ -34,7 +36,7 @@ class VirtualDirectory extends VirtualNode
 
     public function files(): FileIterator
     {
-        return $this->nodes->directoryFiles($this, $this->root);
+        return new FileIterator(new FileGenerator(fn () => $this->generateFiles()));
     }
 
     public function asRoot(): VirtualDirectory
@@ -46,8 +48,20 @@ class VirtualDirectory extends VirtualNode
         return new self($this->nodes, $this->rootPath(), '');
     }
 
+    protected function nodeExists(NodeData $node): bool
+    {
+        return $node->isDir();
+    }
+
     private function expandedName(string $name): string
     {
         return $this->name ? $this->name . '/' . $name : $name;
+    }
+
+    private function generateFiles(): Generator
+    {
+        foreach ($this->nodeData()->filenames() as $filename) {
+            yield new VirtualFile($this->nodes, $this->root, $this->expandedName($filename));
+        }
     }
 }

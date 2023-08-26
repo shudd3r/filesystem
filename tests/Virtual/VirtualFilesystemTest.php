@@ -12,7 +12,7 @@
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Virtual\NodeTree;
+use Shudd3r\Filesystem\Virtual\NodeData;
 use Shudd3r\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Filesystem\Virtual\VirtualLink;
@@ -27,19 +27,19 @@ class VirtualFilesystemTest extends TestCase
     private const EXAMPLE_STRUCTURE = [
         'foo' => [
             'bar'      => ['baz.txt' => 'baz contents'],
-            'file.lnk' => ['/link' => 'virtual://bar.txt'],
+            'file.lnk' => ['/link' => 'bar.txt'],
             'empty'    => []
         ],
         'bar.txt' => 'bar contents',
-        'dir.lnk' => ['/link' => 'virtual://foo/bar'],
-        'inv.lnk' => ['/link' => 'virtual://foo/baz']
+        'dir.lnk' => ['/link' => 'foo/bar'],
+        'inv.lnk' => ['/link' => 'foo/baz']
     ];
 
-    private static NodeTree $tree;
+    private static NodeData $tree;
 
     protected function setUp(): void
     {
-        self::$tree = new NodeTree(self::EXAMPLE_STRUCTURE);
+        self::$tree = NodeData::root(self::EXAMPLE_STRUCTURE);
     }
 
     public function test_exists_method(): void
@@ -64,7 +64,7 @@ class VirtualFilesystemTest extends TestCase
 
     public function test_remove_not_existing_node_is_ignored(): void
     {
-        $tree = new NodeTree(self::EXAMPLE_STRUCTURE);
+        $tree = NodeData::root(self::EXAMPLE_STRUCTURE);
         $this->file('foo/bar/baz/file.txt')->remove();
         $this->assertEquals(self::$tree, $tree);
 
@@ -107,7 +107,7 @@ class VirtualFilesystemTest extends TestCase
 
         $file = $this->file('inv.lnk');
         $file->remove();
-        $this->assertNotExists($this->link('inv.lnk'));
+        $this->assertExists($this->link('inv.lnk'));
     }
 
     public function test_node_permissions(): void

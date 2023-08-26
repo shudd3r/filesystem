@@ -11,17 +11,19 @@
 
 namespace Shudd3r\Filesystem\Virtual;
 
+use Shudd3r\Filesystem\Exception;
+
 
 abstract class VirtualNode
 {
     public const PATH   = 0;
     public const EXISTS = 8;
 
-    protected NodeTree $nodes;
+    protected NodeData $nodes;
     protected string   $root;
     protected string   $name;
 
-    public function __construct(NodeTree $nodes, string $root = '', string $name = '')
+    public function __construct(NodeData $nodes, string $root = '', string $name = '')
     {
         $this->nodes = $nodes;
         $this->root  = $root;
@@ -30,7 +32,7 @@ abstract class VirtualNode
 
     public function pathname(): string
     {
-        return NodeTree::ROOT . $this->rootPath();
+        return NodeData::ROOT . $this->rootPath();
     }
 
     public function name(): string
@@ -40,7 +42,7 @@ abstract class VirtualNode
 
     public function exists(): bool
     {
-        return $this->nodes->exists($this);
+        return $this->nodeExists($this->nodeData());
     }
 
     public function isReadable(): bool
@@ -60,13 +62,35 @@ abstract class VirtualNode
 
     public function validated(int $flags = self::PATH): self
     {
-        $this->nodes->validate($this, $flags);
+        $node = $this->nodeData();
+        if ($this->nodeExists($node)) { return $this; }
+        if ($flags & self::EXISTS) {
+            throw new Exception\NodeNotFound();
+        }
+
+        if ($node->exists() || $node->isLink()) {
+            throw new Exception\UnexpectedNodeType();
+        }
+
+        if (!$node->isValid()) {
+            throw new Exception\UnexpectedLeafNode();
+        }
+
         return $this;
     }
 
     public function remove(): void
     {
-        $this->nodes->remove($this);
+        $node = $this->nodeData();
+        if (!$this->nodeExists($node)) { return; }
+        $node->remove();
+    }
+
+    abstract protected function nodeExists(NodeData $node): bool;
+
+    protected function nodeData(): NodeData
+    {
+        return $this->nodes->nodeData($this->rootPath());
     }
 
     protected function rootPath(): string
