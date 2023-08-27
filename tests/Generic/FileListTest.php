@@ -12,9 +12,9 @@
 namespace Shudd3r\Filesystem\Tests\Generic;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Generic\FileIterator;
-use Shudd3r\Filesystem\Virtual\BasicVirtualFile as VirtualFile;
 use Shudd3r\Filesystem\File;
+use Shudd3r\Filesystem\Generic\FileIterator;
+use Shudd3r\Filesystem\Tests\Doubles;
 
 
 class FileListTest extends TestCase
@@ -34,14 +34,14 @@ class FileListTest extends TestCase
 
     public function test_find_returns_null_when_no_file_is_found(): void
     {
-        $criteria = fn (File $file) => in_array($file->name(), ['foo.doc', 'baz.txt'], true);
-        $this->assertNull($this->files()->find($criteria));
+        $match = fn (File $file) => in_array($file->name(), ['foo.doc', 'baz.txt'], true);
+        $this->assertNull($this->files()->find($match));
     }
 
     public function test_find_returns_first_file_that_meets_criteria(): void
     {
-        $criteria = fn (File $file) => $file->exists();
-        $this->assertSame(self::$example[0], $this->files()->find($criteria));
+        $match = fn (File $file) => $file->exists();
+        $this->assertSame(self::$example[0], $this->files()->find($match));
     }
 
     public function test_select_returns_new_instance_without_filtered_files(): void
@@ -69,7 +69,7 @@ class FileListTest extends TestCase
     {
         $fileArray = [];
         foreach ($files ?? self::$example as $name => $contents) {
-            $fileArray[] = new VirtualFile($name, $contents);
+            $fileArray[] = new Doubles\FakeFile($name, $contents);
         }
         return $fileArray;
     }

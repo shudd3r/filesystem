@@ -14,6 +14,7 @@ namespace Shudd3r\Filesystem\Virtual;
 use Shudd3r\Filesystem\File;
 use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\ContentStream;
+use Shudd3r\Filesystem\Exception\IOException;
 
 
 class VirtualFile extends VirtualNode implements File
@@ -30,7 +31,12 @@ class VirtualFile extends VirtualNode implements File
 
     public function writeStream(ContentStream $stream): void
     {
-        $this->validated(self::WRITE)->nodeData()->putContents(stream_get_contents($stream->resource()));
+        $contents = @stream_get_contents($stream->resource());
+        if ($contents === false) {
+            throw IOException\UnableToReadContents::fromStream($stream);
+        }
+
+        $this->validated(self::WRITE)->nodeData()->putContents($contents);
     }
 
     public function append(string $contents): void

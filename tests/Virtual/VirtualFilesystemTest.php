@@ -23,6 +23,9 @@ use Shudd3r\Filesystem\FilesystemException;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Tests\Doubles;
+use Shudd3r\Filesystem\Tests\Fixtures;
+
+require_once dirname(__DIR__) . '/Fixtures/native-override/virtual.php';
 
 
 class VirtualFilesystemTest extends TestCase
@@ -43,6 +46,11 @@ class VirtualFilesystemTest extends TestCase
     protected function setUp(): void
     {
         self::$tree = NodeData::root(self::EXAMPLE_STRUCTURE);
+    }
+
+    protected function tearDown(): void
+    {
+        Fixtures\Override::reset();
     }
 
     public function test_exists_method(): void
@@ -200,11 +208,12 @@ class VirtualFilesystemTest extends TestCase
         $file->append('-appended');
         $this->assertSame('contents-appended', $file->contents());
 
-        $resource = fopen('php://memory', 'rb+');
-        fwrite($resource, 'stream contents');
-        rewind($resource);
-        $file->writeStream(new ContentStream($resource));
+        $file->writeStream($this->stream());
         $this->assertSame('stream contents', $file->contents());
+
+        $this->override('stream_get_contents', false);
+        $writeStream = fn () => $file->writeStream($this->stream());
+        $this->assertExceptionType(Exception\IOException\UnableToReadContents::class, $writeStream);
 
         $file->copy($this->file('foo/file.lnk'));
         $this->assertSame('bar contents', $file->contents());
@@ -310,5 +319,18 @@ class VirtualFilesystemTest extends TestCase
     private function link(string $name): VirtualLink
     {
         return new VirtualLink(self::$tree, '', $name);
+    }
+
+    private function stream(): ContentStream
+    {
+        $resource = fopen('php://memory', 'rb+');
+        fwrite($resource, 'stream contents');
+        rewind($resource);
+        return new ContentStream($resource);
+    }
+
+    private function override(string $function, $value, $argValue = null): void
+    {
+        Fixtures\Override::set($function, $value, $argValue);
     }
 }

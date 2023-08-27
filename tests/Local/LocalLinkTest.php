@@ -14,10 +14,9 @@ namespace Shudd3r\Filesystem\Tests\Local;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\LocalLink;
 use Shudd3r\Filesystem\Local\Pathname;
-use Shudd3r\Filesystem\Virtual\BasicVirtualFile as VirtualFile;
 use Shudd3r\Filesystem\Exception;
-use Shudd3r\Filesystem\Tests\Fixtures;
 use Shudd3r\Filesystem\Tests\Doubles;
+use Shudd3r\Filesystem\Tests\Fixtures;
 
 
 class LocalLinkTest extends TestCase
@@ -140,7 +139,7 @@ class LocalLinkTest extends TestCase
 
     public function test_setTarget_to_external_filesystem_throws_exception(): void
     {
-        $node = new VirtualFile('virtual.file', 'contents');
+        $node = new Doubles\FakeFile('fake/file.txt', 'contents');
         $link = $this->link('foo.lnk');
         $this->assertExceptionType(Exception\IOException\UnableToCreate::class, fn () => $link->setTarget($node));
     }

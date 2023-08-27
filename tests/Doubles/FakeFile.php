@@ -9,26 +9,18 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual;
+namespace Shudd3r\Filesystem\Tests\Doubles;
 
 use Shudd3r\Filesystem\File;
 use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\ContentStream;
-use Shudd3r\Filesystem\Exception\IOException;
 
 
-class BasicVirtualFile implements File
+class FakeFile implements File
 {
     private string  $name;
     private ?string $contents;
 
-    /**
-     * Null contents value assumes that instance is only a pointer
-     * to a file that does not exist.
-     *
-     * @param string  $name
-     * @param ?string $contents
-     */
     public function __construct(string $name, ?string $contents = null)
     {
         $this->name     = $name;
@@ -87,16 +79,7 @@ class BasicVirtualFile implements File
 
     public function writeStream(ContentStream $stream): void
     {
-        $contents = '';
-        while ($chunk = fread($stream->resource(), 8192)) {
-            $contents .= $chunk;
-        }
-
-        if ($chunk === false) {
-            throw IOException\UnableToReadContents::fromStream($stream);
-        }
-
-        $this->contents = $contents;
+        $this->contents = 'stream contents';
     }
 
     public function append(string $contents): void
