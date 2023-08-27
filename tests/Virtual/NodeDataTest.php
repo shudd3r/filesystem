@@ -39,22 +39,23 @@ class NodeDataTest extends TestCase
     public static function nodeProperties(): array
     {
         return [
-            'not exists'  => ['foo/not/exists',  [false, false, false, false, true, '', null]],
-            'inv path'    => ['bar.txt/path',    [false, false, false, false, false, '', null]],
-            'inv lnk'     => ['inv.lnk',         [false, false, false, true, true, '', 'foo/baz']],
-            'root dir'    => ['',                [true, true, false, false, true, '', null]],
-            'dir'         => ['foo',             [true, true, false, false, true, '', null]],
-            'dir lnk'     => ['dir.lnk',         [true, true, false, true, true, '', 'foo/bar']],
-            'file'        => ['foo/bar/baz.txt', [true, false, true, false, true, 'baz contents', null]],
-            'linked file' => ['dir.lnk/baz.txt', [true, false, true, false, true, 'baz contents', null]],
-            'file lnk'    => ['foo/file.lnk',    [true, false, true, true, true, 'this is bar file', 'bar.txt']]
+            'not exists'  => ['foo/not/exists',  [false, false, false, false, true, '', null, 'not/exists']],
+            'inv path'    => ['bar.txt/path',    [false, false, false, false, false, '', null, 'path']],
+            'inv lnk'     => ['inv.lnk',         [false, false, false, true, true, '', 'foo/baz', 'baz']],
+            'inv lnk ex'  => ['inv.lnk/foo/bar', [false, false, false, false, false, '', 'foo/baz', 'foo/bar']],
+            'root dir'    => ['',                [true, true, false, false, true, '', null, '']],
+            'dir'         => ['foo',             [true, true, false, false, true, '', null, '']],
+            'dir lnk'     => ['dir.lnk',         [true, true, false, true, true, '', 'foo/bar', '']],
+            'file'        => ['foo/bar/baz.txt', [true, false, true, false, true, 'baz contents', null, '']],
+            'file lnk ex' => ['dir.lnk/baz.txt', [true, false, true, false, true, 'baz contents', null, '']],
+            'file lnk'    => ['foo/file.lnk',    [true, false, true, true, true, 'this is bar file', 'bar.txt', '']]
         ];
     }
 
     /** @dataProvider nodeProperties */
     public function test_node_properties(string $nodePath, array $properties): void
     {
-        $keys       = ['exists', 'isDir', 'isFile', 'isLink', 'isValid', 'contents', 'target'];
+        $keys       = ['exists', 'isDir', 'isFile', 'isLink', 'isValid', 'contents', 'target', 'missing'];
         $properties = array_combine($keys, $properties);
 
         $node = self::$tree->nodeData($nodePath);
@@ -65,6 +66,7 @@ class NodeDataTest extends TestCase
         $this->assertSame($properties['isValid'], $node->isValid());
         $this->assertSame($properties['contents'], $node->contents());
         $this->assertSame($properties['target'], $node->target());
+        $this->assertSame($properties['missing'], $node->missingPath());
     }
 
     public function test_root_node(): void

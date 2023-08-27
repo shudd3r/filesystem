@@ -74,6 +74,12 @@ class NodeData
         return $this->exists() || $this->type === VirtualDirectory::class;
     }
 
+    public function missingPath(): string
+    {
+        $fromParent = !isset($this->directory[$this->node]);
+        return implode('/', $fromParent ? array_merge([$this->node], $this->segments) : $this->segments);
+    }
+
     public function remove(): void
     {
         if ($this->link) {

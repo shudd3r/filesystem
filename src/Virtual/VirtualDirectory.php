@@ -11,13 +11,14 @@
 
 namespace Shudd3r\Filesystem\Virtual;
 
+use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Generic\FileGenerator;
 use Shudd3r\Filesystem\Exception;
 use Generator;
 
 
-class VirtualDirectory extends VirtualNode
+class VirtualDirectory extends VirtualNode implements Directory
 {
     public function subdirectory(string $name): VirtualDirectory
     {
@@ -43,7 +44,7 @@ class VirtualDirectory extends VirtualNode
     {
         if (!$this->name) { return $this; }
         if (!$this->exists()) {
-            throw new Exception\RootDirectoryNotFound();
+            throw Exception\RootDirectoryNotFound::forRoot($this->root, $this->name);
         }
         return new self($this->nodes, $this->rootPath(), '');
     }

@@ -12,6 +12,7 @@
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use PHPUnit\Framework\TestCase;
+use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Virtual\NodeData;
 use Shudd3r\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Filesystem\Virtual\VirtualFile;
@@ -20,6 +21,8 @@ use Shudd3r\Filesystem\Virtual\VirtualNode;
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\FilesystemException;
 use Shudd3r\Filesystem\Exception;
+use Shudd3r\Filesystem\Node;
+use Shudd3r\Filesystem\Tests\Doubles;
 
 
 class VirtualFilesystemTest extends TestCase
@@ -142,7 +145,7 @@ class VirtualFilesystemTest extends TestCase
         $notExistingRoot = fn () => $subdirectory->asRoot();
         $this->assertExceptionType(Exception\RootDirectoryNotFound::class, $notExistingRoot);
 
-        $validateExisting = fn () => $subdirectory->validated(VirtualNode::EXISTS);
+        $validateExisting = fn () => $subdirectory->validated(Node::EXISTS);
         $this->assertExceptionType(Exception\NodeNotFound::class, $validateExisting);
 
         $validatePath = fn () => $directory->subdirectory('bar/baz.txt/dir')->validated();
@@ -176,6 +179,39 @@ class VirtualFilesystemTest extends TestCase
     {
         $this->assertSame('baz contents', $this->file('foo/bar/baz.txt')->contents());
         $this->assertSame('bar contents', $this->file('foo/file.lnk')->contents());
+
+        $this->assertNull($this->file('foo/bar/baz.txt')->contentStream());
+
+        $file = $this->file('foo/file.lnk/bar.txt');
+        $this->assertExceptionType(Exception\UnexpectedLeafNode::class, fn () => $file->contents(), 'invalid path');
+
+        $file = $this->file('foo');
+        $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $file->contents(), 'invalid type');
+    }
+
+    public function test_file_write(): void
+    {
+        $file = $this->file('baz/file.txt');
+        $this->assertSame('', $file->contents());
+
+        $file->write('contents');
+        $this->assertSame('contents', $file->contents());
+
+        $file->append('-appended');
+        $this->assertSame('contents-appended', $file->contents());
+
+        $resource = fopen('php://memory', 'rb+');
+        fwrite($resource, 'stream contents');
+        rewind($resource);
+        $file->writeStream(new ContentStream($resource));
+        $this->assertSame('stream contents', $file->contents());
+
+        $file->copy($this->file('foo/file.lnk'));
+        $this->assertSame('bar contents', $file->contents());
+
+        $file->moveTo($this->directory('bar'));
+        $this->assertFalse($file->exists());
+        $this->assertSame('bar contents', $this->file('bar/file.txt')->contents());
     }
 
     public function test_link_target(): void
@@ -185,6 +221,28 @@ class VirtualFilesystemTest extends TestCase
         $this->file('bar.txt')->remove();
         $this->assertNull($link->target());
         $this->assertSame('virtual://bar.txt', $link->target(true));
+
+        $link = $this->link('foo/file.lnk/bar.txt');
+        $this->assertExceptionType(Exception\UnexpectedLeafNode::class, fn () => $link->target(), 'invalid path');
+
+        $link = $this->link('foo');
+        $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $link->target(), 'invalid type');
+    }
+
+    public function test_link_setTarget(): void
+    {
+        $link = $this->link('foo/file.lnk');
+        $link->setTarget($this->file('foo/bar/baz.txt'));
+        $this->assertSame('virtual://foo/bar/baz.txt', $link->target());
+
+        $directoryTarget = fn () => $link->setTarget($this->directory('foo'));
+        $this->assertExceptionType(Exception\UnexpectedNodeType::class, $directoryTarget);
+
+        $filesystemMismatch = fn () => $link->setTarget(new Doubles\FakeLocalNode());
+        $this->assertExceptionType(Exception\IOException\UnableToCreate::class, $filesystemMismatch);
+
+        $indirectTarget = fn () => $link->setTarget($this->link('dir.lnk'));
+        $this->assertExceptionType(Exception\IOException\UnableToCreate::class, $indirectTarget);
     }
 
     public function test_invalid_link(): void
