@@ -25,7 +25,7 @@ class LocalLink extends LocalNode implements Link
 
     public function target(bool $showRemoved = false): ?string
     {
-        $path = $this->pathname->absolute();
+        $path = $this->validated(self::EXISTS)->pathname->absolute();
         $show = $showRemoved || is_file($path) || is_dir($path);
         return $show ? readlink($path) : null;
     }
@@ -72,11 +72,7 @@ class LocalLink extends LocalNode implements Link
             throw Exception\IOException\UnableToCreate::indirectLink($this);
         }
 
-        $path = $node->validated(self::EXISTS)->pathname();
-        if (!is_dir($path) && !is_file($path)) {
-            throw Exception\NodeNotFound::forNode($node);
-        }
-
+        $path     = $node->validated(self::EXISTS)->pathname();
         $mismatch = $this->isDirectory() && !is_dir($path) || $this->isFile() && !is_file($path);
         if ($mismatch) {
             throw Exception\UnexpectedNodeType::forLink($this, $node);

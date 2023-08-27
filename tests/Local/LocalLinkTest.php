@@ -157,10 +157,6 @@ class LocalLinkTest extends TestCase
         $node = $this->node('foo/bar', false);
         $link = $this->link('bar.lnk');
         $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $link->setTarget($node));
-
-        self::$temp->symlink('', 'foo/stale.lnk');
-        $node = $this->node('foo/stale.lnk');
-        $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $link->setTarget($node));
     }
 
     public function test_changing_target_to_different_type_throws_exception(): void
