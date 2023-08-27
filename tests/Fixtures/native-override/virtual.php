@@ -14,7 +14,7 @@ namespace Shudd3r\Filesystem\Virtual;
 use Shudd3r\Filesystem\Tests\Fixtures\Override;
 
 /** @return false|string */
-function fread($resource, int $length)
+function stream_get_contents($resource)
 {
-    return Override::call('fread', $resource) ?? \fread($resource, $length);
+    return Override::call('stream_get_contents', $resource) ?? \stream_get_contents($resource);
 }
