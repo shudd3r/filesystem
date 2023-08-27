@@ -195,15 +195,17 @@ class LocalDirectoryTest extends TestCase
 
     public function test_runtime_remove_directory_failures(): void
     {
-        $dirNode   = self::$temp->directory('foo');
-        $fileNode  = self::$temp->file('foo/bar/baz.txt');
-        $subNode   = self::$temp->directory('foo/bar/sub');
-        $directory = $this->directory()->subdirectory('foo');
-        $remove    = fn () => $directory->remove();
+        $removeDirectory = function (): void {
+            self::$temp->directory('foo');
+            self::$temp->file('foo/bar/baz.txt');
+            self::$temp->directory('foo/bar/sub');
+            $this->directory()->subdirectory('foo')->remove();
+        };
 
-        $this->assertIOException(Exception\IOException\UnableToRemove::class, $remove, 'unlink', $fileNode);
-        $this->assertIOException(Exception\IOException\UnableToRemove::class, $remove, 'rmdir', $subNode);
-        $this->assertIOException(Exception\IOException\UnableToRemove::class, $remove, 'rmdir', $dirNode);
+        $exception = Exception\IOException\UnableToRemove::class;
+        $this->assertIOException($exception, $removeDirectory, 'unlink', self::$temp->pathname('foo/bar/baz.txt'));
+        $this->assertIOException($exception, $removeDirectory, 'rmdir', self::$temp->pathname('foo/bar/sub'));
+        $this->assertIOException($exception, $removeDirectory, 'rmdir', self::$temp->pathname('foo'));
     }
 
     private function assertFiles(array $files, FileIterator $fileIterator): void
