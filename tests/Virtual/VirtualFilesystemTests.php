@@ -17,6 +17,7 @@ use Shudd3r\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Filesystem\Virtual\VirtualLink;
 use Shudd3r\Filesystem\Virtual\NodeData;
+use Shudd3r\Filesystem\Tests\Doubles;
 
 
 abstract class VirtualFilesystemTests extends FilesystemTests
@@ -42,6 +43,11 @@ abstract class VirtualFilesystemTests extends FilesystemTests
     protected function setUp(): void
     {
         $this->nodes = $this->nodes();
+    }
+
+    protected function node(string $name = '', string $root = '', bool $exists = true): VirtualNode
+    {
+        return new Doubles\FakeVirtualNode($this->nodes, $root, $name, $exists);
     }
 
     protected function directory(string $name = '', string $root = ''): VirtualDirectory
