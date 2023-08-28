@@ -14,22 +14,30 @@ namespace Shudd3r\Filesystem\Tests\Fixtures;
 
 class Override
 {
-    public static array $functions = [];
+    private static array $functions = [];
 
-    public static function call(string $function, $forArgValue = null)
+    /**
+     * @param string $function
+     * @param mixed  $argValue
+     *
+     * @return mixed|null
+     */
+    public static function call(string $function, $argValue = null)
     {
-        $value = isset($forArgValue) && is_array(self::$functions[$function] ?? null)
-            ? self::$functions[$function][$forArgValue] ?? null
-            : self::$functions[$function] ?? null;
-        if ($value === null) { return null; }
+        if (!array_key_exists($function, self::$functions)) { return null; }
+        $override = self::$functions[$function];
+        $value    = isset($argValue) && is_array($override) ? $override[$argValue] ?? null : $override;
         return is_callable($value) ? $value() : $value;
     }
 
-    public static function set(string $function, $returnValue, $argValue): void
+    public static function set(string $function, $returnValue, $forArgValue = null): void
     {
-        $argValue !== null
-            ? self::$functions[$function][$argValue] = $returnValue
-            : self::$functions[$function] = $returnValue;
+        self::$functions[$function] = !isset($forArgValue) ? $returnValue : [$forArgValue => $returnValue];
+    }
+
+    public static function remove(string $function): void
+    {
+        unset(self::$functions[$function]);
     }
 
     public static function reset(): void

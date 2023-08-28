@@ -11,18 +11,18 @@
 
 namespace Shudd3r\Filesystem\Tests\Generic;
 
-use PHPUnit\Framework\TestCase;
+use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Generic\ContentStream;
-use Shudd3r\Filesystem\Tests\Fixtures;
 use InvalidArgumentException;
 use RuntimeException;
 
-require_once dirname(__DIR__) . '/Fixtures/native-override/generic.php';
 
-
-class ContentStreamTest extends TestCase
+class ContentStreamTest extends FilesystemTests
 {
-    use Fixtures\TestUtilities;
+    public static function setUpBeforeClass(): void
+    {
+        require_once dirname(__DIR__) . '/Fixtures/native-override/generic.php';
+    }
 
     public function test_resource_method_returns_wrapped_stream(): void
     {
@@ -32,9 +32,8 @@ class ContentStreamTest extends TestCase
 
     public function test_uri_method_returns_resource_uri(): void
     {
-        $file   = self::$temp->file('foo/bar.txt');
-        $stream = new ContentStream(fopen($file, 'rb'));
-        $this->assertSame($file, $stream->uri());
+        $stream = new ContentStream($this->resource());
+        $this->assertSame('php://memory', $stream->uri());
     }
 
     public function test_cannot_instantiate_with_non_resource_argument(): void
@@ -76,8 +75,7 @@ class ContentStreamTest extends TestCase
 
     public function test_resource_method_for_resource_closed_in_outside_scope_throws_Exception(): void
     {
-        $resource = $this->resource();
-        $stream   = new ContentStream($resource);
+        $stream = new ContentStream($resource = $this->resource());
         fclose($resource);
         $this->expectException(RuntimeException::class);
         $stream->resource();

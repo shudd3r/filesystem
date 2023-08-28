@@ -11,21 +11,15 @@
 
 namespace Shudd3r\Filesystem\Tests\Local;
 
-use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\LocalFile;
+use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Generic\ContentStream;
-use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Exception\IOException;
-use Shudd3r\Filesystem\Tests\Fixtures;
-
-require_once dirname(__DIR__) . '/Fixtures/native-override/local.php';
 
 
-class LocalFileTest extends TestCase
+class LocalFileTest extends LocalFilesystemTests
 {
-    use Fixtures\TestUtilities;
-
     public function test_exists_for_existing_file_returns_true(): void
     {
         $file = $this->file('foo/bar/baz.txt', 'contents');

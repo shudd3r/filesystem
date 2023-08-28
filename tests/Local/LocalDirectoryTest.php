@@ -11,23 +11,16 @@
 
 namespace Shudd3r\Filesystem\Tests\Local;
 
-use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Local\LocalLink;
 use Shudd3r\Filesystem\Local\LocalFile;
 use Shudd3r\Filesystem\Local\Pathname;
-use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
-use Shudd3r\Filesystem\Tests\Fixtures;
-
-require_once dirname(__DIR__) . '/Fixtures/native-override/local.php';
 
 
-class LocalDirectoryTest extends TestCase
+class LocalDirectoryTest extends LocalFilesystemTests
 {
-    use Fixtures\TestUtilities;
-
     public function test_static_constructor_for_not_real_directory_path_returns_null(): void
     {
         $path = self::$temp->pathname('not/exists');
@@ -206,19 +199,6 @@ class LocalDirectoryTest extends TestCase
         $this->assertIOException($exception, $removeDirectory, 'unlink', self::$temp->pathname('foo/bar/baz.txt'));
         $this->assertIOException($exception, $removeDirectory, 'rmdir', self::$temp->pathname('foo/bar/sub'));
         $this->assertIOException($exception, $removeDirectory, 'rmdir', self::$temp->pathname('foo'));
-    }
-
-    private function assertFiles(array $files, FileIterator $fileIterator): void
-    {
-        /** @var LocalFile $file */
-        foreach ($fileIterator as $file) {
-            $name = $file->name();
-            $this->assertTrue($file->exists(), sprintf('File `%s` should exist', $name));
-            $this->assertArrayHasKey($name, $files, sprintf('Unexpected file `%s` found', $name));
-            $this->assertSame($files[$name], $file->pathname());
-            unset($files[$name]);
-        }
-        $this->assertSame([], $files, 'Some expected files were not found');
     }
 
     private function files(array $filenames): array

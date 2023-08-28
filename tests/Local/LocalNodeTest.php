@@ -11,19 +11,15 @@
 
 namespace Shudd3r\Filesystem\Tests\Local;
 
-use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\LocalNode;
 use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Tests\Doubles;
-use Shudd3r\Filesystem\Tests\Fixtures;
 
 
-class LocalNodeTest extends TestCase
+class LocalNodeTest extends LocalFilesystemTests
 {
-    use Fixtures\TestUtilities;
-
     public function test_root_node_name_is_empty(): void
     {
         $this->assertEmpty($this->node()->name());

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 /*
  * This file is part of Shudd3r/Filesystem package.
@@ -14,7 +14,7 @@ namespace Shudd3r\Filesystem\Tests\Generic;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\File;
 use Shudd3r\Filesystem\Generic\FileIterator;
-use Shudd3r\Filesystem\Tests\Doubles;
+use Shudd3r\Filesystem\Tests\Doubles\FakeFile;
 
 
 class FileListTest extends TestCase
@@ -23,7 +23,9 @@ class FileListTest extends TestCase
 
     public static function setUpBeforeClass(): void
     {
-        self::$example = self::filesArray(['foo.txt' => 'something', 'foo/bar.ext' => '', 'baz' => null]);
+        $files      = ['foo.txt' => 'something', 'foo/bar.ext' => '', 'baz' => null];
+        $createFile = fn (string $name, ?string $contents) => new FakeFile($name, $contents);
+        self::$example = array_map($createFile, array_keys($files), array_values($files));
     }
 
     public function test_instantiation_from_array_and_ArrayIterator_instance_returns_same_array(): void
@@ -63,15 +65,6 @@ class FileListTest extends TestCase
         $capture = [];
         $this->files()->forEach(function (File $file) use (&$capture): void { $capture[] = $file->name(); });
         $this->assertSame(['foo.txt', 'foo/bar.ext', 'baz'], $capture);
-    }
-
-    private static function filesArray(array $files = null): array
-    {
-        $fileArray = [];
-        foreach ($files ?? self::$example as $name => $contents) {
-            $fileArray[] = new Doubles\FakeFile($name, $contents);
-        }
-        return $fileArray;
     }
 
     private static function files(): FileIterator

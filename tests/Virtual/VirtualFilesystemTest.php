@@ -11,24 +11,19 @@
 
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
-use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Generic\ContentStream;
-use Shudd3r\Filesystem\Virtual\NodeData;
+use Shudd3r\Filesystem\Tests\FilesystemTests;
+use Shudd3r\Filesystem\Virtual\VirtualNode;
 use Shudd3r\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Filesystem\Virtual\VirtualLink;
-use Shudd3r\Filesystem\Virtual\VirtualNode;
-use Shudd3r\Filesystem\Generic\FileIterator;
-use Shudd3r\Filesystem\FilesystemException;
+use Shudd3r\Filesystem\Virtual\NodeData;
+use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Tests\Doubles;
-use Shudd3r\Filesystem\Tests\Fixtures;
-
-require_once dirname(__DIR__) . '/Fixtures/native-override/virtual.php';
 
 
-class VirtualFilesystemTest extends TestCase
+class VirtualFilesystemTest extends FilesystemTests
 {
     private const EXAMPLE_STRUCTURE = [
         'foo' => [
@@ -43,14 +38,14 @@ class VirtualFilesystemTest extends TestCase
 
     private static NodeData $tree;
 
+    public static function setUpBeforeClass(): void
+    {
+        require_once dirname(__DIR__) . '/Fixtures/native-override/virtual.php';
+    }
+
     protected function setUp(): void
     {
         self::$tree = NodeData::root(self::EXAMPLE_STRUCTURE);
-    }
-
-    protected function tearDown(): void
-    {
-        Fixtures\Override::reset();
     }
 
     public function test_exists_method(): void
@@ -208,11 +203,11 @@ class VirtualFilesystemTest extends TestCase
         $file->append('-appended');
         $this->assertSame('contents-appended', $file->contents());
 
-        $file->writeStream($this->stream());
+        $file->writeStream(new ContentStream($this->resource('stream contents')));
         $this->assertSame('stream contents', $file->contents());
 
         $this->override('stream_get_contents', false);
-        $writeStream = fn () => $file->writeStream($this->stream());
+        $writeStream = fn () => $file->writeStream(new ContentStream($this->resource('foo...')));
         $this->assertExceptionType(Exception\IOException\UnableToReadContents::class, $writeStream);
 
         $file->copy($this->file('foo/file.lnk'));
@@ -279,33 +274,6 @@ class VirtualFilesystemTest extends TestCase
         $this->assertFalse($node->exists());
     }
 
-    private function assertExceptionType(string $expected, callable $procedure, string $case = ''): void
-    {
-        $title = $case ? 'Case "' . $case . '": ' : '';
-        try {
-            $procedure();
-        } catch (FilesystemException $ex) {
-            $message = $title . 'Unexpected Exception type - expected `%s` caught `%s`';
-            $this->assertInstanceOf($expected, $ex, sprintf($message, $expected, get_class($ex)));
-            return;
-        }
-
-        $this->fail(sprintf($title . 'No Exception thrown - expected `%s`', $expected));
-    }
-
-    private function assertFiles(array $files, FileIterator $fileIterator): void
-    {
-        /** @var VirtualFile $file */
-        foreach ($fileIterator as $file) {
-            $name = $file->name();
-            $this->assertTrue($file->exists(), sprintf('File `%s` should exist', $name));
-            $this->assertArrayHasKey($name, $files, sprintf('Unexpected file `%s` found', $name));
-            $this->assertSame($files[$name], $file->pathname());
-            unset($files[$name]);
-        }
-        $this->assertSame([], $files, 'Some expected files were not found');
-    }
-
     private function directory(string $name = ''): VirtualDirectory
     {
         return new VirtualDirectory(self::$tree, '', $name);
@@ -319,18 +287,5 @@ class VirtualFilesystemTest extends TestCase
     private function link(string $name): VirtualLink
     {
         return new VirtualLink(self::$tree, '', $name);
-    }
-
-    private function stream(): ContentStream
-    {
-        $resource = fopen('php://memory', 'rb+');
-        fwrite($resource, 'stream contents');
-        rewind($resource);
-        return new ContentStream($resource);
-    }
-
-    private function override(string $function, $value, $argValue = null): void
-    {
-        Fixtures\Override::set($function, $value, $argValue);
     }
 }

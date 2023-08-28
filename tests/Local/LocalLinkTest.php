@@ -11,18 +11,14 @@
 
 namespace Shudd3r\Filesystem\Tests\Local;
 
-use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\LocalLink;
 use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Tests\Doubles;
-use Shudd3r\Filesystem\Tests\Fixtures;
 
 
-class LocalLinkTest extends TestCase
+class LocalLinkTest extends LocalFilesystemTests
 {
-    use Fixtures\TestUtilities;
-
     public function test_exists_method(): void
     {
         $link = $this->link('foo/bar');

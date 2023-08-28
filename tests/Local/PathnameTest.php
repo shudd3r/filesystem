@@ -11,16 +11,12 @@
 
 namespace Shudd3r\Filesystem\Tests\Local;
 
-use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Exception;
-use Shudd3r\Filesystem\Tests\Fixtures;
 
 
-class PathnameTest extends TestCase
+class PathnameTest extends LocalFilesystemTests
 {
-    use Fixtures\TestUtilities;
-
     public static function invalidNames(): array
     {
         return [
