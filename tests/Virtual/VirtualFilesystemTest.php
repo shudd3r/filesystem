@@ -11,43 +11,15 @@
 
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
-use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Virtual\VirtualNode;
-use Shudd3r\Filesystem\Virtual\VirtualDirectory;
-use Shudd3r\Filesystem\Virtual\VirtualFile;
-use Shudd3r\Filesystem\Virtual\VirtualLink;
-use Shudd3r\Filesystem\Virtual\NodeData;
 use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Tests\Doubles;
 
 
-class VirtualFilesystemTest extends FilesystemTests
+class VirtualFilesystemTest extends VirtualFilesystemTests
 {
-    private const EXAMPLE_STRUCTURE = [
-        'foo' => [
-            'bar'      => ['baz.txt' => 'baz contents'],
-            'file.lnk' => ['/link' => 'bar.txt'],
-            'empty'    => []
-        ],
-        'bar.txt' => 'bar contents',
-        'dir.lnk' => ['/link' => 'foo/bar'],
-        'inv.lnk' => ['/link' => 'foo/baz']
-    ];
-
-    private static NodeData $tree;
-
-    public static function setUpBeforeClass(): void
-    {
-        require_once dirname(__DIR__) . '/Fixtures/native-override/virtual.php';
-    }
-
-    protected function setUp(): void
-    {
-        self::$tree = NodeData::root(self::EXAMPLE_STRUCTURE);
-    }
-
     public function test_exists_method(): void
     {
         $this->assertExists($this->directory());
@@ -70,12 +42,12 @@ class VirtualFilesystemTest extends FilesystemTests
 
     public function test_remove_not_existing_node_is_ignored(): void
     {
-        $tree = NodeData::root(self::EXAMPLE_STRUCTURE);
+        $expectedNodes = $this->nodes();
         $this->file('foo/bar/baz/file.txt')->remove();
-        $this->assertEquals(self::$tree, $tree);
+        $this->assertEquals($expectedNodes, $this->nodes);
 
         $this->directory('foo/bar/baz.txt')->remove();
-        $this->assertEquals(self::$tree, $tree);
+        $this->assertEquals($expectedNodes, $this->nodes);
     }
 
     public function test_remove_existing_node_removes_node(): void
@@ -272,20 +244,5 @@ class VirtualFilesystemTest extends FilesystemTests
     private function assertNotExists(VirtualNode $node): void
     {
         $this->assertFalse($node->exists());
-    }
-
-    private function directory(string $name = ''): VirtualDirectory
-    {
-        return new VirtualDirectory(self::$tree, '', $name);
-    }
-
-    private function file(string $name): VirtualFile
-    {
-        return new VirtualFile(self::$tree, '', $name);
-    }
-
-    private function link(string $name): VirtualLink
-    {
-        return new VirtualLink(self::$tree, '', $name);
     }
 }
