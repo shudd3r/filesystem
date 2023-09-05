@@ -27,7 +27,7 @@ abstract class LocalNode implements Node
      * filesystem unless it's a root directory instantiated with a Pathname
      * without relative name.
      */
-    public function __construct(Pathname $pathname)
+    protected function __construct(Pathname $pathname)
     {
         $this->pathname = $pathname;
     }

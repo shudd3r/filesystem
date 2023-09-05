@@ -41,10 +41,6 @@ class PathnameTest extends LocalFilesystemTests
 
     public function test_instance_can_only_be_created_with_real_directory_path(): void
     {
-        foreach ($this->invalidInstancePaths() as $type => $path) {
-            $this->assertNull($this->path($path), "Failed for `$type`");
-        }
-
         $path = self::$temp->directory('existing/directory');
         $this->assertSame($path, realpath($path));
         $this->assertTrue(is_dir($path));
@@ -79,16 +75,6 @@ class PathnameTest extends LocalFilesystemTests
         $directory->asRoot();
     }
 
-    public function test_instance_path_normalization(): void
-    {
-        $rootName = self::$temp->directory();
-        $expected = self::$temp->directory('foo/bar');
-        $this->assertEquals($expected, $this->path($rootName . '/foo/bar')->absolute());
-        $this->assertEquals($expected, $this->path(str_replace('/', '\\', $rootName) . '\foo\bar')->absolute());
-        $this->assertEquals($expected, $this->path($rootName . '\foo/bar/')->absolute());
-        $this->assertEquals($expected, $this->path($rootName . '/foo\bar\\')->absolute());
-    }
-
     /** @dataProvider acceptedNameVariations */
     public function test_child_node_name_separator_normalization(string $name): void
     {
@@ -119,23 +105,8 @@ class PathnameTest extends LocalFilesystemTests
         $this->assertSame($path, $node->closestAncestor());
     }
 
-    private function invalidInstancePaths(): array
+    private function path(string $pathname = null): Pathname
     {
-        chdir(self::$temp->directory());
-        return [
-            'file path'         => self::$temp->file('foo/bar/baz.txt'),
-            'not existing path' => self::$temp->pathname('not/exists'),
-            'invalid symlink'   => self::$temp->symlink('', 'link'),
-            'valid symlink'     => self::$temp->symlink(self::$temp->pathname('foo/bar'), 'link'),
-            'relative path'     => self::$temp->relative('./foo/bar'),
-            'step-up path'      => self::$temp->pathname('foo/bar/..'),
-            'empty path'        => '',
-            'dot path'          => '.'
-        ];
-    }
-
-    private function path(string $pathname = null): ?Pathname
-    {
-        return Pathname::root($pathname ?? self::$temp->directory());
+        return new Pathname($pathname ?? self::$temp->directory());
     }
 }

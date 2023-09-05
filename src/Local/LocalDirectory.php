@@ -22,7 +22,7 @@ class LocalDirectory extends LocalNode implements Directory
 {
     private ?int $assert;
 
-    public function __construct(Pathname $pathname, int $assert = null)
+    protected function __construct(Pathname $pathname, int $assert = null)
     {
         $this->assert = $assert;
         parent::__construct($pathname);
@@ -36,8 +36,9 @@ class LocalDirectory extends LocalNode implements Directory
      */
     public static function root(string $path, int $assert = null): ?self
     {
-        $path = Pathname::root($path);
-        return $path ? new self($path, $assert) : null;
+        $path   = rtrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
+        $isReal = $path === realpath($path) && is_dir($path);
+        return $isReal ? new self(new Pathname($path), $assert) : null;
     }
 
     public function exists(): bool

@@ -25,21 +25,11 @@ final class Pathname
     private string $name;
     private string $path;
 
-    private function __construct(string $root, string $name = '')
+    public function __construct(string $root, string $name = '')
     {
         $this->root = $root;
         $this->name = $name;
         $this->path = $name ? $root . DIRECTORY_SEPARATOR . $name : $root;
-    }
-
-    /**
-     * @param string $path Real, absolute path to existing directory
-     */
-    public static function root(string $path): ?self
-    {
-        $path   = rtrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
-        $isReal = $path === realpath($path) && is_dir($path);
-        return $isReal ? new self($path) : null;
     }
 
     /**
