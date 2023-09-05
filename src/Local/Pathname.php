@@ -33,11 +33,19 @@ final class Pathname
     }
 
     /**
-     * @return string absolute pathname within local filesystem
+     * @return string absolute pathname within filesystem
      */
     public function absolute(): string
     {
         return $this->path;
+    }
+
+    /**
+     * @return string absolute root directory path
+     */
+    public function root(): string
+    {
+        return $this->root;
     }
 
     /**

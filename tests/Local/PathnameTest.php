@@ -44,14 +44,20 @@ class PathnameTest extends LocalFilesystemTests
         $path = self::$temp->directory('existing/directory');
         $this->assertSame($path, realpath($path));
         $this->assertTrue(is_dir($path));
-        $this->assertInstanceOf(Pathname::class, $this->path($path));
+
+        $this->assertInstanceOf(Pathname::class, $pathname = $this->path($path));
+        $this->assertSame($path, $pathname->root());
+        $this->assertSame($path, $pathname->absolute());
     }
 
     public function test_creating_child_node_instance(): void
     {
-        $name = 'foo/bar/baz.txt';
-        $this->assertSame(self::$temp->pathname($name), $this->path()->forChildNode($name)->absolute());
-        $this->assertSame(self::$temp->relative($name), $this->path()->forChildNode($name)->relative());
+        $name     = 'foo/bar/baz.txt';
+        $pathname = $this->path()->forChildNode($name);
+
+        $this->assertSame(self::$temp->relative($name), $pathname->relative());
+        $this->assertSame($absolute = self::$temp->pathname($name), $pathname->absolute());
+        $this->assertSame($absolute, $pathname->root() . DIRECTORY_SEPARATOR . $pathname->relative());
     }
 
     /** @dataProvider invalidNames */
