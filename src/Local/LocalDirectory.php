@@ -14,7 +14,7 @@ namespace Shudd3r\Filesystem\Local;
 use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Generic\FileGenerator;
-use Shudd3r\Filesystem\Exception\IOException;
+use Shudd3r\Filesystem\Exception;
 use Generator;
 
 
@@ -71,18 +71,23 @@ class LocalDirectory extends LocalNode implements Directory
 
     public function asRoot(): self
     {
-        return $this->pathname->relative() ? new self($this->pathname->asRoot(), $this->assert) : $this;
+        if (!$this->pathname->relative()) { return $this; }
+        if (!$this->exists()) {
+            throw Exception\RootDirectoryNotFound::forRoot($this->pathname->root(), $this->pathname->relative());
+        }
+
+        return new self($this->pathname->asRoot(), $this->assert);
     }
 
     protected function removeNode(): void
     {
         foreach ($this->pathname->descendantPaths() as $pathname) {
             if (!$this->delete($pathname->absolute())) {
-                throw IOException\UnableToRemove::directoryNode($this, $pathname->absolute());
+                throw Exception\IOException\UnableToRemove::directoryNode($this, $pathname->absolute());
             }
         }
         if (!@rmdir($this->pathname())) {
-            throw IOException\UnableToRemove::node($this);
+            throw Exception\IOException\UnableToRemove::node($this);
         }
     }
 

@@ -74,13 +74,6 @@ class PathnameTest extends LocalFilesystemTests
         $this->assertSame($newRoot, $newRoot->asRoot());
     }
 
-    public function test_converting_relative_name_for_not_existing_directory_throws_exception(): void
-    {
-        $directory = $this->path()->forChildNode('foo/bar');
-        $this->expectException(Exception\RootDirectoryNotFound::class);
-        $directory->asRoot();
-    }
-
     /** @dataProvider acceptedNameVariations */
     public function test_child_node_name_separator_normalization(string $name): void
     {

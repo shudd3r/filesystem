@@ -12,7 +12,6 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Exception\InvalidNodeName;
-use Shudd3r\Filesystem\Exception\RootDirectoryNotFound;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use FilesystemIterator;
@@ -25,6 +24,10 @@ final class Pathname
     private string $name;
     private string $path;
 
+    /**
+     * @param string $root absolute directory path
+     * @param string $name relative node pathname
+     */
     public function __construct(string $root, string $name = '')
     {
         $this->root = $root;
@@ -101,17 +104,11 @@ final class Pathname
     }
 
     /**
-     * @throws RootDirectoryNotFound for not existing directory
-     *
      * @return self without relative path
      */
     public function asRoot(): self
     {
-        if (!$this->name) { return $this; }
-        if (!is_dir($this->path)) {
-            throw RootDirectoryNotFound::forRoot($this->root, $this->name);
-        }
-        return new self($this->path);
+        return $this->name ? new self($this->path) : $this;
     }
 
     private function validName(string $name): string
