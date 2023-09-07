@@ -15,6 +15,9 @@ use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Generic\FileGenerator;
 use Shudd3r\Filesystem\Exception;
+use RecursiveIteratorIterator;
+use RecursiveDirectoryIterator;
+use FilesystemIterator;
 use Generator;
 
 
@@ -81,7 +84,7 @@ class LocalDirectory extends LocalNode implements Directory
 
     protected function removeNode(): void
     {
-        foreach ($this->pathname->descendantPaths() as $pathname) {
+        foreach ($this->descendantPaths() as $pathname) {
             if (!$this->delete($pathname->absolute())) {
                 throw Exception\IOException\UnableToRemove::directoryNode($this, $pathname->absolute());
             }
@@ -94,7 +97,7 @@ class LocalDirectory extends LocalNode implements Directory
     private function generateFiles(): Generator
     {
         $filter = fn (string $path) => is_file($path);
-        foreach ($this->pathname->descendantPaths($filter) as $pathname) {
+        foreach ($this->descendantPaths($filter) as $pathname) {
             yield new LocalFile($pathname);
         }
     }
@@ -113,5 +116,23 @@ class LocalDirectory extends LocalNode implements Directory
         }
 
         return $isFile ? @unlink($path) : @rmdir($path);
+    }
+
+    /**
+     * @param ?callable $filter fn(string) => bool
+     */
+    private function descendantPaths(callable $filter = null): Generator
+    {
+        $root     = $this->pathname->root();
+        $length   = strlen($root) + 1;
+        $pathname = fn (string $node) => new Pathname($root, substr($node, $length));
+
+        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
+        $nodes = new RecursiveDirectoryIterator($this->pathname->absolute(), $flags);
+        $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($nodes as $node) {
+            if ($filter && !$filter($node)) { continue; }
+            yield $pathname($node);
+        }
     }
 }
