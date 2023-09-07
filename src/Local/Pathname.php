@@ -76,18 +76,6 @@ final class Pathname
     }
 
     /**
-     * @return string absolute path name of closest existing ancestor node
-     */
-    public function closestAncestor(): string
-    {
-        $path = dirname($this->path);
-        while (!file_exists($path) && !is_link($path)) {
-            $path = dirname($path);
-        }
-        return $path;
-    }
-
-    /**
      * @param ?callable $filter fn(string) => bool
      *
      * @return Iterator

@@ -81,29 +81,6 @@ class PathnameTest extends LocalFilesystemTests
         $this->assertSame(self::$temp->relative($name), $this->path()->forChildNode($name)->relative());
     }
 
-    public function test_closestAncestor_method_returns_longest_path_fragment_existing_in_filesystem(): void
-    {
-        $file      = self::$temp->file('foo/bar/file.txt');
-        $directory = self::$temp->directory('foo/bar/dir name');
-        $fileLink  = self::$temp->symlink($file, 'linked/file.txt');
-        $dirLink   = self::$temp->symlink(dirname($directory), 'linked/dir');
-        $linkedDir = self::$temp->pathname('linked/dir/dir name');
-        $deadLink  = self::$temp->symlink('', 'linked/stale');
-
-        $this->assertAncestor($file, 'foo/bar/file.txt/expand/path/file.txt');
-        $this->assertAncestor($directory, 'foo/bar/dir name/expanded/sub');
-        $this->assertAncestor($fileLink, 'linked/file.txt/as/directory');
-        $this->assertAncestor($dirLink, 'linked/dir/not/exist');
-        $this->assertAncestor($linkedDir, 'linked/dir/dir name/not/exists');
-        $this->assertAncestor($deadLink, 'linked/stale/not/exists');
-    }
-
-    private function assertAncestor(string $path, string $nodeName): void
-    {
-        $node = $this->path()->forChildNode($nodeName);
-        $this->assertSame($path, $node->closestAncestor());
-    }
-
     private function path(string $pathname = null): Pathname
     {
         return new Pathname($pathname ?? self::$temp->directory());
