@@ -12,11 +12,12 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Directory;
-use Shudd3r\Filesystem\Generic\FileIterator;
-use Shudd3r\Filesystem\Generic\FileGenerator;
+use Shudd3r\Filesystem\Pathname;
 use Shudd3r\Filesystem\Exception;
-use RecursiveIteratorIterator;
+use Shudd3r\Filesystem\Generic\FileGenerator;
+use Shudd3r\Filesystem\Generic\FileIterator;
 use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 use FilesystemIterator;
 use Generator;
 

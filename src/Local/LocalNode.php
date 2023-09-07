@@ -12,10 +12,11 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Node;
-use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
-use Shudd3r\Filesystem\Exception\UnexpectedLeafNode;
-use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
+use Shudd3r\Filesystem\Pathname;
 use Shudd3r\Filesystem\Exception\NodeNotFound;
+use Shudd3r\Filesystem\Exception\UnexpectedLeafNode;
+use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
+use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
 
 
 abstract class LocalNode implements Node

@@ -9,7 +9,7 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Local;
+namespace Shudd3r\Filesystem;
 
 use Shudd3r\Filesystem\Exception\InvalidNodeName;
 

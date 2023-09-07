@@ -9,10 +9,11 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Tests\Local;
+namespace Shudd3r\Filesystem\Tests;
 
-use Shudd3r\Filesystem\Local\Pathname;
+use Shudd3r\Filesystem\Tests\Local\LocalFilesystemTests;
 use Shudd3r\Filesystem\Exception;
+use Shudd3r\Filesystem\Pathname;
 
 
 class PathnameTest extends LocalFilesystemTests
@@ -39,13 +40,11 @@ class PathnameTest extends LocalFilesystemTests
         ];
     }
 
-    public function test_instance_can_only_be_created_with_real_directory_path(): void
+    public function test_creating_root_node_instance(): void
     {
-        $path = self::$temp->directory('existing/directory');
-        $this->assertSame($path, realpath($path));
-        $this->assertTrue(is_dir($path));
+        $path     = self::$temp->pathname('existing/directory');
+        $pathname = $this->path($path);
 
-        $this->assertInstanceOf(Pathname::class, $pathname = $this->path($path));
         $this->assertSame($path, $pathname->root());
         $this->assertSame($path, $pathname->absolute());
     }
