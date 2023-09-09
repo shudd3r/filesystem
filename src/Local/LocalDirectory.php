@@ -124,16 +124,15 @@ class LocalDirectory extends LocalNode implements Directory
      */
     private function descendantPaths(callable $filter = null): Generator
     {
-        $root     = $this->pathname->root();
-        $length   = strlen($root) + 1;
-        $pathname = fn (string $node) => new Pathname($root, substr($node, $length));
+        $pathname = $this->pathname->absolute();
+        $length   = strlen($pathname) + 1;
 
         $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
-        $nodes = new RecursiveDirectoryIterator($this->pathname->absolute(), $flags);
+        $nodes = new RecursiveDirectoryIterator($pathname, $flags);
         $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
         foreach ($nodes as $node) {
             if ($filter && !$filter($node)) { continue; }
-            yield $pathname($node);
+            yield $this->pathname->forChildNode(substr($node, $length));
         }
     }
 }
