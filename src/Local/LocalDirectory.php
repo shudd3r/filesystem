@@ -42,7 +42,7 @@ class LocalDirectory extends LocalNode implements Directory
     {
         $path   = rtrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
         $isReal = $path === realpath($path) && is_dir($path);
-        return $isReal ? new self(new Pathname($path), $assert) : null;
+        return $isReal ? new self(new Pathname($path, '', DIRECTORY_SEPARATOR), $assert) : null;
     }
 
     public function exists(): bool

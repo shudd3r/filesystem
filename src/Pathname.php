@@ -18,17 +18,17 @@ final class Pathname
 {
     private string $root;
     private string $name;
-    private string $path;
+    private string $ds;
 
     /**
      * @param string $root absolute directory path
      * @param string $name relative node pathname
      */
-    public function __construct(string $root, string $name = '')
+    public function __construct(string $root, string $name = '', string $separator = '/')
     {
         $this->root = $root;
         $this->name = $name;
-        $this->path = $name ? $root . DIRECTORY_SEPARATOR . $name : $root;
+        $this->ds   = $separator;
     }
 
     /**
@@ -36,7 +36,7 @@ final class Pathname
      */
     public function absolute(): string
     {
-        return $this->path;
+        return $this->name ? $this->root . $this->ds . $this->name : $this->root;
     }
 
     /**
@@ -68,7 +68,7 @@ final class Pathname
      */
     public function forChildNode(string $name): self
     {
-        return new self($this->root, $this->validName($name));
+        return new self($this->root, $this->validName($name), $this->ds);
     }
 
     /**
@@ -76,12 +76,12 @@ final class Pathname
      */
     public function asRoot(): self
     {
-        return $this->name ? new self($this->path) : $this;
+        return $this->name ? new self($this->absolute(), '', $this->ds) : $this;
     }
 
     private function validName(string $name): string
     {
-        $name = trim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $name), DIRECTORY_SEPARATOR);
+        $name = trim(str_replace(['\\', '/'], $this->ds, $name), $this->ds);
         if (!$name) { throw InvalidNodeName::forEmptyName(); }
 
         $emptySegment = $this->hasSegment($name, '');
@@ -90,7 +90,7 @@ final class Pathname
         $dotSegment = $this->hasSegment($name, '..', '.');
         if ($dotSegment) { throw InvalidNodeName::forDotSegment($name); }
 
-        return $this->name ? $this->name . DIRECTORY_SEPARATOR . $name : $name;
+        return $this->name ? $this->name . $this->ds . $name : $name;
     }
 
     private function hasSegment(string $name, string ...$segments): bool
@@ -105,6 +105,6 @@ final class Pathname
 
     private function pathFragment(string $segment): string
     {
-        return DIRECTORY_SEPARATOR . $segment . DIRECTORY_SEPARATOR;
+        return $this->ds . $segment . $this->ds;
     }
 }

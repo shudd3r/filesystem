@@ -82,6 +82,6 @@ class PathnameTest extends LocalFilesystemTests
 
     private function path(string $pathname = null): Pathname
     {
-        return new Pathname($pathname ?? self::$temp->directory());
+        return new Pathname($pathname ?? self::$temp->directory(), '', DIRECTORY_SEPARATOR);
     }
 }
