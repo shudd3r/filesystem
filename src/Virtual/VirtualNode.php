@@ -29,13 +29,13 @@ abstract class VirtualNode implements Node
     public function __construct(NodeData $nodes, string $root = '', string $name = '')
     {
         $this->nodes = $nodes;
-        $this->root  = $root;
+        $this->root  = $root ?: 'vfs:/';
         $this->name  = $name;
     }
 
     public function pathname(): string
     {
-        return NodeData::ROOT . $this->rootPath();
+        return $this->rootPath();
     }
 
     public function name(): string
@@ -98,7 +98,9 @@ abstract class VirtualNode implements Node
 
     protected function rootPath(): string
     {
-        if (!$this->root) { return $this->name; }
-        return $this->name ? $this->root . '/' . $this->name : $this->root;
+        if ($this->name) {
+            return $this->root . '/' . $this->name;
+        }
+        return str_ends_with($this->root, '/') ? $this->root . '/' : $this->root;
     }
 }

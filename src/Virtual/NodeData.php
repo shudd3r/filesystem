@@ -17,13 +17,12 @@ use Generator;
 
 class NodeData
 {
-    public const ROOT = 'virtual://';
-
     private array     $directory;
     private string    $node;
     private array     $segments;
     private ?NodeData $link;
     private string    $type;
+    private string    $root;
 
     private function __construct(array &$directory, string $node, array $segments = [], ?NodeData $link = null)
     {
@@ -34,17 +33,19 @@ class NodeData
         $this->type      = $this->type();
     }
 
-    public static function root(array $nodes = []): self
+    public static function root(string $path, array $nodes = []): self
     {
-        $tree = [self::ROOT => $nodes];
-        return new self($tree, self::ROOT);
+        $tree = [$path => $nodes];
+        $node = new self($tree, $path);
+        $node->root = $path;
+        return $node;
     }
 
     public function nodeData(string $path): self
     {
         $segments = $this->pathSegments($path);
         if (!$this->exists() || !$this->isDir()) {
-            return new self($this->directory, $this->node, array_merge($this->segments, $segments), $this->link);
+            return $this->child($this->directory, $this->node, array_merge($this->segments, $segments), $this->link);
         }
         return $segments ? $this->descendantNodeData($segments) : $this;
     }
@@ -91,7 +92,7 @@ class NodeData
 
         if (!$this->exists()) { return; }
 
-        if ($this->node === self::ROOT) {
+        if ($this->node === $this->root) {
             throw new IOException\UnableToRemove('Root directory cannot be removed');
         }
 
@@ -168,13 +169,14 @@ class NodeData
             $basename = array_shift($segments);
         }
 
-        $node = new self($parent, $basename, $segments, $linked);
+        $node = $this->child($parent, $basename, $segments, $linked);
         $link = $segments ? null : $parent[$basename]['/link'] ?? null;
         return $link ? $this->descendantNodeData($this->pathSegments($link), $node) : $node;
     }
 
     private function pathSegments(string $path): array
     {
+        $path = substr($path, strlen($this->root));
         return $path ? explode('/', $path) : [];
     }
 
@@ -188,5 +190,12 @@ class NodeData
             $this->directory = &$this->directory[$dirname];
         }
         $this->segments = [];
+    }
+
+    private function child(array &$directory, string $node, array $segments = [], ?NodeData $link = null): self
+    {
+        $child = new self($directory, $node, $segments, $link);
+        $child->root = $this->root;
+        return $child;
     }
 }

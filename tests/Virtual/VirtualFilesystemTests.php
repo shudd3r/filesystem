@@ -25,12 +25,12 @@ abstract class VirtualFilesystemTests extends FilesystemTests
     private const EXAMPLE_STRUCTURE = [
         'foo' => [
             'bar'      => ['baz.txt' => 'baz contents'],
-            'file.lnk' => ['/link' => 'bar.txt'],
+            'file.lnk' => ['/link' => 'vfs://bar.txt'],
             'empty'    => []
         ],
         'bar.txt' => 'bar contents',
-        'dir.lnk' => ['/link' => 'foo/bar'],
-        'inv.lnk' => ['/link' => 'foo/baz']
+        'dir.lnk' => ['/link' => 'vfs://foo/bar'],
+        'inv.lnk' => ['/link' => 'vfs://foo/baz']
     ];
 
     protected NodeData $nodes;
@@ -67,7 +67,7 @@ abstract class VirtualFilesystemTests extends FilesystemTests
 
     protected function nodes(array $data = null): NodeData
     {
-        return NodeData::root($data ?? self::EXAMPLE_STRUCTURE);
+        return NodeData::root('vfs://', $data ?? self::EXAMPLE_STRUCTURE);
     }
 
     /**

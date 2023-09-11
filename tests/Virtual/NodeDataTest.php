@@ -21,19 +21,19 @@ class NodeDataTest extends TestCase
     private const EXAMPLE_STRUCTURE = [
         'foo' => [
             'bar'      => ['baz.txt' => 'baz contents'],
-            'file.lnk' => ['/link' => 'bar.txt'],
+            'file.lnk' => ['/link' => 'vfs://bar.txt'],
             'empty'    => []
         ],
         'bar.txt' => 'this is bar file',
-        'dir.lnk' => ['/link' => 'foo/bar'],
-        'inv.lnk' => ['/link' => 'foo/baz']
+        'dir.lnk' => ['/link' => 'vfs://foo/bar'],
+        'inv.lnk' => ['/link' => 'vfs://foo/baz']
     ];
 
     private static NodeData $tree;
 
     protected function setUp(): void
     {
-        self::$tree = NodeData::root(self::EXAMPLE_STRUCTURE);
+        self::$tree = NodeData::root('vfs://', self::EXAMPLE_STRUCTURE);
     }
 
     public static function nodeProperties(): array
@@ -57,8 +57,9 @@ class NodeDataTest extends TestCase
     {
         $keys       = ['exists', 'isDir', 'isFile', 'isLink', 'isValid', 'contents', 'target', 'missing'];
         $properties = array_combine($keys, $properties);
+        $properties['target'] = $properties['target'] ? 'vfs://' . $properties['target'] : null;
 
-        $node = self::$tree->nodeData($nodePath);
+        $node = self::$tree->nodeData('vfs://' . $nodePath);
         $this->assertSame($properties['exists'], $node->exists());
         $this->assertSame($properties['isDir'], $node->isDir());
         $this->assertSame($properties['isFile'], $node->isFile());
@@ -73,7 +74,7 @@ class NodeDataTest extends TestCase
     {
         $node = self::$tree;
         $this->assertSame(['bar.txt', 'foo/bar/baz.txt'], iterator_to_array($node->filenames(), false));
-        $this->assertTrue($node->nodeData('subdirectory/path')->isValid());
+        $this->assertTrue($node->nodeData('vfs://subdirectory/path')->isValid());
 
         $node->putContents('contents');
         $node->setTarget('target/path');
@@ -85,9 +86,9 @@ class NodeDataTest extends TestCase
 
     public function test_not_existing_node(): void
     {
-        $node = self::$tree->nodeData('foo/not/exists');
+        $node = self::$tree->nodeData('vfs://foo/not/exists');
         $this->assertSame([], iterator_to_array($node->filenames(), false));
-        $this->assertTrue($node->nodeData('subdirectory/path')->isValid());
+        $this->assertTrue($node->nodeData('vfs://subdirectory/path')->isValid());
 
         $node->remove();
         $this->assertStructure($expectedTree = self::EXAMPLE_STRUCTURE);
@@ -100,19 +101,19 @@ class NodeDataTest extends TestCase
         unset($expectedTree['foo']['not']['exists']);
         $this->assertStructure($expectedTree);
 
-        $node->setTarget('target/path');
-        $expectedTree['foo']['not']['exists']['/link'] = 'target/path';
+        $node->setTarget('vfs://target/path');
+        $expectedTree['foo']['not']['exists']['/link'] = 'vfs://target/path';
         $this->assertStructure($expectedTree);
     }
 
     public function test_directory_node(): void
     {
-        $node = self::$tree->nodeData('foo');
+        $node = self::$tree->nodeData('vfs://foo');
         $this->assertSame(['bar/baz.txt'], iterator_to_array($node->filenames(), false));
-        $this->assertTrue($node->nodeData('subdirectory/path')->isValid());
+        $this->assertTrue($node->nodeData('vfs://subdirectory/path')->isValid());
 
         $node->putContents('contents');
-        $node->setTarget('target/path');
+        $node->setTarget('vfs://target/path');
         $this->assertStructure($expectedTree = self::EXAMPLE_STRUCTURE);
 
         $node->remove();
@@ -122,16 +123,16 @@ class NodeDataTest extends TestCase
 
     public function test_file_node(): void
     {
-        $node = self::$tree->nodeData('foo/bar/baz.txt');
+        $node = self::$tree->nodeData('vfs://foo/bar/baz.txt');
         $this->assertSame([], iterator_to_array($node->filenames(), false));
-        $this->assertFalse($node->nodeData('subdirectory/path')->isValid());
+        $this->assertFalse($node->nodeData('vfs://subdirectory/path')->isValid());
 
         $node->putContents('new contents');
         $expectedTree = self::EXAMPLE_STRUCTURE;
         $expectedTree['foo']['bar']['baz.txt'] = 'new contents';
         $this->assertStructure($expectedTree);
 
-        $node->setTarget('target/path');
+        $node->setTarget('vfs://target/path');
         $this->assertStructure($expectedTree);
 
         $node->remove();
@@ -141,14 +142,14 @@ class NodeDataTest extends TestCase
 
     public function test_linked_file(): void
     {
-        $node = self::$tree->nodeData('foo/file.lnk');
+        $node = self::$tree->nodeData('vfs://foo/file.lnk');
         $node->putContents('new contents');
         $expectedTree = self::EXAMPLE_STRUCTURE;
         $expectedTree['bar.txt'] = 'new contents';
         $this->assertStructure($expectedTree);
 
-        $node->setTarget('foo');
-        $expectedTree['foo']['file.lnk']['/link'] = 'foo';
+        $node->setTarget('vfs://foo');
+        $expectedTree['foo']['file.lnk']['/link'] = 'vfs://foo';
         $this->assertStructure($expectedTree);
 
         $node->remove();
@@ -158,13 +159,13 @@ class NodeDataTest extends TestCase
 
     public function test_linked_directory(): void
     {
-        $node = self::$tree->nodeData('dir.lnk');
+        $node = self::$tree->nodeData('vfs://dir.lnk');
         $this->assertSame(['baz.txt'], iterator_to_array($node->filenames(), false));
-        $this->assertTrue($node->nodeData('subdirectory')->isValid());
+        $this->assertTrue($node->nodeData('vfs://subdirectory')->isValid());
 
-        $node->setTarget('foo');
+        $node->setTarget('vfs://foo');
         $expectedTree = self::EXAMPLE_STRUCTURE;
-        $expectedTree['dir.lnk']['/link'] = 'foo';
+        $expectedTree['dir.lnk']['/link'] = 'vfs://foo';
         $this->assertStructure($expectedTree);
 
         $node->remove();
@@ -174,13 +175,13 @@ class NodeDataTest extends TestCase
 
     public function test_file_in_linked_directory(): void
     {
-        $node = self::$tree->nodeData('dir.lnk/baz.txt');
+        $node = self::$tree->nodeData('vfs://dir.lnk/baz.txt');
         $node->putContents('new contents');
         $expectedTree = self::EXAMPLE_STRUCTURE;
         $expectedTree['foo']['bar']['baz.txt'] = 'new contents';
         $this->assertStructure($expectedTree);
 
-        $node->setTarget('target/path');
+        $node->setTarget('vfs://target/path');
         $this->assertStructure($expectedTree);
 
         $node->remove();
@@ -191,26 +192,26 @@ class NodeDataTest extends TestCase
 
     public function test_invalid_link(): void
     {
-        $node = self::$tree->nodeData('inv.lnk');
+        $node = self::$tree->nodeData('vfs://inv.lnk');
         $node->remove();
         $expectedTree = self::EXAMPLE_STRUCTURE;
         unset($expectedTree['inv.lnk']);
         $this->assertStructure($expectedTree);
 
-        $node->setTarget('foo/baz');
-        $node = self::$tree->nodeData('inv.lnk');
+        $node->setTarget('vfs://foo/baz');
+        $node = self::$tree->nodeData('vfs://inv.lnk');
         $node->putContents('new contents');
         $expectedTree = self::EXAMPLE_STRUCTURE;
         $expectedTree['foo']['baz'] = 'new contents';
         $this->assertStructure($expectedTree);
 
-        $node->setTarget('target/path');
-        $expectedTree['inv.lnk']['/link'] = 'target/path';
+        $node->setTarget('vfs://target/path');
+        $expectedTree['inv.lnk']['/link'] = 'vfs://target/path';
         $this->assertStructure($expectedTree);
     }
 
     private function assertStructure(array $expectedTree): void
     {
-        $this->assertEquals(NodeData::root($expectedTree), self::$tree);
+        $this->assertEquals(NodeData::root('vfs://', $expectedTree), self::$tree);
     }
 }
