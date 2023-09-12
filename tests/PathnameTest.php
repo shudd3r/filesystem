@@ -76,9 +76,40 @@ class PathnameTest extends TestCase
         $this->assertSame('root\\path/foo\\/bar/baz', $pathname->absolute());
         $this->assertSame('bar/baz', $pathname->relative());
 
-        $pathname = $this->path('root\path/foo\\', '\\')->forChildNode($name);
-        $this->assertSame('root\path/foo\\\\bar\\baz', $pathname->absolute());
+        $pathname = $this->path('root\path/foo/', '\\')->forChildNode($name);
+        $this->assertSame('root\path/foo/\\bar\\baz', $pathname->absolute());
         $this->assertSame('bar\\baz', $pathname->relative());
+    }
+
+    public function test_expanding_root_ending_with_separator_does_not_duplicate_separator(): void
+    {
+        $path = $this->path('/');
+        $this->assertSame('/', $path->absolute());
+        $this->assertSame('', $path->relative());
+
+        $path = $path->forChildNode('foo/bar');
+        $this->assertSame('/foo/bar', $path->absolute());
+        $this->assertSame('foo/bar', $path->relative());
+
+        $path = $path->forChildNode('baz');
+        $this->assertSame('/foo/bar/baz', $path->absolute());
+        $this->assertSame('foo/bar/baz', $path->relative());
+
+        $path = $this->path('vfs://');
+        $this->assertSame('vfs://', $path->absolute());
+        $this->assertSame('', $path->relative());
+
+        $path = $path->forChildNode('foo/bar');
+        $this->assertSame('vfs://foo/bar', $path->absolute());
+        $this->assertSame('foo/bar', $path->relative());
+
+        $path = $path->asRoot();
+        $this->assertSame('vfs://foo/bar', $path->absolute());
+        $this->assertSame('', $path->relative());
+
+        $path = $path->forChildNode('baz');
+        $this->assertSame('vfs://foo/bar/baz', $path->absolute());
+        $this->assertSame('baz', $path->relative());
     }
 
     private function path(string $pathname = 'root', string $separator = '/'): Pathname

@@ -16,24 +16,24 @@ use Shudd3r\Filesystem\Exception\InvalidNodeName;
 
 final class Pathname
 {
-    private string $root;
-    private string $name;
-    private string $ds;
+    private string $path;
+    private string $separator;
+    private int    $nameLength;
 
-    private function __construct(string $root, string $name, string $separator)
+    private function __construct(string $path, string $separator, int $nameLength = 0)
     {
-        $this->root = $root;
-        $this->name = $name;
-        $this->ds   = $separator;
+        $this->path       = $path;
+        $this->separator  = $separator;
+        $this->nameLength = $nameLength;
     }
 
     /**
-     * @param string $root      absolute directory path
+     * @param string $path      absolute directory path
      * @param string $separator directory separator
      */
     public static function root(string $path, string $separator = '/'): self
     {
-        return new self($path, '', $separator);
+        return new self($path, $separator);
     }
 
     /**
@@ -41,7 +41,7 @@ final class Pathname
      */
     public function absolute(): string
     {
-        return $this->name ? $this->root . $this->ds . $this->name : $this->root;
+        return $this->path;
     }
 
     /**
@@ -49,7 +49,7 @@ final class Pathname
      */
     public function relative(): string
     {
-        return $this->name;
+        return $this->nameLength ? substr($this->path, -$this->nameLength) : '';
     }
 
     /**
@@ -65,7 +65,10 @@ final class Pathname
      */
     public function forChildNode(string $name): self
     {
-        return new self($this->root, $this->validName($name), $this->ds);
+        $name = $this->validName($name);
+        $add  = $this->nameLength ? $this->nameLength + strlen($this->separator) : 0;
+        $rs   = !$add && str_ends_with($this->path, $this->separator) ? '' : $this->separator;
+        return new self($this->path . $rs . $name, $this->separator, $add + strlen($name));
     }
 
     /**
@@ -73,12 +76,12 @@ final class Pathname
      */
     public function asRoot(): self
     {
-        return $this->name ? new self($this->absolute(), '', $this->ds) : $this;
+        return $this->nameLength ? new self($this->path, $this->separator) : $this;
     }
 
     private function validName(string $name): string
     {
-        $name = trim(str_replace(['\\', '/'], $this->ds, $name), $this->ds);
+        $name = trim(str_replace(['\\', '/'], $this->separator, $name), $this->separator);
         if (!$name) { throw InvalidNodeName::forEmptyName(); }
 
         $emptySegment = $this->hasSegment($name, '');
@@ -87,7 +90,7 @@ final class Pathname
         $dotSegment = $this->hasSegment($name, '..', '.');
         if ($dotSegment) { throw InvalidNodeName::forDotSegment($name); }
 
-        return $this->name ? $this->name . $this->ds . $name : $name;
+        return $name;
     }
 
     private function hasSegment(string $name, string ...$segments): bool
@@ -102,6 +105,6 @@ final class Pathname
 
     private function pathFragment(string $segment): string
     {
-        return $this->ds . $segment . $this->ds;
+        return $this->separator . $segment . $this->separator;
     }
 }
