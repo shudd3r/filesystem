@@ -40,14 +40,6 @@ final class Pathname
     }
 
     /**
-     * @return string absolute root directory path
-     */
-    public function root(): string
-    {
-        return $this->root;
-    }
-
-    /**
      * @return string path name relative to its root directory
      */
     public function relative(): string

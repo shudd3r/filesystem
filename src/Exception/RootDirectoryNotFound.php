@@ -18,7 +18,8 @@ class RootDirectoryNotFound extends FilesystemException
 {
     public static function forRoot(string $path, string $name): self
     {
+        $root    = substr($path, 0, -(strlen($name) + 1));
         $message = 'Root directory instance requires existing directory path. Create `%s` directory in `%s` first';
-        return new self(sprintf($message, $name, $path));
+        return new self(sprintf($message, $name, $root));
     }
 }

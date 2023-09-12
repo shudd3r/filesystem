@@ -44,7 +44,7 @@ class VirtualDirectory extends VirtualNode implements Directory
     {
         if (!$this->name) { return $this; }
         if (!$this->exists()) {
-            throw Exception\RootDirectoryNotFound::forRoot($this->root, $this->name);
+            throw Exception\RootDirectoryNotFound::forRoot($this->rootPath(), $this->name);
         }
         return new self($this->nodes, $this->rootPath(), '');
     }
