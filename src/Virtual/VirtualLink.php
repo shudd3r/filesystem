@@ -61,6 +61,6 @@ class VirtualLink extends VirtualNode implements Link
             throw Exception\UnexpectedNodeType::forLink($this, $node);
         }
 
-        return $node->rootPath();
+        return $node->pathname();
     }
 }

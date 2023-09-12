@@ -17,6 +17,7 @@ use Shudd3r\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Filesystem\Virtual\VirtualLink;
 use Shudd3r\Filesystem\Virtual\NodeData;
+use Shudd3r\Filesystem\Pathname;
 use Shudd3r\Filesystem\Tests\Doubles;
 
 
@@ -45,24 +46,24 @@ abstract class VirtualFilesystemTests extends FilesystemTests
         $this->nodes = $this->nodes();
     }
 
-    protected function node(string $name = '', string $root = '', bool $exists = true): VirtualNode
+    protected function node(string $name = '', string $root = 'vfs://', bool $exists = true): VirtualNode
     {
-        return new Doubles\FakeVirtualNode($this->nodes, $root, $name, $exists);
+        return new Doubles\FakeVirtualNode($this->nodes, $this->path($root, $name), $exists);
     }
 
-    protected function directory(string $name = '', string $root = ''): VirtualDirectory
+    protected function directory(string $name = '', string $root = 'vfs://'): VirtualDirectory
     {
-        return new VirtualDirectory($this->nodes, $root, $name);
+        return new VirtualDirectory($this->nodes, $this->path($root, $name));
     }
 
-    protected function file(string $name, string $root = ''): VirtualFile
+    protected function file(string $name, string $root = 'vfs://'): VirtualFile
     {
-        return new VirtualFile($this->nodes, $root, $name);
+        return new VirtualFile($this->nodes, $this->path($root, $name));
     }
 
-    protected function link(string $name, string $root = ''): VirtualLink
+    protected function link(string $name, string $root = 'vfs://'): VirtualLink
     {
-        return new VirtualLink($this->nodes, $root, $name);
+        return new VirtualLink($this->nodes, $this->path($root, $name));
     }
 
     protected function nodes(array $data = null): NodeData
@@ -98,5 +99,11 @@ abstract class VirtualFilesystemTests extends FilesystemTests
             unset($current[$node]);
         }
         return $tree;
+    }
+
+    private function path(string $root, string $name): Pathname
+    {
+        $path = Pathname::root($root);
+        return $name ? $path->forChildNode($name) : $path;
     }
 }

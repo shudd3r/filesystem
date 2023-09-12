@@ -22,17 +22,17 @@ class VirtualDirectory extends VirtualNode implements Directory
 {
     public function subdirectory(string $name): VirtualDirectory
     {
-        return new VirtualDirectory($this->nodes, $this->root, $this->expandedName($name));
+        return new VirtualDirectory($this->nodes, $this->path->forChildNode($name));
     }
 
     public function link(string $name): VirtualLink
     {
-        return new VirtualLink($this->nodes, $this->root, $this->expandedName($name));
+        return new VirtualLink($this->nodes, $this->path->forChildNode($name));
     }
 
     public function file(string $name): VirtualFile
     {
-        return new VirtualFile($this->nodes, $this->root, $this->expandedName($name));
+        return new VirtualFile($this->nodes, $this->path->forChildNode($name));
     }
 
     public function files(): FileIterator
@@ -42,11 +42,12 @@ class VirtualDirectory extends VirtualNode implements Directory
 
     public function asRoot(): VirtualDirectory
     {
-        if (!$this->name) { return $this; }
+        $path = $this->path->asRoot();
+        if ($path === $this->path) { return $this; }
         if (!$this->exists()) {
-            throw Exception\RootDirectoryNotFound::forRoot($this->rootPath(), $this->name);
+            throw Exception\RootDirectoryNotFound::forRoot($this->pathname(), $this->name());
         }
-        return new self($this->nodes, $this->rootPath(), '');
+        return new self($this->nodes, $path);
     }
 
     protected function nodeExists(NodeData $node): bool
@@ -54,15 +55,10 @@ class VirtualDirectory extends VirtualNode implements Directory
         return $node->isDir();
     }
 
-    private function expandedName(string $name): string
-    {
-        return $this->name ? $this->name . '/' . $name : $name;
-    }
-
     private function generateFiles(): Generator
     {
         foreach ($this->nodeData()->filenames() as $filename) {
-            yield new VirtualFile($this->nodes, $this->root, $this->expandedName($filename));
+            yield new VirtualFile($this->nodes, $this->path->forChildNode($filename));
         }
     }
 }
