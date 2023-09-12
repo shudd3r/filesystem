@@ -12,7 +12,7 @@
 namespace Shudd3r\Filesystem\Tests\Doubles;
 
 use Shudd3r\Filesystem\Local\LocalNode;
-use Shudd3r\Filesystem\Pathname;
+use Shudd3r\Filesystem\Generic\Pathname;
 
 
 class FakeLocalNode extends LocalNode

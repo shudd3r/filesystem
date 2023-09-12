@@ -12,8 +12,8 @@
 namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\Node;
+use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Exception;
-use Shudd3r\Filesystem\Pathname;
 
 
 abstract class VirtualNode implements Node

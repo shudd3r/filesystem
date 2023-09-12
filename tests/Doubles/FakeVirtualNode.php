@@ -13,7 +13,7 @@ namespace Shudd3r\Filesystem\Tests\Doubles;
 
 use Shudd3r\Filesystem\Virtual\VirtualNode;
 use Shudd3r\Filesystem\Virtual\NodeData;
-use Shudd3r\Filesystem\Pathname;
+use Shudd3r\Filesystem\Generic\Pathname;
 
 
 class FakeVirtualNode extends VirtualNode

@@ -17,7 +17,7 @@ use Shudd3r\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Filesystem\Virtual\VirtualLink;
 use Shudd3r\Filesystem\Virtual\NodeData;
-use Shudd3r\Filesystem\Pathname;
+use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Tests\Doubles;
 
 
