@@ -20,15 +20,20 @@ final class Pathname
     private string $name;
     private string $ds;
 
-    /**
-     * @param string $root absolute directory path
-     * @param string $name relative node pathname
-     */
-    public function __construct(string $root, string $name = '', string $separator = '/')
+    private function __construct(string $root, string $name, string $separator)
     {
         $this->root = $root;
         $this->name = $name;
         $this->ds   = $separator;
+    }
+
+    /**
+     * @param string $root      absolute directory path
+     * @param string $separator directory separator
+     */
+    public static function root(string $path, string $separator = '/'): self
+    {
+        return new self($path, '', $separator);
     }
 
     /**

@@ -23,7 +23,7 @@ class FakeLocalNode extends LocalNode
 
     public function __construct(string $root = null, string $name = '', bool $exists = true)
     {
-        $pathname = new Pathname($root ?? __DIR__, '', DIRECTORY_SEPARATOR);
+        $pathname = Pathname::root($root ?? __DIR__, DIRECTORY_SEPARATOR);
         parent::__construct($name ? $pathname->forChildNode($name) : $pathname);
         $this->exists = $exists;
     }
