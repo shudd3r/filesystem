@@ -22,7 +22,7 @@ class VirtualLink extends VirtualNode implements Link
     {
         $node = $this->validated()->nodeData();
         $show = $this->nodeExists($node) && ($showRemoved || $node->exists());
-        return $show ? NodeData::ROOT . $node->target() : null;
+        return $show ? $node->target() : null;
     }
 
     public function setTarget(Node $node): void
@@ -61,6 +61,6 @@ class VirtualLink extends VirtualNode implements Link
             throw Exception\UnexpectedNodeType::forLink($this, $node);
         }
 
-        return $node->rootPath();
+        return $node->pathname();
     }
 }

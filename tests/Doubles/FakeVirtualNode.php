@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem\Tests\Doubles;
 
 use Shudd3r\Filesystem\Virtual\VirtualNode;
 use Shudd3r\Filesystem\Virtual\NodeData;
+use Shudd3r\Filesystem\Generic\Pathname;
 
 
 class FakeVirtualNode extends VirtualNode
@@ -21,9 +22,9 @@ class FakeVirtualNode extends VirtualNode
 
     private bool $exists;
 
-    public function __construct(NodeData $nodes, string $root = '', string $name = '', bool $exists = true)
+    public function __construct(NodeData $nodes, Pathname $pathname, bool $exists = true)
     {
-        parent::__construct($nodes, $root, $name);
+        parent::__construct($nodes, $pathname);
         $this->exists = $exists;
     }
 

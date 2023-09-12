@@ -13,7 +13,6 @@ namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Local\LocalFile;
 use Shudd3r\Filesystem\Local\LocalDirectory;
-use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Exception\IOException;
 
@@ -228,11 +227,11 @@ class LocalFileTest extends LocalFilesystemTests
     private function file(string $filename, string $contents = null): LocalFile
     {
         if (isset($contents)) { self::$temp->file($filename, $contents); }
-        return new LocalFile(Pathname::root(self::$temp->directory())->forChildNode($filename));
+        return $this->directory()->file($filename);
     }
 
     private function directory(): LocalDirectory
     {
-        return new LocalDirectory(Pathname::root(self::$temp->directory()));
+        return LocalDirectory::root(self::$temp->directory());
     }
 }

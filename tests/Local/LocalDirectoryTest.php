@@ -14,7 +14,6 @@ namespace Shudd3r\Filesystem\Tests\Local;
 use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Local\LocalLink;
 use Shudd3r\Filesystem\Local\LocalFile;
-use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
 
@@ -23,21 +22,16 @@ class LocalDirectoryTest extends LocalFilesystemTests
 {
     public function test_static_constructor_for_not_real_directory_path_returns_null(): void
     {
-        $path = self::$temp->pathname('not/exists');
-        $this->assertNull(LocalDirectory::root($path));
-
-        $path = self::$temp->file('foo/file.path');
-        $this->assertNull(LocalDirectory::root($path));
-
-        $path = self::$temp->symlink(self::$temp->directory('foo/bar'), 'dir.link');
-        $this->assertNull(LocalDirectory::root($path));
+        foreach ($this->invalidRootPaths() as $type => $path) {
+            $this->assertNull($this->directory($path), sprintf('Failed for `%s`', $type));
+        }
     }
 
     public function test_static_constructor_for_existing_directory_path_returns_root_directory_instance(): void
     {
-        $path = self::$temp->directory('foo/bar');
-        $root = LocalDirectory::root($path);
-        $this->assertEquals(new LocalDirectory(Pathname::root($path)), $root);
+        $this->assertInstanceOf(LocalDirectory::class, $this->directory());
+
+        $root = $this->directory($path = self::$temp->directory('foo/bar'));
         $this->assertSame($path, $root->pathname());
         $this->assertSame('', $root->name());
         $this->assertTrue($root->exists());
@@ -63,9 +57,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_subdirectory_for_valid_path_returns_LocalDirectory(): void
     {
-        $root      = Pathname::root(self::$temp->directory());
-        $directory = new LocalDirectory($root);
-        $this->assertEquals(new LocalDirectory($root->forChildNode('foo/bar')), $directory->subdirectory('foo/bar'));
+        $this->assertInstanceOf(LocalDirectory::class, $this->directory()->subdirectory('foo/bar'));
     }
 
     public function test_subdirectory_for_invalid_path_throws_Filesystem_Exception(): void
@@ -76,8 +68,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_link_for_valid_path_returns_LocalLink(): void
     {
-        $directory = $this->directory();
-        $this->assertInstanceOf(LocalLink::class, $directory->link('foo/bar'));
+        $this->assertInstanceOf(LocalLink::class, $this->directory()->link('foo/bar'));
     }
 
     public function test_link_for_invalid_path_throws_Filesystem_Exception(): void
@@ -88,9 +79,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_file_for_valid_path_returns_File(): void
     {
-        $root      = Pathname::root(self::$temp->directory());
-        $directory = new LocalDirectory($root);
-        $this->assertEquals(new LocalFile($root->forChildNode('foo/file.txt')), $directory->file('foo/file.txt'));
+        $this->assertInstanceOf(LocalFile::class, $this->directory()->file('foo/file.txt'));
     }
 
     public function test_file_for_invalid_path_throws_Filesystem_Exception(): void
@@ -211,8 +200,23 @@ class LocalDirectoryTest extends LocalFilesystemTests
         return $files;
     }
 
-    private function directory(string $name = null, int $flags = null): ?LocalDirectory
+    private function invalidRootPaths(): array
     {
-        return LocalDirectory::root($name ?? self::$temp->directory(), $flags);
+        chdir(self::$temp->directory());
+        return [
+            'file path'         => self::$temp->file('foo/bar/baz.txt'),
+            'not existing path' => self::$temp->pathname('not/exists'),
+            'invalid symlink'   => self::$temp->symlink('', 'link'),
+            'valid symlink'     => self::$temp->symlink(self::$temp->pathname('foo/bar'), 'link'),
+            'relative path'     => self::$temp->relative('./foo/bar'),
+            'step-up path'      => self::$temp->pathname('foo/bar/..'),
+            'empty path'        => '',
+            'dot path'          => '.'
+        ];
+    }
+
+    private function directory(string $path = null, int $flags = null): ?LocalDirectory
+    {
+        return LocalDirectory::root($path ?? self::$temp->directory(), $flags);
     }
 }

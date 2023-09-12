@@ -12,7 +12,7 @@
 namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Local\LocalLink;
-use Shudd3r\Filesystem\Local\Pathname;
+use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Tests\Doubles;
 
@@ -181,16 +181,11 @@ class LocalLinkTest extends LocalFilesystemTests
 
     private function link(string $name): LocalLink
     {
-        return new LocalLink($this->pathname($name));
+        return LocalDirectory::root(self::$temp->directory())->link($name);
     }
 
     private function node(string $name, bool $exists = true): Doubles\FakeLocalNode
     {
-        return new Doubles\FakeLocalNode($this->pathname($name), '', $exists);
-    }
-
-    private function pathname(string $name): Pathname
-    {
-        return Pathname::root(self::$temp->directory())->forChildNode($name);
+        return new Doubles\FakeLocalNode(self::$temp->directory(), $name, $exists);
     }
 }

@@ -12,35 +12,34 @@
 namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\Node;
+use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Exception;
 
 
 abstract class VirtualNode implements Node
 {
     protected NodeData $nodes;
-    protected string   $root;
-    protected string   $name;
+    protected Pathname $path;
 
     /**
      * @param NodeData $nodes Root instance of NodeData
      * @param string   $root  Path to root node (without prefix)
      * @param string   $name  Node name
      */
-    public function __construct(NodeData $nodes, string $root = '', string $name = '')
+    public function __construct(NodeData $nodes, Pathname $path)
     {
         $this->nodes = $nodes;
-        $this->root  = $root;
-        $this->name  = $name;
+        $this->path  = $path;
     }
 
     public function pathname(): string
     {
-        return NodeData::ROOT . $this->rootPath();
+        return $this->path->absolute();
     }
 
     public function name(): string
     {
-        return $this->name;
+        return $this->path->relative();
     }
 
     public function exists(): bool
@@ -93,12 +92,6 @@ abstract class VirtualNode implements Node
 
     protected function nodeData(): NodeData
     {
-        return $this->nodes->nodeData($this->rootPath());
-    }
-
-    protected function rootPath(): string
-    {
-        if (!$this->root) { return $this->name; }
-        return $this->name ? $this->root . '/' . $this->name : $this->root;
+        return $this->nodes->nodeData($this->pathname());
     }
 }

@@ -99,11 +99,11 @@ class VirtualFilesystemTest extends VirtualFilesystemTests
     public function test_directory_methods(): void
     {
         $directory = $this->directory();
-        $this->assertSame('virtual://', $directory->pathname());
+        $this->assertSame('vfs://', $directory->pathname());
         $this->assertSame('', $directory->name());
 
         $directory = $this->directory('foo');
-        $this->assertSame('virtual://foo', $directory->pathname());
+        $this->assertSame('vfs://foo', $directory->pathname());
         $this->assertSame('foo', $directory->name());
         $subdirectory = $directory->subdirectory('bar/baz');
         $this->assertSame('foo/bar/baz', $subdirectory->name());
@@ -112,7 +112,7 @@ class VirtualFilesystemTest extends VirtualFilesystemTests
         $this->assertSame('', $directory->name());
         $subdirectory = $directory->subdirectory('bar/baz');
         $this->assertSame('bar/baz', $subdirectory->name());
-        $this->assertSame('virtual://foo/bar/baz', $subdirectory->pathname());
+        $this->assertSame('vfs://foo/bar/baz', $subdirectory->pathname());
         $this->assertSame($subdirectory, $subdirectory->validated());
         $this->assertExists($directory->file('bar/baz.txt'));
         $this->assertExists($directory->link('file.lnk'));
@@ -133,14 +133,14 @@ class VirtualFilesystemTest extends VirtualFilesystemTests
     public function test_directory_file_iteration(): void
     {
         $directory = $this->directory();
-        $expected  = ['bar.txt' => 'virtual://bar.txt', 'foo/bar/baz.txt' => 'virtual://foo/bar/baz.txt'];
+        $expected  = ['bar.txt' => 'vfs://bar.txt', 'foo/bar/baz.txt' => 'vfs://foo/bar/baz.txt'];
         $this->assertFiles($expected, $directory->files());
 
-        $directory = $this->directory('foo');
-        $expected  = ['foo/bar/baz.txt' => 'virtual://foo/bar/baz.txt'];
+        $directory = $directory->subdirectory('foo');
+        $expected  = ['foo/bar/baz.txt' => 'vfs://foo/bar/baz.txt'];
         $this->assertFiles($expected, $directory->files());
 
-        $expected = ['bar/baz.txt' => 'virtual://foo/bar/baz.txt'];
+        $expected = ['bar/baz.txt' => 'vfs://foo/bar/baz.txt'];
         $this->assertFiles($expected, $directory->asRoot()->files());
 
         $directory = $this->directory('foo/empty');
@@ -193,10 +193,10 @@ class VirtualFilesystemTest extends VirtualFilesystemTests
     public function test_link_target(): void
     {
         $link = $this->link('foo/file.lnk');
-        $this->assertSame('virtual://bar.txt', $link->target());
+        $this->assertSame('vfs://bar.txt', $link->target());
         $this->file('bar.txt')->remove();
         $this->assertNull($link->target());
-        $this->assertSame('virtual://bar.txt', $link->target(true));
+        $this->assertSame('vfs://bar.txt', $link->target(true));
 
         $link = $this->link('foo/file.lnk/bar.txt');
         $this->assertExceptionType(Exception\UnexpectedLeafNode::class, fn () => $link->target(), 'invalid path');
@@ -209,7 +209,7 @@ class VirtualFilesystemTest extends VirtualFilesystemTests
     {
         $link = $this->link('foo/file.lnk');
         $link->setTarget($this->file('foo/bar/baz.txt'));
-        $this->assertSame('virtual://foo/bar/baz.txt', $link->target());
+        $this->assertSame('vfs://foo/bar/baz.txt', $link->target());
 
         $directoryTarget = fn () => $link->setTarget($this->directory('foo'));
         $this->assertExceptionType(Exception\UnexpectedNodeType::class, $directoryTarget);

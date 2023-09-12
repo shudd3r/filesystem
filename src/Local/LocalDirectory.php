@@ -12,9 +12,13 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Directory;
-use Shudd3r\Filesystem\Generic\FileIterator;
+use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Generic\FileGenerator;
-use Shudd3r\Filesystem\Exception\IOException;
+use Shudd3r\Filesystem\Generic\FileIterator;
+use Shudd3r\Filesystem\Exception;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use FilesystemIterator;
 use Generator;
 
 
@@ -22,7 +26,7 @@ class LocalDirectory extends LocalNode implements Directory
 {
     private ?int $assert;
 
-    public function __construct(Pathname $pathname, int $assert = null)
+    protected function __construct(Pathname $pathname, int $assert = null)
     {
         $this->assert = $assert;
         parent::__construct($pathname);
@@ -36,8 +40,9 @@ class LocalDirectory extends LocalNode implements Directory
      */
     public static function root(string $path, int $assert = null): ?self
     {
-        $path = Pathname::root($path);
-        return $path ? new self($path, $assert) : null;
+        $path   = rtrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
+        $isReal = $path === realpath($path) && is_dir($path);
+        return $isReal ? new self(Pathname::root($path, DIRECTORY_SEPARATOR), $assert) : null;
     }
 
     public function exists(): bool
@@ -70,25 +75,30 @@ class LocalDirectory extends LocalNode implements Directory
 
     public function asRoot(): self
     {
-        return $this->pathname->relative() ? new self($this->pathname->asRoot(), $this->assert) : $this;
+        if (!$this->pathname->relative()) { return $this; }
+        if (!$this->exists()) {
+            throw Exception\RootDirectoryNotFound::forRoot($this->pathname->absolute(), $this->pathname->relative());
+        }
+
+        return new self($this->pathname->asRoot(), $this->assert);
     }
 
     protected function removeNode(): void
     {
-        foreach ($this->pathname->descendantPaths() as $pathname) {
+        foreach ($this->descendantPaths() as $pathname) {
             if (!$this->delete($pathname->absolute())) {
-                throw IOException\UnableToRemove::directoryNode($this, $pathname->absolute());
+                throw Exception\IOException\UnableToRemove::directoryNode($this, $pathname->absolute());
             }
         }
         if (!@rmdir($this->pathname())) {
-            throw IOException\UnableToRemove::node($this);
+            throw Exception\IOException\UnableToRemove::node($this);
         }
     }
 
     private function generateFiles(): Generator
     {
         $filter = fn (string $path) => is_file($path);
-        foreach ($this->pathname->descendantPaths($filter) as $pathname) {
+        foreach ($this->descendantPaths($filter) as $pathname) {
             yield new LocalFile($pathname);
         }
     }
@@ -107,5 +117,22 @@ class LocalDirectory extends LocalNode implements Directory
         }
 
         return $isFile ? @unlink($path) : @rmdir($path);
+    }
+
+    /**
+     * @param ?callable $filter fn(string) => bool
+     */
+    private function descendantPaths(callable $filter = null): Generator
+    {
+        $pathname = $this->pathname->absolute();
+        $length   = strlen($pathname) + 1;
+
+        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
+        $nodes = new RecursiveDirectoryIterator($pathname, $flags);
+        $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($nodes as $node) {
+            if ($filter && !$filter($node)) { continue; }
+            yield $this->pathname->forChildNode(substr($node, $length));
+        }
     }
 }

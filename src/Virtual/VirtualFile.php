@@ -56,7 +56,7 @@ class VirtualFile extends VirtualNode implements File
     {
         $node = $this->nodeData();
         if (!$this->nodeExists($node)) { return; }
-        $file = $directory->file($name ?? basename($this->name));
+        $file = $directory->file($name ?? basename($this->pathname()));
         if ($this->selfReference($file)) { return; }
         $file->copy($this);
         $this->remove();

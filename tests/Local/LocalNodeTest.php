@@ -12,7 +12,6 @@
 namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Local\LocalNode;
-use Shudd3r\Filesystem\Local\Pathname;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Tests\Doubles;
@@ -20,23 +19,20 @@ use Shudd3r\Filesystem\Tests\Doubles;
 
 class LocalNodeTest extends LocalFilesystemTests
 {
+    public function test_instantiation(): void
+    {
+        $this->assertInstanceOf(LocalNode::class, $this->node('foo/bar'));
+    }
+
     public function test_root_node_name_is_empty(): void
     {
         $this->assertEmpty($this->node()->name());
     }
 
-    public function test_node_name_returns_normalized_relative_pathname(): void
-    {
-        $this->assertSame('foo/bar/baz', $this->node('\foo/bar\baz//')->name());
-    }
-
     public function test_pathname_returns_absolute_node_path(): void
     {
-        $rootPath = self::$temp->directory();
-        $this->assertSame($rootPath, $this->node()->pathname());
-
-        $nodePath = self::$temp->pathname('foo/bar');
-        $this->assertSame($nodePath, $this->node('foo/bar', false)->pathname());
+        $this->assertSame(self::$temp->directory(), $this->node()->pathname());
+        $this->assertSame(self::$temp->pathname('foo/bar'), $this->node('foo/bar', false)->pathname());
     }
 
     public function test_permissions_for_existing_node(): void
@@ -166,7 +162,7 @@ class LocalNodeTest extends LocalFilesystemTests
 
     public function test_remove_for_not_existing_node_is_ignored(): void
     {
-        $root = new Doubles\FakeLocalNode(Pathname::root(self::$temp->directory()), '', false);
+        $root = $this->node('', false);
         $this->assertFalse($root->isRemovable());
         $root->remove();
         $this->assertFalse($root->removed);
@@ -181,8 +177,8 @@ class LocalNodeTest extends LocalFilesystemTests
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $remove);
     }
 
-    private function node(string $name = '', bool $exists = true): LocalNode
+    private function node(string $name = '', bool $exists = true): Doubles\FakeLocalNode
     {
-        return new Doubles\FakeLocalNode(Pathname::root(self::$temp->directory()), $name, $exists);
+        return new Doubles\FakeLocalNode(self::$temp->directory(), $name, $exists);
     }
 }

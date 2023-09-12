@@ -12,7 +12,7 @@
 namespace Shudd3r\Filesystem\Tests\Doubles;
 
 use Shudd3r\Filesystem\Local\LocalNode;
-use Shudd3r\Filesystem\Local\Pathname;
+use Shudd3r\Filesystem\Generic\Pathname;
 
 
 class FakeLocalNode extends LocalNode
@@ -21,10 +21,10 @@ class FakeLocalNode extends LocalNode
 
     private bool $exists;
 
-    public function __construct(?Pathname $root = null, string $name = '', bool $exists = true)
+    public function __construct(string $root = null, string $name = '', bool $exists = true)
     {
-        $root ??= Pathname::root(__DIR__);
-        parent::__construct($name ? $root->forChildNode($name) : $root);
+        $pathname = Pathname::root($root ?? __DIR__, DIRECTORY_SEPARATOR);
+        parent::__construct($name ? $pathname->forChildNode($name) : $pathname);
         $this->exists = $exists;
     }
 

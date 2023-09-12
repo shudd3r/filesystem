@@ -12,10 +12,11 @@
 namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Node;
-use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
-use Shudd3r\Filesystem\Exception\UnexpectedLeafNode;
-use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
+use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Exception\NodeNotFound;
+use Shudd3r\Filesystem\Exception\UnexpectedLeafNode;
+use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
+use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
 
 
 abstract class LocalNode implements Node
@@ -27,7 +28,7 @@ abstract class LocalNode implements Node
      * filesystem unless it's a root directory instantiated with a Pathname
      * without relative name.
      */
-    public function __construct(Pathname $pathname)
+    protected function __construct(Pathname $pathname)
     {
         $this->pathname = $pathname;
     }
@@ -48,7 +49,7 @@ abstract class LocalNode implements Node
     {
         if ($this->exists()) { return is_readable($this->pathname()); }
         if (file_exists($this->pathname())) { return false; }
-        $ancestor = $this->pathname->closestAncestor();
+        $ancestor = $this->closestAncestor();
         return is_dir($ancestor) && is_readable($ancestor);
     }
 
@@ -56,7 +57,7 @@ abstract class LocalNode implements Node
     {
         if ($this->exists()) { return is_writable($this->pathname()); }
         if (file_exists($this->pathname())) { return false; }
-        $ancestor = $this->pathname->closestAncestor();
+        $ancestor = $this->closestAncestor();
         return is_dir($ancestor) && is_writable($ancestor);
     }
 
@@ -72,7 +73,7 @@ abstract class LocalNode implements Node
         $existingNodeAccess = !$exists || is_writable($path) && is_readable($path);
         if (!$existingNodeAccess) { return false; }
 
-        $ancestor = $this->pathname->closestAncestor();
+        $ancestor = $this->closestAncestor();
         return is_dir($ancestor) && is_writable($ancestor);
     }
 
@@ -113,7 +114,7 @@ abstract class LocalNode implements Node
             throw UnexpectedNodeType::forNode($this);
         }
 
-        $ancestorPath = $this->pathname->closestAncestor();
+        $ancestorPath = $this->closestAncestor();
         if (!is_dir($ancestorPath)) {
             throw UnexpectedLeafNode::forNode($this, $ancestorPath);
         }
@@ -127,9 +128,18 @@ abstract class LocalNode implements Node
             throw FailedPermissionCheck::forRootRemove($this);
         }
 
-        $path = $this->pathname->closestAncestor();
+        $path = $this->closestAncestor();
         if (!is_writable($path)) {
             throw FailedPermissionCheck::forNodeRemove($this, $path);
         }
+    }
+
+    private function closestAncestor(): string
+    {
+        $path = dirname($this->pathname->absolute());
+        while (!file_exists($path) && !is_link($path)) {
+            $path = dirname($path);
+        }
+        return $path;
     }
 }
