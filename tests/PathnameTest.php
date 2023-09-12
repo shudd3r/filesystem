@@ -11,12 +11,12 @@
 
 namespace Shudd3r\Filesystem\Tests;
 
-use Shudd3r\Filesystem\Tests\Local\LocalFilesystemTests;
-use Shudd3r\Filesystem\Exception;
+use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Pathname;
+use Shudd3r\Filesystem\Exception;
 
 
-class PathnameTest extends LocalFilesystemTests
+class PathnameTest extends TestCase
 {
     public static function invalidNames(): array
     {
@@ -40,21 +40,20 @@ class PathnameTest extends LocalFilesystemTests
         ];
     }
 
-    public function test_creating_root_node_instance(): void
+    public function test_root_instance(): void
     {
-        $path     = self::$temp->pathname('existing/directory');
-        $pathname = $this->path($path);
-
+        $pathname = $this->path($path = '*root \path\ is///not validated///');
         $this->assertSame($path, $pathname->absolute());
+        $this->assertSame('', $pathname->relative());
+        $this->assertSame($pathname, $pathname->asRoot());
     }
 
     public function test_creating_child_node_instance(): void
     {
-        $name     = 'foo/bar/baz.txt';
-        $pathname = $this->path()->forChildNode($name);
+        $pathname = $this->path('scheme://root')->forChildNode('foo/bar/baz.txt');
 
-        $this->assertSame(self::$temp->relative($name), $pathname->relative());
-        $this->assertSame(self::$temp->pathname($name), $pathname->absolute());
+        $this->assertSame('foo/bar/baz.txt', $pathname->relative());
+        $this->assertSame('scheme://root/foo/bar/baz.txt', $pathname->absolute());
     }
 
     /** @dataProvider invalidNames */
@@ -66,20 +65,24 @@ class PathnameTest extends LocalFilesystemTests
 
     public function test_converting_relative_name_to_root_returns_root_directory_name(): void
     {
-        $path = self::$temp->directory('foo/bar');
-        $this->assertEquals($this->path($path), $newRoot = $this->path()->forChildNode('foo/bar')->asRoot());
-        $this->assertSame($newRoot, $newRoot->asRoot());
+        $pathname = $this->path('scheme://root')->forChildNode('foo/bar/baz.txt');
+        $this->assertEquals($this->path('scheme://root/foo/bar/baz.txt'), $pathname->asRoot());
     }
 
     /** @dataProvider acceptedNameVariations */
     public function test_child_node_name_separator_normalization(string $name): void
     {
-        $this->assertSame(self::$temp->pathname($name), $this->path()->forChildNode($name)->absolute());
-        $this->assertSame(self::$temp->relative($name), $this->path()->forChildNode($name)->relative());
+        $pathname = $this->path('root\\path/foo\\')->forChildNode($name);
+        $this->assertSame('root\\path/foo\\/bar/baz', $pathname->absolute());
+        $this->assertSame('bar/baz', $pathname->relative());
+
+        $pathname = $this->path('root\path/foo\\', '\\')->forChildNode($name);
+        $this->assertSame('root\path/foo\\\\bar\\baz', $pathname->absolute());
+        $this->assertSame('bar\\baz', $pathname->relative());
     }
 
-    private function path(string $pathname = null): Pathname
+    private function path(string $pathname = 'root', string $separator = '/'): Pathname
     {
-        return Pathname::root($pathname ?? self::$temp->directory(), DIRECTORY_SEPARATOR);
+        return Pathname::root($pathname, $separator);
     }
 }
