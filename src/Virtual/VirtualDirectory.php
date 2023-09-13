@@ -12,6 +12,7 @@
 namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\Directory;
+use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Generic\FileGenerator;
 use Shudd3r\Filesystem\Exception;
@@ -20,6 +21,15 @@ use Generator;
 
 class VirtualDirectory extends VirtualNode implements Directory
 {
+    /**
+     * @param string $path  Root node path
+     * @param array  $nodes Pre-existing node meta-data structure
+     */
+    public static function root(string $path = 'vfs://', array $nodes = []): self
+    {
+        return new self(NodeData::root($path, $nodes), Pathname::root($path));
+    }
+
     public function subdirectory(string $name): VirtualDirectory
     {
         return new VirtualDirectory($this->nodes, $this->path->forChildNode($name));

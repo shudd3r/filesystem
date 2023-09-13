@@ -21,12 +21,7 @@ abstract class VirtualNode implements Node
     protected NodeData $nodes;
     protected Pathname $path;
 
-    /**
-     * @param NodeData $nodes Root instance of NodeData
-     * @param string   $root  Path to root node (without prefix)
-     * @param string   $name  Node name
-     */
-    public function __construct(NodeData $nodes, Pathname $path)
+    protected function __construct(NodeData $nodes, Pathname $path)
     {
         $this->nodes = $nodes;
         $this->path  = $path;

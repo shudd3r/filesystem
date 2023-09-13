@@ -13,8 +13,8 @@ namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use Shudd3r\Filesystem\Virtual\VirtualNode;
 use Shudd3r\Filesystem\Generic\ContentStream;
-use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Node;
+use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Tests\Doubles;
 
 
@@ -42,12 +42,12 @@ class VirtualFilesystemTest extends VirtualFilesystemTests
 
     public function test_remove_not_existing_node_is_ignored(): void
     {
-        $expectedNodes = $this->nodes();
+        $expectedRoot = $this->directory('', self::EXAMPLE_STRUCTURE);
         $this->file('foo/bar/baz/file.txt')->remove();
-        $this->assertEquals($expectedNodes, $this->nodes);
+        $this->assertEquals($expectedRoot, $this->root);
 
         $this->directory('foo/bar/baz.txt')->remove();
-        $this->assertEquals($expectedNodes, $this->nodes);
+        $this->assertEquals($expectedRoot, $this->root);
     }
 
     public function test_remove_existing_node_removes_node(): void
