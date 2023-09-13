@@ -12,14 +12,14 @@
 namespace Shudd3r\Filesystem\Exception;
 
 use Shudd3r\Filesystem\FilesystemException;
+use Shudd3r\Filesystem\Directory;
 
 
 class RootDirectoryNotFound extends FilesystemException
 {
-    public static function forRoot(string $path, string $name): self
+    public static function forRoot(Directory $directory): self
     {
-        $root    = substr($path, 0, -(strlen($name) + 1));
         $message = 'Root directory instance requires existing directory path. Create `%s` directory in `%s` first';
-        return new self(sprintf($message, $name, $root));
+        return new self(sprintf($message, $directory->name(), self::nodeRoot($directory)));
     }
 }

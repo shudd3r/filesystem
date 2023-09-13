@@ -77,7 +77,7 @@ class LocalDirectory extends LocalNode implements Directory
     {
         if (!$this->pathname->relative()) { return $this; }
         if (!$this->exists()) {
-            throw Exception\RootDirectoryNotFound::forRoot($this->pathname->absolute(), $this->pathname->relative());
+            throw Exception\RootDirectoryNotFound::forRoot($this);
         }
 
         return new self($this->pathname->asRoot(), $this->assert);
