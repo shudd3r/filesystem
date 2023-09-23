@@ -72,7 +72,7 @@ abstract class TreeNode
         throw new UnsupportedOperation();
     }
 
-    public function target(): ?string
+    public function target(): string
     {
         throw new UnsupportedOperation();
     }
