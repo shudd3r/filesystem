@@ -29,8 +29,7 @@ class TreeNodeTest extends TestCase
         $this->assertFalse($node->isLink());
         $this->assertTrue($node->isValid());
         $this->assertException(fn () => $node->filenames());
-        $this->assertException(fn () => $node->add('foo', $node));
-        $this->assertException(fn () => $node->remove('foo'));
+        $this->assertException(fn () => $node->remove());
         $this->assertException(fn () => $node->contents());
         $this->assertException(fn () => $node->putContents('foo'));
         $this->assertException(fn () => $node->target());

@@ -47,17 +47,12 @@ abstract class TreeNode
         return true;
     }
 
+    public function remove(): void
+    {
+        throw new UnsupportedOperation();
+    }
+
     public function filenames(): Generator
-    {
-        throw new UnsupportedOperation();
-    }
-
-    public function add(string $path, TreeNode $node): void
-    {
-        throw new UnsupportedOperation();
-    }
-
-    public function remove(string $path): void
     {
         throw new UnsupportedOperation();
     }

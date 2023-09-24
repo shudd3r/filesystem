@@ -22,8 +22,8 @@ class Root
     private int       $length;
 
     /**
-     * @param string    $path
-     * @param Directory $nodes
+     * @param string     $path
+     * @param ?Directory $nodes
      */
     public function __construct(string $path, Directory $nodes = null)
     {

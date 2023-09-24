@@ -14,7 +14,6 @@ namespace Shudd3r\Filesystem\Tests\Virtual\TreeNode;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Virtual\TreeNode\Directory;
 use Shudd3r\Filesystem\Virtual\TreeNode\MissingNode;
-use Shudd3r\Filesystem\Exception\UnsupportedOperation;
 
 
 class DirectoryTest extends TestCase
@@ -49,46 +48,21 @@ class DirectoryTest extends TestCase
     public function test_adding_nodes(): void
     {
         $directory = new Directory();
-        $this->assertInstanceOf(MissingNode::class, $directory->node('foo/bar'));
-        $directory->add('foo/bar', $bar = new Directory());
-        $this->assertSame($bar, $directory->node('foo/bar'));
-    }
-
-    public function test_adding_node_with_empty_path_throws_exception(): void
-    {
-        $directory = new Directory();
-        $this->expectException(UnsupportedOperation::class);
-        $directory->add('', new Directory());
-    }
-
-    public function test_adding_node_to_existing_path_throws_exception(): void
-    {
-        $directory = new Directory([
-            'foo' => new Directory()
-        ]);
-        $this->expectException(UnsupportedOperation::class);
-        $directory->add('foo/bar', new Directory());
-    }
-
-    public function test_remove_nodes(): void
-    {
-        $directory = new Directory([
-            'foo' => $foo = new Directory([
-                'bar' => $bar = new Directory()
-            ])
-        ]);
-
-        $directory->remove('foo/bar/baz');
-        $this->assertSame($bar, $directory->node('foo/bar'));
-        $directory->remove('foo/bar');
-        $this->assertInstanceOf(MissingNode::class, $directory->node('foo/bar'));
+        $this->assertInstanceOf(MissingNode::class, $directory->node('foo'));
+        $directory->add('foo', $foo = new Directory());
         $this->assertSame($foo, $directory->node('foo'));
+        $directory->add('foo', $newFoo = new Directory());
+        $this->assertSame($newFoo, $directory->node('foo'));
     }
 
-    public function test_remove_with_empty_path_throws_exception(): void
+    public function test_remove_node(): void
     {
-        $directory = new Directory();
-        $this->expectException(UnsupportedOperation::class);
-        $directory->remove('');
+        $directory = new Directory([
+            'foo' => new Directory(),
+            'bar' => new Directory()
+        ]);
+
+        $directory->unlink('foo');
+        $this->assertEquals(new Directory(['bar' => new Directory()]), $directory);
     }
 }

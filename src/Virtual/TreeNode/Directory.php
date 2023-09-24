@@ -27,6 +27,16 @@ class Directory extends TreeNode
         $this->nodes = $nodes;
     }
 
+    public function add(string $name, TreeNode $node): void
+    {
+        $this->nodes[$name] = $node;
+    }
+
+    public function unlink(string $name): void
+    {
+        unset($this->nodes[$name]);
+    }
+
     public function node(string $path): TreeNode
     {
         if (!$path) { return $this; }
@@ -45,35 +55,6 @@ class Directory extends TreeNode
     public function filenames(): Generator
     {
         yield from [];
-    }
-
-    public function add(string $path, TreeNode $node): void
-    {
-        [$child, $subPath] = $this->splitPath($path);
-        if (!$child || isset($this->nodes[$child])) {
-            parent::add($path, $node);
-        }
-        if ($subPath) {
-            $subNode = new self([]);
-            $subNode->add($subPath, $node);
-        }
-
-        $this->nodes[$child] = $subNode ?? $node;
-    }
-
-    public function remove(string $path): void
-    {
-        if (!$path) { parent::remove($path); }
-        [$child, $subPath] = $this->splitPath($path);
-
-        $node = $this->nodes[$child] ?? null;
-        if (!$node) { return; }
-        if ($subPath) {
-            $node->remove($subPath);
-            return;
-        }
-
-        unset($this->nodes[$path]);
     }
 
     private function splitPath(string $path): array
