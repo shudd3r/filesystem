@@ -20,7 +20,7 @@ class FileTest extends TestCase
 {
     public function test_node_method_returns_InvalidNode_with_given_path(): void
     {
-        $this->assertEquals(new InvalidNode('foo/bar'), $this->file()->node('foo/bar'));
+        $this->assertEquals(new InvalidNode('foo', 'bar'), $this->file()->node('foo', 'bar'));
     }
 
     public function test_isFile_method_returns_true(): void

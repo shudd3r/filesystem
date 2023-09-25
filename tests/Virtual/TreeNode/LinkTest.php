@@ -24,21 +24,23 @@ class LinkTest extends TestCase
 
     public function test_target_method_returns_instance_targetPath(): void
     {
-        $this->assertSame('foo/bar', $this->link('foo/bar')->target());
+        $this->assertSame('vfs://foo/bar', $this->link('vfs://foo/bar')->target());
     }
 
     public function test_setTarget_method_changes_link_target(): void
     {
-        $link = $this->link('foo/bar');
-        $link->setTarget('bar/baz');
-        $this->assertSame('bar/baz', $link->target());
+        $link = $this->link('vfs://foo/bar');
+        $link->setTarget('vfs://bar/baz');
+        $this->assertSame('vfs://bar/baz', $link->target());
     }
 
-    public function test_node_method_returns_link_with_missing_path(): void
+    public function test_node_method_returns_new_instance_with_expanded_missing_path_segments(): void
     {
-        $link = $this->link('baz')->node('foo/bar');
-        $this->assertInstanceOf(Link::class, $link);
-        $this->assertSame('foo/bar', $link->missingPath());
+        $link = $this->link('baz');
+        $this->assertInstanceOf(Link::class, $expanded = $link->node('foo', 'bar'));
+        $this->assertNotSame($link, $expanded);
+        $this->assertSame(['foo', 'bar'], $expanded->missingSegments());
+        $this->assertSame(['foo', 'bar', 'baz'], $expanded->node('baz')->missingSegments());
     }
 
     private function link(string $targetPath): Link

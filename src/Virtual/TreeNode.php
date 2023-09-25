@@ -17,7 +17,7 @@ use Generator;
 
 abstract class TreeNode
 {
-    public function node(string $path): self
+    public function node(string ...$pathSegments): self
     {
         throw new UnsupportedOperation();
     }
@@ -77,8 +77,8 @@ abstract class TreeNode
         throw new UnsupportedOperation();
     }
 
-    public function missingPath(): string
+    public function missingSegments(): array
     {
-        return '';
+        return [];
     }
 }

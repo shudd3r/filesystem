@@ -16,11 +16,16 @@ use Shudd3r\Filesystem\Virtual\TreeNode;
 
 class InvalidNode extends TreeNode
 {
-    private string $missingPath;
+    private array $missingSegments;
 
-    public function __construct(string $missingPath)
+    public function __construct(string ...$missingSegments)
     {
-        $this->missingPath = $missingPath;
+        $this->missingSegments = $missingSegments;
+    }
+
+    public function node(string ...$pathSegments): TreeNode
+    {
+        return new self(...$this->missingSegments, ...$pathSegments);
     }
 
     public function exists(): bool
@@ -33,8 +38,8 @@ class InvalidNode extends TreeNode
         return false;
     }
 
-    public function missingPath(): string
+    public function missingSegments(): array
     {
-        return $this->missingPath;
+        return $this->missingSegments;
     }
 }

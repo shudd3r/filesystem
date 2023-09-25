@@ -31,10 +31,10 @@ class TreeNodeTest extends TestCase
         $this->assertException(fn () => $node->filenames());
         $this->assertException(fn () => $node->remove());
         $this->assertException(fn () => $node->contents());
-        $this->assertException(fn () => $node->putContents('foo'));
+        $this->assertException(fn () => $node->putContents('contents...'));
         $this->assertException(fn () => $node->target());
         $this->assertException(fn () => $node->setTarget('foo'));
-        $this->assertSame('', $node->missingPath());
+        $this->assertSame([], $node->missingSegments());
     }
 
     private function assertException(callable $methodCall): void

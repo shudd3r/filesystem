@@ -23,9 +23,9 @@ class File extends TreeNode
         $this->contents = $contents;
     }
 
-    public function node(string $path): TreeNode
+    public function node(string ...$pathSegments): TreeNode
     {
-        return new InvalidNode($path);
+        return new InvalidNode(...$pathSegments);
     }
 
     public function isFile(): bool

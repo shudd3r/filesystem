@@ -17,24 +17,25 @@ use Shudd3r\Filesystem\Virtual\TreeNode\MissingNode;
 
 class MissingNodeTest extends TestCase
 {
-    public function test_node_method_returns_same_instance(): void
-    {
-        $node = $this->node('foo/bar');
-        $this->assertSame($node, $node->node('bar/baz'));
-    }
-
     public function test_exists_method_returns_false(): void
     {
-        $this->assertFalse($this->node('foo/bar')->exists());
+        $this->assertFalse($this->missingNode('foo')->exists());
     }
 
-    public function test_missingPath_method_returns_instance_path(): void
+    public function test_missingSegments_method_returns_instance_segments(): void
     {
-        $this->assertSame('foo/bar', $this->node('foo/bar')->missingPath());
+        $this->assertSame(['foo', 'bar'], $this->missingNode('foo', 'bar')->missingSegments());
     }
 
-    private function node(string $missingPath): MissingNode
+    public function test_node_method_returns_new_instance_with_expanded_missing_path_segments(): void
     {
-        return new MissingNode($missingPath);
+        $missingNode = $this->missingNode('foo');
+        $this->assertNotSame($missingNode, $missingNode->node('bar', 'baz'));
+        $this->assertEquals($this->missingNode('foo', 'bar', 'baz'), $missingNode->node('bar', 'baz'));
+    }
+
+    private function missingNode(string ...$missingSegments): MissingNode
+    {
+        return new MissingNode(...$missingSegments);
     }
 }

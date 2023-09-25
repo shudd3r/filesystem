@@ -34,15 +34,16 @@ class Root
 
     public function node(string $path): TreeNode
     {
-        return $this->nodes->node($this->relativePath($path));
+        return $this->nodes->node(...$this->pathSegments($path));
     }
 
-    private function relativePath(string $path): string
+    private function pathSegments(string $path): array
     {
         if (!str_starts_with($path, $this->path)) {
             throw new UnsupportedOperation();
         }
 
-        return substr($path, $this->length);
+        $path = substr($path, $this->length);
+        return $path ? explode('/', $path) : [];
     }
 }

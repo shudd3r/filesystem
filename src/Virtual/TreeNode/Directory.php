@@ -37,14 +37,12 @@ class Directory extends TreeNode
         unset($this->nodes[$name]);
     }
 
-    public function node(string $path): TreeNode
+    public function node(string ...$pathSegments): TreeNode
     {
-        if (!$path) { return $this; }
-
-        [$child, $subPath] = $this->splitPath($path);
-
-        $node = $this->nodes[$child] ?? new MissingNode($path);
-        return $subPath ? $node->node($subPath) : $node;
+        if (!$pathSegments) { return $this; }
+        $child = array_shift($pathSegments);
+        $node  = $this->nodes[$child] ?? new MissingNode($child);
+        return $pathSegments ? $node->node(...$pathSegments) : $node;
     }
 
     public function isDir(): bool
@@ -55,10 +53,5 @@ class Directory extends TreeNode
     public function filenames(): Generator
     {
         yield from [];
-    }
-
-    private function splitPath(string $path): array
-    {
-        return explode('/', $path, 2) + [null, null];
     }
 }

@@ -26,11 +26,11 @@ class DirectoryTest extends TestCase
             ])
         ]);
 
-        $this->assertSame($directory, $directory->node(''));
+        $this->assertSame($directory, $directory->node());
         $this->assertSame($foo, $directory->node('foo'));
-        $this->assertSame($bar, $directory->node('foo/bar'));
+        $this->assertSame($bar, $directory->node('foo', 'bar'));
         $this->assertSame($bar, $directory->node('foo')->node('bar'));
-        $this->assertInstanceOf(MissingNode::class, $directory->node('foo/bar/baz'));
+        $this->assertEquals(new MissingNode('baz'), $directory->node('foo', 'bar', 'baz'));
     }
 
     public function test_isDir_returns_true(): void

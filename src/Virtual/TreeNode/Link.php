@@ -17,28 +17,23 @@ use Shudd3r\Filesystem\Virtual\TreeNode;
 class Link extends TreeNode
 {
     private string $targetPath;
-    private string $missingPath = '';
+    private array  $missingSegments = [];
 
     public function __construct(string $targetPath)
     {
         $this->targetPath = $targetPath;
     }
 
-    public function node(string $path): TreeNode
+    public function node(string ...$pathSegments): TreeNode
     {
         $clone = clone $this;
-        $clone->missingPath = $path;
+        $clone->missingSegments = array_merge($this->missingSegments, $pathSegments);
         return $clone;
     }
 
     public function isLink(): bool
     {
         return true;
-    }
-
-    public function missingPath(): string
-    {
-        return $this->missingPath;
     }
 
     public function target(): string
@@ -49,5 +44,10 @@ class Link extends TreeNode
     public function setTarget(string $path): void
     {
         $this->targetPath = $path;
+    }
+
+    public function missingSegments(): array
+    {
+        return $this->missingSegments;
     }
 }

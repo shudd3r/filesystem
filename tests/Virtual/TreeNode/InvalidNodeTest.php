@@ -19,21 +19,28 @@ class InvalidNodeTest extends TestCase
 {
     public function test_isValid_method_returns_false(): void
     {
-        $this->assertFalse($this->node('foo/bar')->isValid());
+        $this->assertFalse($this->invalidNode('foo', 'bar')->isValid());
     }
 
     public function test_exists_method_returns_false(): void
     {
-        $this->assertFalse($this->node('foo/bar')->exists());
+        $this->assertFalse($this->invalidNode('foo', 'bar')->exists());
     }
 
-    public function test_missingPath_method_returns_instance_path(): void
+    public function test_missingSegments_method_returns_instance_segments(): void
     {
-        $this->assertSame('foo/bar', $this->node('foo/bar')->missingPath());
+        $this->assertSame(['foo', 'bar'], $this->invalidNode('foo', 'bar')->missingSegments());
     }
 
-    private function node(string $missingPath): InvalidNode
+    public function test_node_method_returns_new_instance_with_expanded_missing_path_segments(): void
     {
-        return new InvalidNode($missingPath);
+        $invalidNode = $this->invalidNode('foo');
+        $this->assertNotSame($invalidNode, $invalidNode->node('bar', 'baz'));
+        $this->assertEquals($this->invalidNode('foo', 'bar', 'baz'), $invalidNode->node('bar', 'baz'));
+    }
+
+    private function invalidNode(string ...$missingSegments): InvalidNode
+    {
+        return new InvalidNode(...$missingSegments);
     }
 }
