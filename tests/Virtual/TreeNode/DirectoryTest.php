@@ -13,7 +13,9 @@ namespace Shudd3r\Filesystem\Tests\Virtual\TreeNode;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Virtual\TreeNode\Directory;
+use Shudd3r\Filesystem\Virtual\TreeNode\Link;
 use Shudd3r\Filesystem\Virtual\TreeNode\MissingNode;
+use Shudd3r\Filesystem\Virtual\TreeNode\File;
 
 
 class DirectoryTest extends TestCase
@@ -39,10 +41,23 @@ class DirectoryTest extends TestCase
         $this->assertTrue($directory->isDir());
     }
 
-    public function test_files_returns_empty_iterator(): void
+    public function test_filenames_returns_ordered_filename_iterator(): void
     {
-        $directory = new Directory();
-        $this->assertSame([], iterator_to_array($directory->filenames()));
+        $directory = new Directory([
+            'b' => new File(),
+            'a' => new Directory([
+                'c' => new File(),
+                'b' => new Directory([
+                    'a' => new File(),
+                    'b' => new Link('foo')
+                ]),
+                'a' => new File()
+            ]),
+            'c' => new Directory()
+        ]);
+
+        $expected = ['a/a', 'a/b/a', 'a/c', 'b'];
+        $this->assertSame($expected, iterator_to_array($directory->filenames(), false));
     }
 
     public function test_adding_nodes(): void

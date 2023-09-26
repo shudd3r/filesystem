@@ -50,8 +50,14 @@ class Directory extends TreeNode
         return true;
     }
 
-    public function filenames(): Generator
+    public function filenames(string $path = ''): Generator
     {
-        yield from [];
+        $nodes = $this->nodes;
+        ksort($nodes, SORT_STRING);
+        foreach ($nodes as $name => $node) {
+            if ($node->isLink()) { continue; }
+            $pathname = $path ? $path . '/' . $name : $name;
+            $node->isDir() ? yield from $node->filenames($pathname) : yield $pathname;
+        }
     }
 }
