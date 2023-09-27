@@ -16,16 +16,18 @@ use Shudd3r\Filesystem\Virtual\TreeNode;
 
 class MissingNode extends TreeNode
 {
-    private array $missingSegments;
+    private Directory $directory;
+    private array     $missingSegments;
 
-    public function __construct(string ...$missingSegments)
+    public function __construct(Directory $directory, string ...$missingSegments)
     {
+        $this->directory       = $directory;
         $this->missingSegments = $missingSegments;
     }
 
     public function node(string ...$pathSegments): TreeNode
     {
-        return new self(...$this->missingSegments, ...$pathSegments);
+        return new self($this->directory, ...$this->missingSegments, ...$pathSegments);
     }
 
     public function exists(): bool
@@ -33,8 +35,27 @@ class MissingNode extends TreeNode
         return false;
     }
 
+    public function putContents(string $contents): void
+    {
+        $this->attachNode(new File($contents));
+    }
+
+    public function setTarget(string $path): void
+    {
+        $this->attachNode(new Link($path));
+    }
+
     public function missingSegments(): array
     {
         return $this->missingSegments;
+    }
+
+    private function attachNode(TreeNode $node): void
+    {
+        $attachName = array_shift($this->missingSegments);
+        while ($name = array_pop($this->missingSegments)) {
+            $node = new Directory([$name => $node]);
+        }
+        $this->directory->add($attachName, $node);
     }
 }

@@ -32,7 +32,7 @@ class DirectoryTest extends TestCase
         $this->assertSame($foo, $directory->node('foo'));
         $this->assertSame($bar, $directory->node('foo', 'bar'));
         $this->assertSame($bar, $directory->node('foo')->node('bar'));
-        $this->assertEquals(new MissingNode('baz'), $directory->node('foo', 'bar', 'baz'));
+        $this->assertEquals(new MissingNode($bar, 'baz'), $directory->node('foo', 'bar', 'baz'));
     }
 
     public function test_isDir_returns_true(): void

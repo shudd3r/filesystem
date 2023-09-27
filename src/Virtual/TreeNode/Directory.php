@@ -41,7 +41,7 @@ class Directory extends TreeNode
     {
         if (!$pathSegments) { return $this; }
         $child = array_shift($pathSegments);
-        $node  = $this->nodes[$child] ?? new MissingNode($child);
+        $node  = $this->nodes[$child] ?? new MissingNode($this, $child);
         return $pathSegments ? $node->node(...$pathSegments) : $node;
     }
 

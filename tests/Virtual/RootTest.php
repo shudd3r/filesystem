@@ -32,7 +32,7 @@ class RootTest extends TestCase
         $this->assertSame($foo, $root->node('vfs://root/foo'));
         $this->assertSame($bar, $root->node('vfs://root/foo/bar'));
         $this->assertSame($bar, $root->node('vfs://root/foo')->node('bar'));
-        $this->assertEquals(new MissingNode('baz'), $root->node('vfs://root/foo/bar/baz'));
+        $this->assertEquals(new MissingNode($bar, 'baz'), $root->node('vfs://root/foo/bar/baz'));
     }
 
     public function test_node_for_not_matching_root_path_throws_exception(): void
