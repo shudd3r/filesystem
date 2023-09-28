@@ -11,11 +11,9 @@
 
 namespace Shudd3r\Filesystem\Virtual;
 
-use Shudd3r\Filesystem\Virtual\TreeNode\Directory;
-use Shudd3r\Filesystem\Virtual\TreeNode\Link;
-use Shudd3r\Filesystem\Virtual\TreeNode\LinkedNode;
-use Shudd3r\Filesystem\Virtual\TreeNode\ParentContext;
-use Shudd3r\Filesystem\Exception\UnsupportedOperation;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Exception;
 
 
 class Root
@@ -42,21 +40,21 @@ class Root
 
         $basename = array_pop($path);
         $parent   = $path ? $this->nodes->node(...$path) : $this->nodes;
-        if ($parent instanceof Link) {
+        if ($parent instanceof TreeNode\Link) {
             $parent = $this->targetNode($parent);
         }
 
         if (!$parent->isDir()) { return $parent->node($basename); }
 
         $node = $parent->node($basename);
-        if ($node instanceof Link) {
-            $node = new LinkedNode($node, $this->targetNode($node));
+        if ($node instanceof TreeNode\Link) {
+            $node = new TreeNode\LinkedNode($node, $this->targetNode($node));
         }
 
-        return $node->exists() || $node->isLink() ? new ParentContext($node, $parent, $basename) : $node;
+        return $node->exists() || $node->isLink() ? new TreeNode\ParentContext($node, $parent, $basename) : $node;
     }
 
-    private function targetNode(Link $link): TreeNode
+    private function targetNode(TreeNode\Link $link): TreeNode
     {
         $path = $this->pathSegments($link->target());
         return $this->nodes->node(...$path, ...$link->missingSegments());
@@ -65,7 +63,7 @@ class Root
     private function pathSegments(string $path): array
     {
         if (!str_starts_with($path, $this->path)) {
-            throw new UnsupportedOperation();
+            throw new Exception\UnsupportedOperation();
         }
 
         $path = substr($path, $this->length);

@@ -9,11 +9,11 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Tests\Virtual\TreeNode;
+namespace Shudd3r\Filesystem\Tests\Virtual\Root\TreeNode;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Virtual\TreeNode\ParentContext;
-use Shudd3r\Filesystem\Virtual\TreeNode;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\ParentContext;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
 
 class ParentContextTest extends TestCase
@@ -21,35 +21,35 @@ class ParentContextTest extends TestCase
     public function test_remove_method_removes_node_from_parent_directory(): void
     {
         $directory = new TreeNode\Directory(['foo' => new TreeNode\File('contents...')]);
-        $this->context(new TreeNode\File('contents...'), $directory, 'foo')->remove();
+        $this->context(new TreeNode\File('contents...'), $directory)->remove();
         $this->assertEquals(new TreeNode\Directory(), $directory);
     }
 
     public function test_other_methods_are_delegated_to_wrapped_node(): void
     {
         $node    = new TreeNode\Directory(['file.txt' => new TreeNode\File('foo file')]);
-        $context = $this->context($node, new TreeNode\Directory(), 'foo');
+        $context = $this->context($node, new TreeNode\Directory());
         $this->assertTrue($context->exists());
         $this->assertTrue($context->isDir());
         $this->assertTrue($context->isValid());
         $this->assertSame(['file.txt'], iterator_to_array($context->filenames(), false));
 
         $node    = new TreeNode\File('foo file');
-        $context = $this->context($node, new TreeNode\Directory(), 'foo');
+        $context = $this->context($node, new TreeNode\Directory());
         $this->assertTrue($context->isFile());
         $this->assertSame('foo file', $context->contents());
         $context->putContents('new contents');
         $this->assertSame('new contents', $context->contents());
 
         $node    = new TreeNode\Link('vfs://node/path');
-        $context = $this->context($node, new TreeNode\Directory(), 'foo');
+        $context = $this->context($node, new TreeNode\Directory());
         $this->assertTrue($context->isLink());
         $this->assertSame('vfs://node/path', $context->target());
         $context->setTarget('vfs://new/node');
         $this->assertSame('vfs://new/node', $context->target());
 
         $node    = new TreeNode\InvalidNode('foo', 'bar');
-        $context = $this->context($node, new TreeNode\Directory(), 'foo');
+        $context = $this->context($node, new TreeNode\Directory());
         $this->assertFalse($context->exists());
         $this->assertFalse($context->isDir());
         $this->assertFalse($context->isFile());
@@ -57,8 +57,8 @@ class ParentContextTest extends TestCase
         $this->assertFalse($context->isValid());
     }
 
-    private function context(TreeNode $node, TreeNode\Directory $parent, string $name): ParentContext
+    private function context(TreeNode $node, TreeNode\Directory $parent): ParentContext
     {
-        return new ParentContext($node, $parent, $name);
+        return new ParentContext($node, $parent, 'foo');
     }
 }

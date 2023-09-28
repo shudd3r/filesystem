@@ -9,9 +9,9 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual\TreeNode;
+namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
-use Shudd3r\Filesystem\Virtual\TreeNode;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
 
 class File extends TreeNode

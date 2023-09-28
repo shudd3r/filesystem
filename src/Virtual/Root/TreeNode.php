@@ -9,9 +9,9 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual;
+namespace Shudd3r\Filesystem\Virtual\Root;
 
-use Shudd3r\Filesystem\Exception\UnsupportedOperation;
+use Shudd3r\Filesystem\Exception;
 use Generator;
 
 
@@ -19,7 +19,7 @@ abstract class TreeNode
 {
     public function node(string ...$pathSegments): self
     {
-        throw new UnsupportedOperation();
+        throw new Exception\UnsupportedOperation();
     }
 
     public function exists(): bool
@@ -49,32 +49,32 @@ abstract class TreeNode
 
     public function remove(): void
     {
-        throw new UnsupportedOperation();
+        throw new Exception\UnsupportedOperation();
     }
 
     public function filenames(): Generator
     {
-        throw new UnsupportedOperation();
+        throw new Exception\UnsupportedOperation();
     }
 
     public function contents(): string
     {
-        throw new UnsupportedOperation();
+        throw new Exception\UnsupportedOperation();
     }
 
     public function putContents(string $contents): void
     {
-        throw new UnsupportedOperation();
+        throw new Exception\UnsupportedOperation();
     }
 
     public function target(): string
     {
-        throw new UnsupportedOperation();
+        throw new Exception\UnsupportedOperation();
     }
 
     public function setTarget(string $path): void
     {
-        throw new UnsupportedOperation();
+        throw new Exception\UnsupportedOperation();
     }
 
     public function missingSegments(): array

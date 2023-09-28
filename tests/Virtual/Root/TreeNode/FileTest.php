@@ -9,11 +9,11 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Tests\Virtual\TreeNode;
+namespace Shudd3r\Filesystem\Tests\Virtual\Root\TreeNode;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Virtual\TreeNode\File;
-use Shudd3r\Filesystem\Virtual\TreeNode\InvalidNode;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\File;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\InvalidNode;
 
 
 class FileTest extends TestCase

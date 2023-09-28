@@ -13,12 +13,12 @@ namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Virtual\Root;
-use Shudd3r\Filesystem\Virtual\TreeNode\ParentContext;
-use Shudd3r\Filesystem\Virtual\TreeNode\MissingNode;
-use Shudd3r\Filesystem\Virtual\TreeNode\InvalidNode;
-use Shudd3r\Filesystem\Virtual\TreeNode\Directory;
-use Shudd3r\Filesystem\Virtual\TreeNode\File;
-use Shudd3r\Filesystem\Virtual\TreeNode\Link;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\MissingNode;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\InvalidNode;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\ParentContext;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\File;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
 use Shudd3r\Filesystem\Exception;
 
 

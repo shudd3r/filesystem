@@ -9,11 +9,11 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Tests\Virtual;
+namespace Shudd3r\Filesystem\Tests\Virtual\Root;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Virtual\TreeNode;
-use Shudd3r\Filesystem\Exception\UnsupportedOperation;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Exception;
 
 
 class TreeNodeTest extends TestCase
@@ -39,7 +39,7 @@ class TreeNodeTest extends TestCase
 
     private function assertException(callable $methodCall): void
     {
-        $expected = UnsupportedOperation::class;
+        $expected = Exception\UnsupportedOperation::class;
         try {
             $methodCall();
         } catch (\Exception $ex) {
