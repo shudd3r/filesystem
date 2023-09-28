@@ -12,6 +12,9 @@
 namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\Virtual\TreeNode\Directory;
+use Shudd3r\Filesystem\Virtual\TreeNode\Link;
+use Shudd3r\Filesystem\Virtual\TreeNode\LinkedNode;
+use Shudd3r\Filesystem\Virtual\TreeNode\ParentContext;
 use Shudd3r\Filesystem\Exception\UnsupportedOperation;
 
 
@@ -34,7 +37,29 @@ class Root
 
     public function node(string $path): TreeNode
     {
-        return $this->nodes->node(...$this->pathSegments($path));
+        $path = $this->pathSegments($path);
+        if (!$path) { return $this->nodes; }
+
+        $basename = array_pop($path);
+        $parent   = $path ? $this->nodes->node(...$path) : $this->nodes;
+        if ($parent instanceof Link) {
+            $parent = $this->targetNode($parent);
+        }
+
+        if (!$parent->isDir()) { return $parent->node($basename); }
+
+        $node = $parent->node($basename);
+        if ($node instanceof Link) {
+            $node = new LinkedNode($node, $this->targetNode($node));
+        }
+
+        return $node->exists() || $node->isLink() ? new ParentContext($node, $parent, $basename) : $node;
+    }
+
+    private function targetNode(Link $link): TreeNode
+    {
+        $path = $this->pathSegments($link->target());
+        return $this->nodes->node(...$path, ...$link->missingSegments());
     }
 
     private function pathSegments(string $path): array
