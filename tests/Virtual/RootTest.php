@@ -16,6 +16,7 @@ use Shudd3r\Filesystem\Virtual\Root;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\MissingNode;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\InvalidNode;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\ParentContext;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\LinkedNode;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\File;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
@@ -68,6 +69,26 @@ class RootTest extends TestCase
         $this->assertTrue($node->isDir() && $node->isLink());
         $this->assertInstanceOf(ParentContext::class, $node = $root->node('vfs://inv.lnk'));
         $this->assertTrue(!$node->isFile() && !$node->isDir() && $node->isLink());
+        $this->assertInstanceOf(ParentContext::class, $node = $root->node('vfs://red.lnk'));
+        $this->assertTrue(!$node->isFile() && $node->isDir() && $node->isLink());
+    }
+
+    public function test_resolving_multiple_links(): void
+    {
+        $root = new Root('vfs://', new Directory([
+            'foo' => new Directory([
+                'bar' => $dir = new Directory([
+                    'file'         => $file = new File('contents'),
+                    'red.file.lnk' => $link = new Link('vfs://file.lnk')
+                ])
+            ]),
+            'file.lnk' => new Link('vfs://foo/bar/file'),
+            'dir.lnk'  => new Link('vfs://foo')
+        ]));
+
+        $expected = new ParentContext(new LinkedNode($link, $file), $dir, 'red.file.lnk');
+        $this->assertEquals($expected, $node = $root->node('vfs://dir.lnk/bar/red.file.lnk'));
+        $this->assertSame('contents', $node->contents());
     }
 
     private function root(): Root
@@ -80,7 +101,8 @@ class RootTest extends TestCase
             ]),
             'bar.txt' => new File('this is bar file'),
             'dir.lnk' => new Link('vfs://foo/bar'),
-            'inv.lnk' => new Link('vfs://foo/baz')
+            'inv.lnk' => new Link('vfs://foo/baz'),
+            'red.lnk' => new Link('vfs://dir.lnk')
         ]));
     }
 }

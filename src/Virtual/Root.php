@@ -57,7 +57,8 @@ class Root
     private function targetNode(TreeNode\Link $link): TreeNode
     {
         $path = $this->pathSegments($link->target());
-        return $this->nodes->node(...$path, ...$link->missingSegments());
+        $node = $this->nodes->node(...$path, ...$link->missingSegments());
+        return $node instanceof TreeNode\Link ? $this->targetNode($node) : $node;
     }
 
     private function pathSegments(string $path): array
