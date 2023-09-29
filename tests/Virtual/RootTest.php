@@ -91,6 +91,26 @@ class RootTest extends TestCase
         $this->assertSame('contents', $node->contents());
     }
 
+    public function test_circular_reference_protection(): void
+    {
+        $root = new Root('vfs://', new Directory([
+            'foo' => new Directory([
+                'lnk.foo' => new Link('vfs://foo/bar/lnk.bar'),
+                'bar' => $dir = new Directory([
+                    'lnk.bar' => $link = new Link('vfs://lnk.root')
+                ])
+            ]),
+            'lnk.root' => new Link('vfs://foo/lnk.foo')
+        ]));
+
+        $expected = new ParentContext(new LinkedNode($link, $link), $dir, 'lnk.bar');
+        $this->assertEquals($expected, $node = $root->node('vfs://foo/bar/lnk.bar'));
+        $this->assertTrue($node->isValid() && $node->isLink() && !$node->isFile() && !$node->isDir());
+
+        $this->assertEquals($link->node('path'), $node = $root->node('vfs://foo/bar/lnk.bar/path'));
+        $this->assertTrue($node->isValid() && $node->isLink() && !$node->isFile() && !$node->isDir());
+    }
+
     private function root(): Root
     {
         return new Root('vfs://', new Directory([

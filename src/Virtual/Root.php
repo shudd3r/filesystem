@@ -54,11 +54,17 @@ class Root
         return $node->exists() || $node->isLink() ? new TreeNode\ParentContext($node, $parent, $basename) : $node;
     }
 
-    private function targetNode(TreeNode\Link $link): TreeNode
+    private function targetNode(TreeNode\Link $node): TreeNode
     {
-        $path = $this->pathSegments($link->target());
-        $node = $this->nodes->node(...$path, ...$link->missingSegments());
-        return $node instanceof TreeNode\Link ? $this->targetNode($node) : $node;
+        $resolvedPaths = [];
+        while ($node instanceof TreeNode\Link) {
+            $path = $node->target();
+            if (in_array($path, $resolvedPaths, true)) { break; }
+            $node = $this->nodes->node(...$this->pathSegments($path), ...$node->missingSegments());
+            $resolvedPaths[] = $path;
+        }
+
+        return $node;
     }
 
     private function pathSegments(string $path): array
