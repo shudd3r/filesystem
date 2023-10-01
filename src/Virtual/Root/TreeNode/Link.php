@@ -31,9 +31,19 @@ class Link extends TreeNode
         return $clone;
     }
 
+    public function exists(): bool
+    {
+        return empty($this->missingSegments);
+    }
+
     public function isLink(): bool
     {
-        return true;
+        return empty($this->missingSegments);
+    }
+
+    public function isValid(): bool
+    {
+        return empty($this->missingSegments);
     }
 
     public function target(): string

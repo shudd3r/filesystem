@@ -17,9 +17,10 @@ use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
 
 class LinkTest extends TestCase
 {
-    public function test_isLink_method_returns_true(): void
+    public function test_link_properties(): void
     {
-        $this->assertTrue($this->link('foo')->isLink());
+        $link = $this->link('foo');
+        $this->assertTrue($link->exists() && $link->isLink() && $link->isValid());
     }
 
     public function test_target_method_returns_instance_targetPath(): void
@@ -41,6 +42,7 @@ class LinkTest extends TestCase
         $this->assertNotSame($link, $expanded);
         $this->assertSame(['foo', 'bar'], $expanded->missingSegments());
         $this->assertSame(['foo', 'bar', 'baz'], $expanded->node('baz')->missingSegments());
+        $this->assertFalse($expanded->exists() || $expanded->isLink() || $expanded->isValid());
     }
 
     private function link(string $targetPath): Link

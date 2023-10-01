@@ -107,8 +107,7 @@ class RootTest extends TestCase
         $this->assertEquals($expected, $node = $root->node('vfs://foo/bar/lnk.bar'));
         $this->assertTrue($node->isValid() && $node->isLink() && !$node->isFile() && !$node->isDir());
 
-        $this->assertEquals($link->node('path'), $node = $root->node('vfs://foo/bar/lnk.bar/path'));
-        $this->assertTrue($node->isValid() && $node->isLink() && !$node->isFile() && !$node->isDir());
+        $this->assertEquals($link->node('path'), $root->node('vfs://foo/bar/lnk.bar/path'));
     }
 
     private function root(): Root
