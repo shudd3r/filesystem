@@ -28,11 +28,11 @@ class TreeNodeTest extends TestCase
         $this->assertFalse($node->isFile());
         $this->assertFalse($node->isLink());
         $this->assertTrue($node->isValid());
-        $this->assertException(fn () => $node->filenames());
+        $this->assertSame([], iterator_to_array($node->filenames()));
         $this->assertException(fn () => $node->remove());
-        $this->assertException(fn () => $node->contents());
+        $this->assertEmpty($node->contents());
         $this->assertException(fn () => $node->putContents('contents...'));
-        $this->assertException(fn () => $node->target());
+        $this->assertNull($node->target());
         $this->assertException(fn () => $node->setTarget('foo'));
         $this->assertSame([], $node->missingSegments());
     }

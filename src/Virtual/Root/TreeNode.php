@@ -54,12 +54,12 @@ abstract class TreeNode
 
     public function filenames(): Generator
     {
-        throw new Exception\UnsupportedOperation();
+        yield from [];
     }
 
     public function contents(): string
     {
-        throw new Exception\UnsupportedOperation();
+        return '';
     }
 
     public function putContents(string $contents): void
@@ -67,9 +67,9 @@ abstract class TreeNode
         throw new Exception\UnsupportedOperation();
     }
 
-    public function target(): string
+    public function target(): ?string
     {
-        throw new Exception\UnsupportedOperation();
+        return null;
     }
 
     public function setTarget(string $path): void
