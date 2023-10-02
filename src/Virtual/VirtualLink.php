@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\Link;
 use Shudd3r\Filesystem\Node;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 use Shudd3r\Filesystem\Exception;
 
 
@@ -20,47 +21,47 @@ class VirtualLink extends VirtualNode implements Link
 {
     public function target(bool $showRemoved = false): ?string
     {
-        $node = $this->validated()->nodeData();
+        $node = $this->validated()->node();
         $show = $this->nodeExists($node) && ($showRemoved || $node->exists());
         return $show ? $node->target() : null;
     }
 
     public function setTarget(Node $node): void
     {
-        $this->nodeData()->setTarget($this->targetPath($node));
+        $this->node()->setTarget($this->targetPath($node));
     }
 
     public function isDirectory(): bool
     {
-        return $this->nodeData()->isDir();
+        return $this->node()->isDir();
     }
 
     public function isFile(): bool
     {
-        return $this->nodeData()->isFile();
+        return $this->node()->isFile();
     }
 
-    protected function nodeExists(NodeData $node): bool
+    protected function nodeExists(TreeNode $node): bool
     {
         return $node->isLink();
     }
 
-    private function targetPath(Node $node): string
+    private function targetPath(Node $target): string
     {
-        if (!$node instanceof VirtualNode) {
+        if (!$target instanceof VirtualNode || $target->root !== $this->root) {
             throw Exception\IOException\UnableToCreate::externalLink($this);
         }
 
-        if ($node instanceof Link) {
+        if ($target instanceof Link) {
             throw Exception\IOException\UnableToCreate::indirectLink($this);
         }
 
-        $data     = $node->validated(self::EXISTS)->nodeData();
-        $mismatch = $this->isDirectory() && !$data->isDir() || $this->isFile() && !$data->isFile();
+        $node     = $target->validated(self::EXISTS)->node();
+        $mismatch = $this->isDirectory() && !$node->isDir() || $this->isFile() && !$node->isFile();
         if ($mismatch) {
-            throw Exception\UnexpectedNodeType::forLink($this, $node);
+            throw Exception\UnexpectedNodeType::forLink($this, $target);
         }
 
-        return $node->pathname();
+        return $target->pathname();
     }
 }

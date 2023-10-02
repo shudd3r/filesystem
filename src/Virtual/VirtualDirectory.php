@@ -15,6 +15,8 @@ use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Generic\FileGenerator;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory as RootDirectory;
 use Shudd3r\Filesystem\Exception;
 use Generator;
 
@@ -22,27 +24,27 @@ use Generator;
 class VirtualDirectory extends VirtualNode implements Directory
 {
     /**
-     * @param string $path  Root node path
-     * @param array  $nodes Pre-existing node meta-data structure
+     * @param string         $path      Root node path
+     * @param ?RootDirectory $directory Pre-existing node meta-data structure
      */
-    public static function root(string $path = 'vfs://', array $nodes = []): self
+    public static function root(string $path = 'vfs://', RootDirectory $directory = null): self
     {
-        return new self(NodeData::root($path, $nodes), Pathname::root($path));
+        return new self(new Root($path, $directory ?? new RootDirectory()), Pathname::root($path));
     }
 
     public function subdirectory(string $name): VirtualDirectory
     {
-        return new VirtualDirectory($this->nodes, $this->path->forChildNode($name));
+        return new VirtualDirectory($this->root, $this->path->forChildNode($name));
     }
 
     public function link(string $name): VirtualLink
     {
-        return new VirtualLink($this->nodes, $this->path->forChildNode($name));
+        return new VirtualLink($this->root, $this->path->forChildNode($name));
     }
 
     public function file(string $name): VirtualFile
     {
-        return new VirtualFile($this->nodes, $this->path->forChildNode($name));
+        return new VirtualFile($this->root, $this->path->forChildNode($name));
     }
 
     public function files(): FileIterator
@@ -57,18 +59,21 @@ class VirtualDirectory extends VirtualNode implements Directory
         if (!$this->exists()) {
             throw Exception\RootDirectoryNotFound::forRoot($this);
         }
-        return new self($this->nodes, $path);
+        return new self($this->root, $path);
     }
 
-    protected function nodeExists(NodeData $node): bool
+    protected function nodeExists(TreeNode $node): bool
     {
         return $node->isDir();
     }
 
     private function generateFiles(): Generator
     {
-        foreach ($this->nodeData()->filenames() as $filename) {
-            yield new VirtualFile($this->nodes, $this->path->forChildNode($filename));
+        $node      = $this->node();
+        $filenames = $node->isDir() ? $node->filenames() : [];
+
+        foreach ($filenames as $filename) {
+            yield new VirtualFile($this->root, $this->path->forChildNode($filename));
         }
     }
 }

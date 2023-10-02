@@ -14,6 +14,7 @@ namespace Shudd3r\Filesystem\Virtual;
 use Shudd3r\Filesystem\File;
 use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\ContentStream;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 use Shudd3r\Filesystem\Exception\IOException;
 
 
@@ -21,12 +22,12 @@ class VirtualFile extends VirtualNode implements File
 {
     public function contents(): string
     {
-        return $this->validated(self::READ)->nodeData()->contents();
+        return $this->validated(self::READ)->node()->contents();
     }
 
     public function write(string $contents): void
     {
-        $this->validated(self::WRITE)->nodeData()->putContents($contents);
+        $this->validated(self::WRITE)->node()->putContents($contents);
     }
 
     public function writeStream(ContentStream $stream): void
@@ -36,12 +37,12 @@ class VirtualFile extends VirtualNode implements File
             throw IOException\UnableToReadContents::fromStream($stream);
         }
 
-        $this->validated(self::WRITE)->nodeData()->putContents($contents);
+        $this->validated(self::WRITE)->node()->putContents($contents);
     }
 
     public function append(string $contents): void
     {
-        $node = $this->validated(self::WRITE)->nodeData();
+        $node = $this->validated(self::WRITE)->node();
         $node->putContents($node->contents() . $contents);
     }
 
@@ -54,7 +55,7 @@ class VirtualFile extends VirtualNode implements File
 
     public function moveTo(Directory $directory, string $name = null): void
     {
-        $node = $this->nodeData();
+        $node = $this->node();
         if (!$this->nodeExists($node)) { return; }
         $file = $directory->file($name ?? basename($this->pathname()));
         if ($this->selfReference($file)) { return; }
@@ -67,13 +68,13 @@ class VirtualFile extends VirtualNode implements File
         return null;
     }
 
-    protected function nodeExists(NodeData $node): bool
+    protected function nodeExists(TreeNode $node): bool
     {
         return $node->isFile();
     }
 
     private function selfReference(File $file): bool
     {
-        return $file instanceof self && $this->pathname() === $file->pathname();
+        return $file instanceof self && $this->root === $file->root && $this->pathname() === $file->pathname();
     }
 }

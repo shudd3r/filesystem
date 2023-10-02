@@ -15,21 +15,11 @@ use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Filesystem\Virtual\VirtualFile;
 use Shudd3r\Filesystem\Virtual\VirtualLink;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
 
 abstract class VirtualFilesystemTests extends FilesystemTests
 {
-    protected const EXAMPLE_STRUCTURE = [
-        'foo' => [
-            'bar'      => ['baz.txt' => 'baz contents'],
-            'file.lnk' => ['/link' => 'vfs://bar.txt'],
-            'empty'    => []
-        ],
-        'bar.txt' => 'bar contents',
-        'dir.lnk' => ['/link' => 'vfs://foo/bar'],
-        'inv.lnk' => ['/link' => 'vfs://foo/baz']
-    ];
-
     protected VirtualDirectory $root;
 
     public static function setUpBeforeClass(): void
@@ -39,12 +29,12 @@ abstract class VirtualFilesystemTests extends FilesystemTests
 
     protected function setUp(): void
     {
-        $this->root = VirtualDirectory::root('vfs://', self::EXAMPLE_STRUCTURE);
+        $this->root = VirtualDirectory::root('vfs://', $this->exampleStructure());
     }
 
-    protected function directory(string $name = '', array $nodes = null): VirtualDirectory
+    protected function directory(string $name = '', TreeNode\Directory $nodes = null): VirtualDirectory
     {
-        $root = $nodes ? VirtualDirectory::root('vfs://', $nodes) : $this->root;
+        $root = VirtualDirectory::root('vfs://', $nodes ?? $this->exampleStructure());
         return $name ? $this->root->subdirectory($name) : $root;
     }
 
@@ -56,5 +46,49 @@ abstract class VirtualFilesystemTests extends FilesystemTests
     protected function link(string $name): VirtualLink
     {
         return $this->root->link($name);
+    }
+
+    protected function exampleStructure(array $changes = []): TreeNode\Directory
+    {
+        $tree = $this->mergeStructure([
+            'foo' => [
+                'bar' => [
+                    'baz.txt' => new TreeNode\File('baz contents')
+                ],
+                'file.lnk' => new TreeNode\Link('vfs://bar.txt'),
+                'empty'    => []
+            ],
+            'bar.txt' => new TreeNode\File('bar contents'),
+            'dir.lnk' => new TreeNode\Link('vfs://foo/bar'),
+            'inv.lnk' => new TreeNode\Link('vfs://foo/baz')
+        ], $changes);
+
+        return new TreeNode\Directory($this->createDirectories($tree));
+    }
+
+    private function mergeStructure($tree, $changes): array
+    {
+        foreach ($changes as $name => $value) {
+            if ($value === null) {
+                unset($tree[$name]);
+                continue;
+            }
+            if (!is_array($value)) {
+                $tree[$name] = $value;
+                continue;
+            }
+            $tree[$name] = isset($tree[$name]) ? $this->mergeStructure($tree[$name], $value) : $value;
+        }
+
+        return $tree;
+    }
+
+    private function createDirectories(array $tree): array
+    {
+        foreach ($tree as &$value) {
+            if (!is_array($value)) { continue; }
+            $value = new TreeNode\Directory($this->createDirectories($value));
+        }
+        return $tree;
     }
 }
