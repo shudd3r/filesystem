@@ -13,18 +13,19 @@ namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Generic\Pathname;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 use Shudd3r\Filesystem\Exception;
 
 
 abstract class VirtualNode implements Node
 {
-    protected NodeData $nodes;
+    protected Root     $root;
     protected Pathname $path;
 
-    protected function __construct(NodeData $nodes, Pathname $path)
+    protected function __construct(Root $root, Pathname $path)
     {
-        $this->nodes = $nodes;
-        $this->path  = $path;
+        $this->root = $root;
+        $this->path = $path;
     }
 
     public function pathname(): string
@@ -39,7 +40,7 @@ abstract class VirtualNode implements Node
 
     public function exists(): bool
     {
-        return $this->nodeExists($this->nodeData());
+        return $this->nodeExists($this->node());
     }
 
     public function isReadable(): bool
@@ -59,7 +60,7 @@ abstract class VirtualNode implements Node
 
     public function validated(int $flags = self::PATH): self
     {
-        $node = $this->nodeData();
+        $node = $this->node();
         if ($this->nodeExists($node)) { return $this; }
         if ($flags & self::EXISTS) {
             throw Exception\NodeNotFound::forNode($this);
@@ -70,7 +71,7 @@ abstract class VirtualNode implements Node
         }
 
         if (!$node->isValid()) {
-            $collision = substr($this->pathname(), 0, -strlen('/' . $node->missingPath()));
+            $collision = substr($this->pathname(), 0, -strlen('/' . implode('/', $node->missingSegments())));
             throw Exception\UnexpectedLeafNode::forNode($this, $collision);
         }
 
@@ -80,13 +81,13 @@ abstract class VirtualNode implements Node
     public function remove(): void
     {
         if (!$this->exists()) { return; }
-        $this->validated(self::REMOVE)->nodeData()->remove();
+        $this->validated(self::REMOVE)->node()->remove();
     }
 
-    abstract protected function nodeExists(NodeData $node): bool;
+    abstract protected function nodeExists(TreeNode $node): bool;
 
-    protected function nodeData(): NodeData
+    protected function node(): TreeNode
     {
-        return $this->nodes->nodeData($this->pathname());
+        return $this->root->node($this->pathname());
     }
 }
