@@ -52,6 +52,11 @@ abstract class TreeNode
         throw new Exception\UnsupportedOperation();
     }
 
+    public function createDir(): void
+    {
+        throw new Exception\UnsupportedOperation();
+    }
+
     public function filenames(): Generator
     {
         yield from [];

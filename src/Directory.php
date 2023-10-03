@@ -18,6 +18,11 @@ use Shudd3r\Filesystem\Exception\RootDirectoryNotFound;
 interface Directory extends Files, Node
 {
     /**
+     * Creates directory if it does not exist.
+     */
+    public function create(): void;
+
+    /**
      * Unless precondition assertion fails, Relative Directory instance
      * MUST be returned whether directory with given name exists within
      * this directory structure or not.

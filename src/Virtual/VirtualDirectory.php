@@ -32,6 +32,13 @@ class VirtualDirectory extends VirtualNode implements Directory
         return new self(new Root($path, $directory ?? new RootDirectory()), Pathname::root($path));
     }
 
+    public function create(): void
+    {
+        $node = $this->validated(self::WRITE)->node();
+        if ($this->nodeExists($node)) { return; }
+        $node->createDir();
+    }
+
     public function subdirectory(string $name): VirtualDirectory
     {
         return new VirtualDirectory($this->root, $this->path->forChildNode($name));

@@ -50,6 +50,13 @@ class LocalDirectory extends LocalNode implements Directory
         return is_dir($this->pathname());
     }
 
+    public function create(): void
+    {
+        if ($this->validated(self::WRITE)->exists()) { return; }
+        if (@mkdir($this->pathname(), 0755, true)) { return; }
+        throw Exception\IOException\UnableToCreate::node($this);
+    }
+
     public function subdirectory(string $name): self
     {
         $directory = new self($this->pathname->forChildNode($name), $this->assert);

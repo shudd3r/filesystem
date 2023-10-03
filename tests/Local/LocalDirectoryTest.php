@@ -55,6 +55,21 @@ class LocalDirectoryTest extends LocalFilesystemTests
         $this->assertFalse($root->subdirectory('file.lnk')->exists());
     }
 
+    public function test_create_for_writable_path_creates_directory(): void
+    {
+        $directory = $this->directory()->subdirectory('foo');
+        $this->assertDirectoryDoesNotExist($directory->pathname());
+        $directory->create();
+        $this->assertDirectoryExists($directory->pathname());
+    }
+
+    public function test_create_for_not_writable_path_throws_exception(): void
+    {
+        self::$temp->file('foo.file');
+        $directory = $this->directory()->subdirectory('foo.file/bar');
+        $this->assertExceptionType(Exception\UnexpectedLeafNode::class, fn () => $directory->create());
+    }
+
     public function test_subdirectory_for_valid_path_returns_LocalDirectory(): void
     {
         $this->assertInstanceOf(LocalDirectory::class, $this->directory()->subdirectory('foo/bar'));
@@ -188,6 +203,14 @@ class LocalDirectoryTest extends LocalFilesystemTests
         $this->assertIOException($exception, $removeDirectory, 'unlink', self::$temp->pathname('foo/bar/baz.txt'));
         $this->assertIOException($exception, $removeDirectory, 'rmdir', self::$temp->pathname('foo/bar/sub'));
         $this->assertIOException($exception, $removeDirectory, 'rmdir', self::$temp->pathname('foo'));
+    }
+
+    public function test_runtime_create_directory_failure(): void
+    {
+        $directory = $this->directory()->subdirectory('foo');
+        $create    = fn () => $directory->create();
+        $exception = Exception\IOException\UnableToCreate::class;
+        $this->assertIOException($exception, $create, 'mkdir', $directory->pathname());
     }
 
     private function files(array $filenames): array

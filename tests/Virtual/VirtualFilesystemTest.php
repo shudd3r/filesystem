@@ -110,24 +110,28 @@ class VirtualFilesystemTest extends VirtualFilesystemTests
 
         $directory = $directory->asRoot();
         $this->assertSame('', $directory->name());
-        $subdirectory = $directory->subdirectory('bar/baz');
-        $this->assertSame('bar/baz', $subdirectory->name());
-        $this->assertSame('vfs://foo/bar/baz', $subdirectory->pathname());
-        $this->assertSame($subdirectory, $subdirectory->validated());
         $this->assertExists($directory->file('bar/baz.txt'));
         $this->assertExists($directory->link('file.lnk'));
-
-        $notExistingRoot = fn () => $subdirectory->asRoot();
-        $this->assertExceptionType(Exception\RootDirectoryNotFound::class, $notExistingRoot);
-
-        $validateExisting = fn () => $subdirectory->validated(Node::EXISTS);
-        $this->assertExceptionType(Exception\NodeNotFound::class, $validateExisting);
 
         $validatePath = fn () => $directory->subdirectory('bar/baz.txt/dir')->validated();
         $this->assertExceptionType(Exception\UnexpectedLeafNode::class, $validatePath);
 
         $validatePath = fn () => $directory->subdirectory('bar/baz.txt')->validated();
         $this->assertExceptionType(Exception\UnexpectedNodeType::class, $validatePath);
+
+        $subdirectory = $directory->subdirectory('bar/baz');
+        $this->assertSame('bar/baz', $subdirectory->name());
+        $this->assertSame('vfs://foo/bar/baz', $subdirectory->pathname());
+        $this->assertSame($subdirectory, $subdirectory->validated(Node::PATH | Node::READ | Node::WRITE));
+
+        $validateExisting = fn () => $subdirectory->validated(Node::EXISTS);
+        $this->assertExceptionType(Exception\NodeNotFound::class, $validateExisting);
+
+        $notExistingRoot = fn () => $subdirectory->asRoot();
+        $this->assertExceptionType(Exception\RootDirectoryNotFound::class, $notExistingRoot);
+
+        $subdirectory->create();
+        $this->assertTrue($subdirectory->exists());
     }
 
     public function test_directory_file_iteration(): void

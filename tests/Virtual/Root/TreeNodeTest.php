@@ -30,6 +30,7 @@ class TreeNodeTest extends TestCase
         $this->assertTrue($node->isValid());
         $this->assertSame([], iterator_to_array($node->filenames()));
         $this->assertException(fn () => $node->remove());
+        $this->assertException(fn () => $node->createDir());
         $this->assertEmpty($node->contents());
         $this->assertException(fn () => $node->putContents('contents...'));
         $this->assertNull($node->target());

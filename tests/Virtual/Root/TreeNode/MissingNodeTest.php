@@ -37,6 +37,12 @@ class MissingNodeTest extends TestCase
         $this->assertEquals($this->missingNode($directory, 'foo', 'bar', 'baz'), $missingNode->node('bar', 'baz'));
     }
 
+    public function test_createDir_creates_new_subdirectory(): void
+    {
+        $this->missingNode($directory, 'foo', 'bar')->createDir();
+        $this->assertEquals(new Directory(), $directory->node('foo', 'bar'));
+    }
+
     public function test_putContents_creates_File_in_directory(): void
     {
         $this->missingNode($directory, 'foo', 'bar')->putContents('file contents...');

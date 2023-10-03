@@ -35,6 +35,11 @@ class MissingNode extends TreeNode
         return false;
     }
 
+    public function createDir(): void
+    {
+        $this->attachNode(new Directory());
+    }
+
     public function putContents(string $contents): void
     {
         $this->attachNode(new File($contents));
