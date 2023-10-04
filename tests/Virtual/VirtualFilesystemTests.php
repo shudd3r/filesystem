@@ -29,12 +29,13 @@ abstract class VirtualFilesystemTests extends FilesystemTests
 
     protected function setUp(): void
     {
-        $this->root = VirtualDirectory::root('vfs://', $this->exampleStructure());
+        $this->root = $this->directory('', $this->exampleStructure());
     }
 
-    protected function directory(string $name = '', TreeNode\Directory $nodes = null): VirtualDirectory
+    protected function directory(string $name = '', array $structure = null): VirtualDirectory
     {
-        $root = VirtualDirectory::root('vfs://', $nodes ?? $this->exampleStructure());
+        $structure = $this->createNodes($structure ?? $this->exampleStructure());
+        $root      = VirtualDirectory::root('vfs://', $structure);
         return $name ? $this->root->subdirectory($name) : $root;
     }
 
@@ -48,47 +49,43 @@ abstract class VirtualFilesystemTests extends FilesystemTests
         return $this->root->link($name);
     }
 
-    protected function exampleStructure(array $changes = []): TreeNode\Directory
+    protected function exampleStructure(array $changes = []): array
     {
         $tree = $this->mergeStructure([
             'foo' => [
-                'bar' => [
-                    'baz.txt' => new TreeNode\File('baz contents')
-                ],
-                'file.lnk' => new TreeNode\Link('vfs://bar.txt'),
+                'bar'      => ['baz.txt' => 'baz contents'],
+                'file.lnk' => 'vfs://bar.txt',
                 'empty'    => []
             ],
-            'bar.txt' => new TreeNode\File('bar contents'),
-            'dir.lnk' => new TreeNode\Link('vfs://foo/bar'),
-            'inv.lnk' => new TreeNode\Link('vfs://foo/baz')
+            'bar.txt' => 'bar contents',
+            'dir.lnk' => 'vfs://foo/bar',
+            'inv.lnk' => 'vfs://foo/baz'
         ], $changes);
 
-        return new TreeNode\Directory($this->createDirectories($tree));
+        return $tree;
     }
 
     private function mergeStructure($tree, $changes): array
     {
         foreach ($changes as $name => $value) {
-            if ($value === null) {
-                unset($tree[$name]);
-                continue;
-            }
-            if (!is_array($value)) {
-                $tree[$name] = $value;
-                continue;
-            }
-            $tree[$name] = isset($tree[$name]) ? $this->mergeStructure($tree[$name], $value) : $value;
+            $merge = is_array($value) && isset($tree[$name]);
+            $tree[$name] = $merge ? $this->mergeStructure($tree[$name], $value) : $value;
+            if ($value === null) { unset($tree[$name]); }
         }
 
         return $tree;
     }
 
-    private function createDirectories(array $tree): array
+    private function createNodes(array $tree): TreeNode\Directory
     {
-        foreach ($tree as &$value) {
-            if (!is_array($value)) { continue; }
-            $value = new TreeNode\Directory($this->createDirectories($value));
+        foreach ($tree as $name => &$value) {
+            $value = is_array($value) ? $this->createNodes($value) : $this->leafNode($name, $value);
         }
-        return $tree;
+        return new TreeNode\Directory($tree);
+    }
+
+    private function leafNode(string $name, string $value): TreeNode
+    {
+        return str_ends_with($name, '.lnk') ? new TreeNode\Link($value) : new TreeNode\File($value);
     }
 }
