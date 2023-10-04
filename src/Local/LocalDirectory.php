@@ -104,7 +104,7 @@ class LocalDirectory extends LocalNode implements Directory
 
     private function generateFiles(): Generator
     {
-        $filter = fn (string $path) => is_file($path);
+        $filter = fn (string $path) => is_file($path) && !is_link($path);
         foreach ($this->descendantPaths($filter) as $pathname) {
             yield new LocalFile($pathname);
         }

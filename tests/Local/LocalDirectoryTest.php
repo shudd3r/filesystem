@@ -107,6 +107,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
     {
         $directory = $this->directory();
         $expected  = $this->files(['bar/baz.txt', 'foo/bar/file.txt', 'foo.txt']);
+        self::$temp->symlink($expected['foo.txt'], 'file.lnk');
         $this->assertFiles($expected, $directory->files());
     }
 
