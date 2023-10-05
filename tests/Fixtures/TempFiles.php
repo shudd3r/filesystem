@@ -52,9 +52,9 @@ class TempFiles
         return $filename;
     }
 
-    public function directory(string $directory = '.'): string
+    public function directory(string $directory = ''): string
     {
-        $directory = $directory === '.' ? $this->root : $this->pathname($directory);
+        $directory = $directory === '' ? $this->root : $this->pathname($directory);
         if (!is_dir($directory)) {
             mkdir($directory, 0700, true);
         }
