@@ -22,11 +22,6 @@ abstract class VirtualFilesystemTests extends FilesystemTests
 {
     protected VirtualDirectory $root;
 
-    public static function setUpBeforeClass(): void
-    {
-        require_once dirname(__DIR__) . '/Fixtures/native-override/virtual.php';
-    }
-
     protected function setUp(): void
     {
         $this->root = $this->directory('', $this->exampleStructure());

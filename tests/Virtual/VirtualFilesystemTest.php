@@ -182,10 +182,6 @@ class VirtualFilesystemTest extends VirtualFilesystemTests
         $file->writeStream(new ContentStream($this->resource('stream contents')));
         $this->assertSame('stream contents', $file->contents());
 
-        $this->override('stream_get_contents', false);
-        $writeStream = fn () => $file->writeStream(new ContentStream($this->resource('foo...')));
-        $this->assertExceptionType(Exception\IOException\UnableToReadContents::class, $writeStream);
-
         $file->copy($this->file('foo/file.lnk'));
         $this->assertSame('bar contents', $file->contents());
 

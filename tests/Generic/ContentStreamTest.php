@@ -13,8 +13,8 @@ namespace Shudd3r\Filesystem\Tests\Generic;
 
 use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Generic\ContentStream;
+use Shudd3r\Filesystem\Exception\IOException;
 use InvalidArgumentException;
-use RuntimeException;
 
 
 class ContentStreamTest extends FilesystemTests
@@ -77,7 +77,21 @@ class ContentStreamTest extends FilesystemTests
     {
         $stream = new ContentStream($resource = $this->resource());
         fclose($resource);
-        $this->expectException(RuntimeException::class);
+        $this->expectException(IOException\UnableToReadContents::class);
         $stream->resource();
+    }
+
+    public function test_contents_method_returns_stream_contents(): void
+    {
+        $stream = new ContentStream($this->resource('contents...'));
+        $this->assertSame('contents...', $stream->contents());
+    }
+
+    public function test_fail_to_read_contents_throws_exception(): void
+    {
+        $stream = new ContentStream($this->resource('contents...'));
+        $this->override('stream_get_contents', false);
+        $this->expectException(IOException\UnableToReadContents::class);
+        $stream->contents();
     }
 }

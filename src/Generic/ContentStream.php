@@ -11,8 +11,8 @@
 
 namespace Shudd3r\Filesystem\Generic;
 
+use Shudd3r\Filesystem\Exception\IOException\UnableToReadContents;
 use InvalidArgumentException;
-use RuntimeException;
 
 
 class ContentStream
@@ -53,12 +53,28 @@ class ContentStream
     }
 
     /**
+     * @throws UnableToReadContents
+     *
      * @return resource
      */
     public function resource()
     {
         if (is_resource($this->stream)) { return $this->stream; }
-        throw new RuntimeException('Stream resource was closed in outside scope');
+        throw new UnableToReadContents('Stream resource was closed in outside scope');
+    }
+
+    /**
+     * @throws UnableToReadContents
+     *
+     * @return string
+     */
+    public function contents(): string
+    {
+        $contents = @stream_get_contents($this->resource());
+        if ($contents === false) {
+            throw UnableToReadContents::fromStream($this);
+        }
+        return $contents;
     }
 
     /**
