@@ -13,7 +13,6 @@ namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Local\LocalFile;
 use Shudd3r\Filesystem\Local\LocalDirectory;
-use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Exception\IOException;
 
 
@@ -74,14 +73,14 @@ class LocalFileTest extends LocalFilesystemTests
 
     public function test_writeStream_for_not_existing_file_creates_file_with_given_contents(): void
     {
-        $stream = new ContentStream($this->resource($contents = 'foo contents...'));
+        $stream = $this->stream($contents = 'foo contents...');
         $this->file('bar.txt')->writeStream($stream);
         $this->assertSame($contents, file_get_contents(self::$temp->pathname('bar.txt')));
     }
 
     public function test_writeStream_for_existing_file_replaces_its_contents(): void
     {
-        $stream = new ContentStream($this->resource($newContents = 'new contents'));
+        $stream = $this->stream($newContents = 'new contents');
         $this->file('bar.txt', 'old contents')->writeStream($stream);
         $this->assertSame($newContents, file_get_contents(self::$temp->pathname('bar.txt')));
     }
@@ -176,8 +175,7 @@ class LocalFileTest extends LocalFilesystemTests
     public function test_contentStream_for_existing_file_returns_streamable_contents(): void
     {
         $file = $this->file('foo.txt', 'foo contents...');
-        $this->assertInstanceOf(ContentStream::class, $stream = $file->contentStream());
-        $this->assertSame($file->contents(), fread($stream->resource(), 1024));
+        $this->assertSame($file->contents(), $file->contentStream()->contents());
     }
 
     public function test_runtime_file_write_failures(): void

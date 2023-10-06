@@ -11,14 +11,14 @@
 
 namespace Shudd3r\Filesystem\Tests\Generic;
 
-use Shudd3r\Filesystem\Tests\FilesystemTests;
+use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Exception\IOException;
 use Shudd3r\Filesystem\Tests\Fixtures\Override;
 use InvalidArgumentException;
 
 
-class ContentStreamTest extends FilesystemTests
+class ContentStreamTest extends TestCase
 {
     public static function setUpBeforeClass(): void
     {
@@ -99,5 +99,14 @@ class ContentStreamTest extends FilesystemTests
         Override::set('stream_get_contents', false);
         $this->expectException(IOException\UnableToReadContents::class);
         $stream->contents();
+    }
+
+    /** @return resource */
+    private function resource(string $contents = '')
+    {
+        $resource = fopen('php://memory', 'rb+');
+        fwrite($resource, $contents);
+        rewind($resource);
+        return $resource;
     }
 }

@@ -14,6 +14,7 @@ namespace Shudd3r\Filesystem\Tests;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\File;
 use Shudd3r\Filesystem\Generic\FileIterator;
+use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\FilesystemException;
 
 
@@ -46,12 +47,11 @@ abstract class FilesystemTests extends TestCase
         $this->assertSame([], $files, 'Some expected files were not found');
     }
 
-    /** @return resource */
-    protected function resource(string $contents = '')
+    protected function stream(string $contents = ''): ContentStream
     {
         $resource = fopen('php://memory', 'rb+');
         fwrite($resource, $contents);
         rewind($resource);
-        return $resource;
+        return new ContentStream($resource);
     }
 }

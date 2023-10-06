@@ -12,7 +12,6 @@
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use Shudd3r\Filesystem\Virtual\VirtualNode;
-use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Tests\Doubles;
@@ -179,7 +178,7 @@ class VirtualFilesystemTest extends VirtualFilesystemTests
         $file->append('-appended');
         $this->assertSame('contents-appended', $file->contents());
 
-        $file->writeStream(new ContentStream($this->resource('stream contents')));
+        $file->writeStream($this->stream('stream contents'));
         $this->assertSame('stream contents', $file->contents());
 
         $file->copy($this->file('foo/file.lnk'));
