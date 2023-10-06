@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Tests\Fixtures\TempFiles;
+use Shudd3r\Filesystem\Tests\Fixtures\Override;
 
 
 abstract class LocalFilesystemTests extends FilesystemTests
@@ -36,7 +37,7 @@ abstract class LocalFilesystemTests extends FilesystemTests
     protected function tearDown(): void
     {
         self::$temp->clear();
-        parent::tearDown();
+        Override::reset();
     }
 
     protected function assertIOException(string $exception, callable $procedure, string $override, $argValue = null): void
@@ -47,5 +48,20 @@ abstract class LocalFilesystemTests extends FilesystemTests
         }, $argValue);
         $this->assertExceptionType($exception, $procedure);
         $this->removeOverride($override);
+    }
+
+    /**
+     * @param string         $function
+     * @param callable|mixed $returnValue fn() => mixed
+     * @param mixed          $argValue    Trigger override for this value
+     */
+    protected function override(string $function, $returnValue, $argValue = null): void
+    {
+        Override::set($function, $returnValue, $argValue);
+    }
+
+    protected function removeOverride(string $function): void
+    {
+        Override::remove($function);
     }
 }

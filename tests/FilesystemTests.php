@@ -15,16 +15,10 @@ use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\File;
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\FilesystemException;
-use Shudd3r\Filesystem\Tests\Fixtures\Override;
 
 
 abstract class FilesystemTests extends TestCase
 {
-    protected function tearDown(): void
-    {
-        Override::reset();
-    }
-
     protected function assertExceptionType(string $expected, callable $procedure, string $case = ''): void
     {
         $title = $case ? 'Case "' . $case . '": ' : '';
@@ -59,20 +53,5 @@ abstract class FilesystemTests extends TestCase
         fwrite($resource, $contents);
         rewind($resource);
         return $resource;
-    }
-
-    /**
-     * @param string         $function
-     * @param callable|mixed $returnValue fn() => mixed
-     * @param mixed          $argValue    Trigger override for this value
-     */
-    protected function override(string $function, $returnValue, $argValue = null): void
-    {
-        Override::set($function, $returnValue, $argValue);
-    }
-
-    protected function removeOverride(string $function): void
-    {
-        Override::remove($function);
     }
 }

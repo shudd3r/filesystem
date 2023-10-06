@@ -14,6 +14,7 @@ namespace Shudd3r\Filesystem\Tests\Generic;
 use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\Exception\IOException;
+use Shudd3r\Filesystem\Tests\Fixtures\Override;
 use InvalidArgumentException;
 
 
@@ -22,6 +23,11 @@ class ContentStreamTest extends FilesystemTests
     public static function setUpBeforeClass(): void
     {
         require_once dirname(__DIR__) . '/Fixtures/native-override/generic.php';
+    }
+
+    protected function tearDown(): void
+    {
+        Override::reset();
     }
 
     public function test_resource_method_returns_wrapped_stream(): void
@@ -38,21 +44,21 @@ class ContentStreamTest extends FilesystemTests
 
     public function test_cannot_instantiate_with_non_resource_argument(): void
     {
-        $this->override('is_resource', false);
+        Override::set('is_resource', false);
         $this->expectException(InvalidArgumentException::class);
         new ContentStream($this->resource());
     }
 
     public function test_cannot_instantiate_with_not_readable_stream(): void
     {
-        $this->override('stream_get_meta_data', ['mode' => 'w']);
+        Override::set('stream_get_meta_data', ['mode' => 'w']);
         $this->expectException(InvalidArgumentException::class);
         new ContentStream($this->resource());
     }
 
     public function test_cannot_instantiate_with_non_stream_argument(): void
     {
-        $this->override('get_resource_type', 'not-stream');
+        Override::set('get_resource_type', 'not-stream');
         $this->expectException(InvalidArgumentException::class);
         new ContentStream($this->resource());
     }
@@ -90,7 +96,7 @@ class ContentStreamTest extends FilesystemTests
     public function test_fail_to_read_contents_throws_exception(): void
     {
         $stream = new ContentStream($this->resource('contents...'));
-        $this->override('stream_get_contents', false);
+        Override::set('stream_get_contents', false);
         $this->expectException(IOException\UnableToReadContents::class);
         $stream->contents();
     }
