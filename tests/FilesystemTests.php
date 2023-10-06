@@ -12,6 +12,7 @@
 namespace Shudd3r\Filesystem\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\File;
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Generic\ContentStream;
@@ -20,6 +21,19 @@ use Shudd3r\Filesystem\FilesystemException;
 
 abstract class FilesystemTests extends TestCase
 {
+    private const EXAMPLE_STRUCTURE = [
+        'foo' => [
+            'bar'      => ['baz.txt' => 'baz contents'],
+            'file.lnk' => 'bar.txt',
+            'empty'    => []
+        ],
+        'bar.txt' => 'bar contents',
+        'dir.lnk' => 'foo/bar',
+        'inv.lnk' => 'not/exists'
+    ];
+
+    abstract protected function root(array $structure = null): Directory;
+
     protected function assertExceptionType(string $expected, callable $procedure, string $case = ''): void
     {
         $title = $case ? 'Case "' . $case . '": ' : '';
@@ -53,5 +67,21 @@ abstract class FilesystemTests extends TestCase
         fwrite($resource, $contents);
         rewind($resource);
         return new ContentStream($resource);
+    }
+
+    protected function exampleStructure(array $merge = []): array
+    {
+        return $this->mergeStructure(self::EXAMPLE_STRUCTURE, $merge);
+    }
+
+    private function mergeStructure($tree, $changes): array
+    {
+        foreach ($changes as $name => $value) {
+            $merge = is_array($value) && isset($tree[$name]);
+            $tree[$name] = $merge ? $this->mergeStructure($tree[$name], $value) : $value;
+            if ($value === null) { unset($tree[$name]); }
+        }
+
+        return $tree;
     }
 }

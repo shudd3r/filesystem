@@ -12,6 +12,7 @@
 namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Tests\FilesystemTests;
+use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Tests\Fixtures\TempFiles;
 use Shudd3r\Filesystem\Tests\Fixtures\Override;
 
@@ -40,6 +41,17 @@ abstract class LocalFilesystemTests extends FilesystemTests
         Override::reset();
     }
 
+    protected function root(array $structure = null): LocalDirectory
+    {
+        $this->createNodes($structure ?? []);
+        return LocalDirectory::root(self::$temp->directory());
+    }
+
+    protected function path(string $name = ''): string
+    {
+        return self::$temp->pathname($name);
+    }
+
     protected function assertIOException(string $exception, callable $procedure, string $override, $argValue = null): void
     {
         $this->override($override, function () {
@@ -63,5 +75,32 @@ abstract class LocalFilesystemTests extends FilesystemTests
     protected function removeOverride(string $function): void
     {
         Override::remove($function);
+    }
+
+    private function createNodes(array $tree, string $path = ''): ?array
+    {
+        if (!$tree) { self::$temp->directory($path); }
+
+        $links = [];
+        foreach ($tree as $name => $value) {
+            $name     = $path ? $path . '/' . $name : $name;
+            $newLinks = is_array($value) ? $this->createNodes($value, $name) : $this->createLeaf($name, $value);
+            $newLinks && $links = array_merge($links, $newLinks);
+        }
+
+        if ($path) { return $links; }
+        foreach ($links as $name => $value) {
+            self::$temp->symlink($value, $name);
+        }
+        return null;
+    }
+
+    private function createLeaf(string $name, string $value): array
+    {
+        if (str_ends_with($name, '.lnk')) {
+            return [$name => self::$temp->pathname($value)];
+        }
+        self::$temp->file($name, $value);
+        return [];
     }
 }

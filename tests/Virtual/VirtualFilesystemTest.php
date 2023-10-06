@@ -11,6 +11,9 @@
 
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
+use Shudd3r\Filesystem\Virtual\VirtualDirectory;
+use Shudd3r\Filesystem\Virtual\VirtualFile;
+use Shudd3r\Filesystem\Virtual\VirtualLink;
 use Shudd3r\Filesystem\Virtual\VirtualNode;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
@@ -19,6 +22,13 @@ use Shudd3r\Filesystem\Tests\Doubles;
 
 class VirtualFilesystemTest extends VirtualFilesystemTests
 {
+    private VirtualDirectory $root;
+
+    protected function setUp(): void
+    {
+        $this->root = $this->root();
+    }
+
     public function test_exists_method(): void
     {
         $this->assertExists($this->directory());
@@ -41,7 +51,7 @@ class VirtualFilesystemTest extends VirtualFilesystemTests
 
     public function test_remove_not_existing_node_is_ignored(): void
     {
-        $expectedRoot = $this->directory('', $this->exampleStructure());
+        $expectedRoot = $this->directory();
         $this->file('foo/bar/baz/file.txt')->remove();
         $this->assertEquals($expectedRoot, $this->root);
 
@@ -139,7 +149,7 @@ class VirtualFilesystemTest extends VirtualFilesystemTests
         $expected  = ['bar.txt' => 'vfs://bar.txt', 'foo/bar/baz.txt' => 'vfs://foo/bar/baz.txt'];
         $this->assertFiles($expected, $directory->files());
 
-        $directory = $directory->subdirectory('foo');
+        $directory = $this->directory('foo');
         $expected  = ['foo/bar/baz.txt' => 'vfs://foo/bar/baz.txt'];
         $this->assertFiles($expected, $directory->files());
 
@@ -237,5 +247,20 @@ class VirtualFilesystemTest extends VirtualFilesystemTests
     private function assertNotExists(VirtualNode $node): void
     {
         $this->assertFalse($node->exists());
+    }
+
+    private function directory(string $name = ''): VirtualDirectory
+    {
+        return $name ? $this->root->subdirectory($name) : $this->root;
+    }
+
+    private function file(string $name): VirtualFile
+    {
+        return $this->root->file($name);
+    }
+
+    private function link(string $name): VirtualLink
+    {
+        return $this->root->link($name);
     }
 }

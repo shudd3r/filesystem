@@ -21,7 +21,7 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
 {
     public function test_subdirectory_for_valid_path_returns_Directory_with_descendant_path(): void
     {
-        $subdirectory = $this->directory()->subdirectory('foo/bar');
+        $subdirectory = $this->root()->subdirectory('foo/bar');
         $this->assertInstanceOf(VirtualDirectory::class, $subdirectory);
         $this->assertSame('vfs://foo/bar', $subdirectory->pathname());
         $this->assertSame('foo/bar', $subdirectory->name());
@@ -30,13 +30,13 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
 
     public function test_subdirectory_for_invalid_path_throws_Filesystem_Exception(): void
     {
-        $procedure = fn () => $this->directory()->subdirectory('foo//bar');
+        $procedure = fn () => $this->root()->subdirectory('foo//bar');
         $this->assertExceptionType(Exception\InvalidNodeName::class, $procedure);
     }
 
     public function test_file_for_valid_path_returns_File_with_descendant_path(): void
     {
-        $file = $this->directory()->file('foo/file.txt');
+        $file = $this->root()->file('foo/file.txt');
         $this->assertInstanceOf(VirtualFile::class, $file);
         $this->assertSame('vfs://foo/file.txt', $file->pathname());
         $this->assertSame('foo/file.txt', $file->name());
@@ -44,13 +44,13 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
 
     public function test_file_for_invalid_path_throws_Filesystem_Exception(): void
     {
-        $procedure = fn () => $this->directory()->file('');
+        $procedure = fn () => $this->root()->file('');
         $this->assertExceptionType(Exception\InvalidNodeName::class, $procedure);
     }
 
     public function test_link_for_valid_path_returns_Link_with_descendant_path(): void
     {
-        $link = $this->directory()->link('foo/bar');
+        $link = $this->root()->link('foo/bar');
         $this->assertInstanceOf(VirtualLink::class, $link);
         $this->assertSame('vfs://foo/bar', $link->pathname());
         $this->assertSame('foo/bar', $link->name());
@@ -58,13 +58,13 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
 
     public function test_link_for_invalid_path_throws_Filesystem_Exception(): void
     {
-        $procedure = fn () => $this->directory()->link('foo/bar/../bar');
+        $procedure = fn () => $this->root()->link('foo/bar/../bar');
         $this->assertExceptionType(Exception\InvalidNodeName::class, $procedure);
     }
 
     public function test_exists_for_existing_directory_returns_true(): void
     {
-        $root = $this->directory();
+        $root = $this->root();
         $this->assertTrue($root->exists());
         $this->assertTrue($root->subdirectory('foo')->exists());
         $this->assertTrue($root->subdirectory('foo\bar')->exists());
@@ -74,7 +74,7 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
 
     public function test_exists_for_not_existing_directory_returns_false(): void
     {
-        $root = $this->directory();
+        $root = $this->root();
         $this->assertFalse($root->subdirectory('bar')->exists());
         $this->assertFalse($root->subdirectory('foo\bar\baz.txt')->exists());
         $this->assertFalse($root->subdirectory('foo\file.lnk')->exists());
@@ -84,19 +84,19 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
 
     public function test_create_for_existing_directory_is_ignored(): void
     {
-        $root = $this->directory('', $this->exampleStructure());
+        $root = $this->root();
         $root->subdirectory('foo')->create();
         $root->subdirectory('dir.lnk')->create();
-        $this->assertEquals($this->directory('', $this->exampleStructure()), $root);
+        $this->assertEquals($this->root(), $root);
     }
 
     public function test_create_for_writable_path_creates_directory(): void
     {
-        $root = $this->directory();
+        $root = $this->root();
         $root->subdirectory('bar')->create();
         $root->subdirectory('foo/empty/dir')->create();
         $root->subdirectory('dir.lnk/baz')->create();
-        $expected = $this->directory('', $this->exampleStructure([
+        $expected = $this->root($this->exampleStructure([
             'foo' => ['bar' => ['baz' => []], 'empty' => ['dir' => []]],
             'bar' => []
         ]));
@@ -112,7 +112,7 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
             'Link descendant' => [Exception\UnexpectedLeafNode::class, 'foo/file.lnk/dir']
         ];
 
-        $root = $this->directory();
+        $root = $this->root();
         foreach ($cases as $case => [$exception, $path]) {
             $directory = $root->subdirectory($path);
             $this->assertExceptionType($exception, fn () => $directory->create(), $case);
@@ -121,7 +121,7 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
 
     public function test_converting_existing_subdirectory_to_root_directory(): void
     {
-        $subdirectory = $this->directory('foo/bar');
+        $subdirectory = $this->root()->subdirectory('foo/bar');
         $newRoot      = $subdirectory->asRoot();
 
         $this->assertSame($subdirectory->pathname(), $newRoot->pathname());
@@ -135,7 +135,7 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
 
     public function test_converting_not_existing_subdirectory_to_root_throws_exception(): void
     {
-        $relative = $this->directory('foo/dir');
+        $relative = $this->root()->subdirectory('foo/dir');
         $this->expectException(Exception\RootDirectoryNotFound::class);
         $relative->asRoot();
     }
@@ -144,7 +144,7 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
     {
         $fileStructure = $this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]);
 
-        $directory = $this->directory('', $fileStructure);
+        $directory = $this->root($fileStructure);
         $expected  = $this->files(['bar.txt', 'foo/bar/baz.txt', 'foo/buzz', 'foo/fizz']);
         $this->assertFiles($expected, $directory->files());
 
@@ -161,7 +161,7 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
     {
         $fileStructure = $this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]);
 
-        $directory = $this->directory('', $fileStructure);
+        $directory = $this->root($fileStructure);
         $files     = $directory->files();
         $directory->subdirectory('foo/bar')->remove();
         $directory->file('bar.txt')->remove();
@@ -170,18 +170,18 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
 
     public function test_remove_method_deletes_existing_structure(): void
     {
-        $root = $this->directory();
+        $root = $this->root();
         $root->subdirectory('foo')->remove();
-        $expected = $this->directory('', $this->exampleStructure(['foo' => null]));
+        $expected = $this->root($this->exampleStructure(['foo' => null]));
         $this->assertEquals($expected, $root);
     }
 
     public function test_remove_method_for_not_existing_directory_is_ignored(): void
     {
-        $root = $this->directory();
+        $root = $this->root();
         $root->subdirectory('bar.txt')->remove();
         $root->subdirectory('foo/empty/bar')->remove();
-        $this->assertEquals($this->directory(), $root);
+        $this->assertEquals($this->root(), $root);
     }
 
     private function files(array $filenames, string $root = 'vfs://'): array

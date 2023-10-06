@@ -14,7 +14,6 @@ namespace Shudd3r\Filesystem\Tests\Fixtures;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use FilesystemIterator;
-use InvalidArgumentException;
 use RuntimeException;
 
 
@@ -63,14 +62,14 @@ class TempFiles
 
     public function symlink(string $target, string $name): string
     {
-        $invalid = false;
-        if (!$target) {
-            $invalid = true;
-            $target  = $this->file('remove.after.link');
+        if ($target && strpos($target, $this->root) !== 0) {
+            $target = '';
         }
 
-        if (strpos($target, $this->root) !== 0) {
-            throw new InvalidArgumentException();
+        $invalid = false;
+        if (!$target || !file_exists($target)) {
+            $invalid = true;
+            $target  = $this->file($target ? substr($target, strlen($this->root . '/')) : 'remove.after.link');
         }
 
         $this->directory($this->relative(dirname($name)));
@@ -98,9 +97,7 @@ class TempFiles
 
     public function pathname(string $nodeName): string
     {
-        if ($nodeName === '.') { return $this->root; }
-        $path = $this->relative($nodeName);
-        return $this->root . DIRECTORY_SEPARATOR . $path;
+        return $nodeName ? $this->root . DIRECTORY_SEPARATOR . $this->relative($nodeName) : $this->root;
     }
 
     public function relative(string $path): string
