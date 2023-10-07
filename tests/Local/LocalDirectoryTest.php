@@ -215,19 +215,4 @@ class LocalDirectoryTest extends LocalFilesystemTests
         $exception = Exception\IOException\UnableToCreate::class;
         $this->assertIOException($exception, $create, 'mkdir', $directory->pathname());
     }
-
-    private function invalidRootPaths(): array
-    {
-        chdir($this->path());
-        return [
-            'file path'         => self::$temp->file('foo/bar/baz.txt'),
-            'not existing path' => self::$temp->pathname('not/exists'),
-            'invalid symlink'   => self::$temp->symlink('', 'link'),
-            'valid symlink'     => self::$temp->symlink(self::$temp->pathname('foo/bar'), 'link'),
-            'relative path'     => self::$temp->relative('./foo/bar'),
-            'step-up path'      => self::$temp->pathname('foo/bar/..'),
-            'empty path'        => '',
-            'dot path'          => '.'
-        ];
-    }
 }
