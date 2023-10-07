@@ -11,7 +11,7 @@
 
 namespace Shudd3r\Filesystem\Tests\Local;
 
-use Shudd3r\Filesystem\Exception\IOException;
+use Shudd3r\Filesystem\Exception;
 
 
 class LocalFileTest extends LocalFilesystemTests
@@ -177,28 +177,51 @@ class LocalFileTest extends LocalFilesystemTests
         $this->assertSame($file->contents(), $file->contentStream()->contents());
     }
 
+    public function test_method_calls_on_invalid_file_path_throw_exception(): void
+    {
+        $root   = $this->root(['foo' => ['file.txt' => ''], 'bar.txt' => '']);
+        $stream = $this->stream('contents');
+        $copied = $root->file('bar.txt');
+
+        $file      = $root->file('foo/file.txt/bar.txt');
+        $exception = Exception\UnexpectedLeafNode::class;
+        $this->assertExceptionType($exception, fn () => $file->contents(), 'contents');
+        $this->assertExceptionType($exception, fn () => $file->write('contents'), 'write');
+        $this->assertExceptionType($exception, fn () => $file->append('contents'), 'append');
+        $this->assertExceptionType($exception, fn () => $file->writeStream($stream), 'writeStream');
+        $this->assertExceptionType($exception, fn () => $file->copy($copied), 'copy');
+
+        $file      = $root->file('foo');
+        $exception = Exception\UnexpectedNodeType::class;
+        $this->assertExceptionType($exception, fn () => $file->contents(), 'contents');
+        $this->assertExceptionType($exception, fn () => $file->write('contents'), 'write');
+        $this->assertExceptionType($exception, fn () => $file->append('contents'), 'append');
+        $this->assertExceptionType($exception, fn () => $file->writeStream($stream), 'writeStream');
+        $this->assertExceptionType($exception, fn () => $file->copy($copied), 'copy');
+    }
+
     public function test_runtime_file_write_failures(): void
     {
         $file  = $this->root()->file('foo/bar/baz.txt');
         $write = fn () => $file->write('something');
-        $this->assertIOException(IOException\UnableToCreate::class, $write, 'mkdir');
-        $this->assertIOException(IOException\UnableToCreate::class, $write, 'file_put_contents');
-        $this->assertIOException(IOException\UnableToSetPermissions::class, $write, 'chmod');
-        $this->assertIOException(IOException\UnableToWriteContents::class, $write, 'file_put_contents');
+        $this->assertIOException(Exception\IOException\UnableToCreate::class, $write, 'mkdir');
+        $this->assertIOException(Exception\IOException\UnableToCreate::class, $write, 'file_put_contents');
+        $this->assertIOException(Exception\IOException\UnableToSetPermissions::class, $write, 'chmod');
+        $this->assertIOException(Exception\IOException\UnableToWriteContents::class, $write, 'file_put_contents');
     }
 
     public function test_runtime_remove_file_failures(): void
     {
         $file   = $this->root(['foo' => ['bar.txt' => 'contents']])->file('foo/bar.txt');
         $remove = fn () => $file->remove();
-        $this->assertIOException(IOException\UnableToRemove::class, $remove, 'unlink');
+        $this->assertIOException(Exception\IOException\UnableToRemove::class, $remove, 'unlink');
     }
 
     public function test_runtime_read_file_failures(): void
     {
         $file      = $this->root(['foo' => ['bar.txt' => 'contents']])->file('foo/bar.txt');
         $read      = fn () => $file->contents();
-        $exception = IOException\UnableToReadContents::class;
+        $exception = Exception\IOException\UnableToReadContents::class;
         $this->assertIOException($exception, $read, 'fopen');
         $this->assertIOException($exception, $read, 'flock');
         $this->assertIOException($exception, $read, 'file_get_contents');
