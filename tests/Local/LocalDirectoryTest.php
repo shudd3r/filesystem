@@ -29,9 +29,9 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_static_constructor_for_existing_directory_path_returns_root_directory_instance(): void
     {
-        $this->assertInstanceOf(LocalDirectory::class, $this->root());
+        $this->assertInstanceOf(LocalDirectory::class, $this->root(['foo' => ['bar' => []]]));
 
-        $root = LocalDirectory::root($path = self::$temp->directory('foo/bar'));
+        $root = LocalDirectory::root($path = $this->path('foo/bar'));
         $this->assertSame($path, $root->pathname());
         $this->assertSame('', $root->name());
         $this->assertTrue($root->exists());
@@ -41,9 +41,9 @@ class LocalDirectoryTest extends LocalFilesystemTests
     {
         $subdirectory = $this->root()->subdirectory('foo/bar');
         $this->assertInstanceOf(LocalDirectory::class, $subdirectory);
-        $this->assertSame(self::$temp->directory('foo/bar'), $subdirectory->pathname());
+        $this->assertSame($this->path('foo/bar'), $subdirectory->pathname());
         $this->assertSame('foo/bar', $subdirectory->name());
-        $this->assertSame(self::$temp->directory('foo/bar/baz'), $subdirectory->subdirectory('baz')->pathname());
+        $this->assertSame($this->path('foo/bar/baz'), $subdirectory->subdirectory('baz')->pathname());
     }
 
     public function test_subdirectory_for_invalid_path_throws_Filesystem_Exception(): void
@@ -56,7 +56,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
     {
         $file = $this->root()->file('foo/file.txt');
         $this->assertInstanceOf(LocalFile::class, $file);
-        $this->assertSame(self::$temp->directory('foo/file.txt'), $file->pathname());
+        $this->assertSame($this->path('foo/file.txt'), $file->pathname());
         $this->assertSame('foo/file.txt', $file->name());
     }
 
@@ -70,7 +70,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
     {
         $link = $this->root()->link('foo/bar');
         $this->assertInstanceOf(LocalLink::class, $link);
-        $this->assertSame(self::$temp->directory('foo/bar'), $link->pathname());
+        $this->assertSame($this->path('foo/bar'), $link->pathname());
         $this->assertSame('foo/bar', $link->name());
     }
 
@@ -82,8 +82,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_exists_for_existing_directory_returns_true(): void
     {
-        self::$temp->symlink(self::$temp->directory('foo/bar/baz.dir'), 'dir.lnk');
-        $root = $this->root();
+        $root = $this->root(['foo' => ['bar' => ['baz.dir' => []]], 'dir.lnk' => 'foo/bar/baz.dir']);
         $this->assertTrue($root->exists());
         $this->assertTrue($root->subdirectory('foo/bar/baz.dir')->exists());
         $this->assertTrue($root->subdirectory('dir.lnk')->exists());
@@ -91,8 +90,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_exists_for_not_existing_directory_returns_false(): void
     {
-        self::$temp->symlink(self::$temp->file('foo/bar/baz.file'), 'file.lnk');
-        $root = $this->root();
+        $root = $this->root(['foo' => ['bar' => ['baz.file' => '']], 'file.lnk' => 'foo/bar/baz.file']);
         $this->assertFalse($root->subdirectory('foo/bar/baz.dir')->exists());
         $this->assertFalse($root->subdirectory('foo/bar/baz.file')->exists());
         $this->assertFalse($root->subdirectory('file.lnk')->exists());
@@ -108,15 +106,13 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_create_for_not_writable_path_throws_exception(): void
     {
-        self::$temp->file('foo.file');
-        $directory = $this->root()->subdirectory('foo.file/bar');
+        $directory = $this->root(['foo.file' => ''])->subdirectory('foo.file/bar');
         $this->assertExceptionType(Exception\UnexpectedLeafNode::class, fn () => $directory->create());
     }
 
     public function test_converting_existing_subdirectory_to_root_directory(): void
     {
-        self::$temp->directory('foo/bar');
-        $subdirectory = $this->root()->subdirectory('foo/bar');
+        $subdirectory = $this->root(['foo' => ['bar' => []]])->subdirectory('foo/bar');
         $newRoot      = $subdirectory->asRoot();
 
         $this->assertSame($subdirectory->pathname(), $newRoot->pathname());
@@ -153,12 +149,8 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_files_will_iterate_over_currently_existing_files(): void
     {
-        $directory = $this->root([
-            'foo' => ['bar' => ['file.txt' => '']],
-            'bar' => ['baz.txt' => ''],
-            'txt' => ''
-        ]);
-        $files = $directory->files();
+        $directory = $this->root(['foo' => ['bar' => ['file.txt' => '']], 'bar' => ['baz.txt' => ''], 'txt' => '']);
+        $files     = $directory->files();
         $directory->subdirectory('foo')->remove();
         $directory->file('txt')->remove();
         $this->assertFiles($this->files(['bar/baz.txt']), $files);
@@ -166,49 +158,52 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_remove_method_deletes_existing_structure(): void
     {
-        self::$temp->symlink(self::$temp->file('foo/bar/baz.txt'), 'foo/link.file');
-        self::$temp->symlink(self::$temp->directory('foo/bar/dir/sub'), 'foo/bar/sub.link');
-        $this->root()->subdirectory('foo')->remove();
-        $this->assertDirectoryDoesNotExist(self::$temp->pathname('foo'));
+        $root = $this->root([
+            'foo'     => ['bar' => ['baz.txt' => '', 'dir' => []], 'file.lnk' => 'foo/bar/baz.txt'],
+            'dir.lnk' => 'foo/bar/dir',
+            'bar'     => []
+        ]);
+        $this->assertDirectoryExists($link = $this->path('dir.lnk'));
+        $root->subdirectory('foo')->remove();
+        $this->assertDirectoryDoesNotExist($this->path('foo'));
+        $this->assertDirectoryExists($this->path('bar'));
+        $this->assertDirectoryDoesNotExist($link);
+        $this->assertTrue(is_link($link));
     }
 
     public function test_remove_method_for_not_existing_directory_is_ignored(): void
     {
-        $file = self::$temp->file('bar.txt');
-        $this->root()->subdirectory('bar.txt')->remove();
-        $this->assertFileExists($file);
+        $this->root(['bar.txt' => ''])->subdirectory('bar.txt')->remove();
+        $this->assertFileExists($this->path('bar.txt'));
     }
 
     public function test_root_instantiated_with_assert_flags_throws_exceptions_for_derived_nodes(): void
     {
-        $file = self::$temp->file('foo/bar.txt');
+        $this->root(['foo' => ['bar.txt' => '']]);
 
-        $root = LocalDirectory::root(self::$temp->directory(), Node::PATH);
+        $root = LocalDirectory::root($this->path(), Node::PATH);
         $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $root->subdirectory('foo/bar.txt'));
         $this->assertExceptionType(Exception\UnexpectedLeafNode::class, fn () => $root->file('foo/bar.txt/file.txt'));
         $this->assertInstanceOf(Node::class, $root->file('foo.file'));
 
-        $root = LocalDirectory::root(self::$temp->directory(), Node::EXISTS | Node::WRITE);
+        $root = LocalDirectory::root($this->path(), Node::EXISTS | Node::WRITE);
         $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $root->file('foo.file'));
         $this->assertInstanceOf(Node::class, $root->file('foo/bar.txt'));
 
-        $this->override('is_writable', false, $file);
+        $this->override('is_writable', false, $this->path('foo/bar.txt'));
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $root->file('foo/bar.txt'));
     }
 
     public function test_runtime_remove_directory_failures(): void
     {
-        $removeDirectory = function (): void {
-            self::$temp->directory('foo');
-            self::$temp->file('foo/bar/baz.txt');
-            self::$temp->directory('foo/bar/sub');
-            $this->root()->subdirectory('foo')->remove();
+        $remove = function (): void {
+            $this->root(['foo' => ['bar' => ['baz.txt' => '', 'sub' => []]]])->subdirectory('foo')->remove();
         };
 
         $exception = Exception\IOException\UnableToRemove::class;
-        $this->assertIOException($exception, $removeDirectory, 'unlink', self::$temp->pathname('foo/bar/baz.txt'));
-        $this->assertIOException($exception, $removeDirectory, 'rmdir', self::$temp->pathname('foo/bar/sub'));
-        $this->assertIOException($exception, $removeDirectory, 'rmdir', self::$temp->pathname('foo'));
+        $this->assertIOException($exception, $remove, 'unlink', $this->path('foo/bar/baz.txt'));
+        $this->assertIOException($exception, $remove, 'rmdir', $this->path('foo/bar/sub'));
+        $this->assertIOException($exception, $remove, 'rmdir', $this->path('foo'));
     }
 
     public function test_runtime_create_directory_failure(): void
@@ -231,7 +226,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     private function invalidRootPaths(): array
     {
-        chdir(self::$temp->directory());
+        chdir($this->path());
         return [
             'file path'         => self::$temp->file('foo/bar/baz.txt'),
             'not existing path' => self::$temp->pathname('not/exists'),

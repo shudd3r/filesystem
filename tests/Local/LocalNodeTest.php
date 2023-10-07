@@ -31,25 +31,23 @@ class LocalNodeTest extends LocalFilesystemTests
 
     public function test_pathname_returns_absolute_node_path(): void
     {
-        $this->assertSame(self::$temp->directory(), $this->node()->pathname());
-        $this->assertSame(self::$temp->pathname('foo/bar'), $this->node('foo/bar', false)->pathname());
+        $this->assertSame($this->path(), $this->node()->pathname());
+        $this->assertSame($this->path('foo/bar'), $this->node('foo/bar', false)->pathname());
     }
 
     public function test_permissions_for_existing_node(): void
     {
-        $path = self::$temp->directory('foo');
-        $node = $this->node('foo');
-
+        $node = $this->node('foo', true, ['foo' => []]);
         $this->assertTrue($node->isReadable());
         $this->assertTrue($node->isWritable());
         $this->assertTrue($node->isRemovable());
 
-        $this->override('is_readable', false, $path);
+        $this->override('is_readable', false, $node->pathname());
         $this->assertFalse($node->isReadable());
         $this->assertTrue($node->isWritable());
         $this->assertFalse($node->isRemovable());
 
-        $this->override('is_writable', false, $path);
+        $this->override('is_writable', false, $node->pathname());
         $this->assertFalse($node->isReadable());
         $this->assertFalse($node->isWritable());
         $this->assertFalse($node->isRemovable());
@@ -57,19 +55,17 @@ class LocalNodeTest extends LocalFilesystemTests
 
     public function test_permissions_for_not_existing_node_depend_on_ancestor_permissions(): void
     {
-        $path = self::$temp->directory('foo');
-        $node = $this->node('foo/bar/dir', false);
-
+        $node = $this->node('foo/bar/dir', false, ['foo' => []]);
         $this->assertTrue($node->isReadable());
         $this->assertTrue($node->isWritable());
         $this->assertTrue($node->isRemovable());
 
-        $this->override('is_readable', false, $path);
+        $this->override('is_readable', false, $this->path('foo'));
         $this->assertFalse($node->isReadable());
         $this->assertTrue($node->isWritable());
         $this->assertTrue($node->isRemovable());
 
-        $this->override('is_writable', false, $path);
+        $this->override('is_writable', false, $this->path('foo'));
         $this->assertFalse($node->isReadable());
         $this->assertFalse($node->isWritable());
         $this->assertFalse($node->isRemovable());
@@ -77,9 +73,7 @@ class LocalNodeTest extends LocalFilesystemTests
 
     public function test_permissions_for_invalid_node_type_return_false(): void
     {
-        self::$temp->file('foo/exists');
-        $node = $this->node('foo/exists', false);
-
+        $node = $this->node('foo/exists', false, ['foo' => ['exists' => '']]);
         $this->assertFalse($node->isReadable());
         $this->assertFalse($node->isWritable());
         $this->assertFalse($node->isRemovable());
@@ -87,9 +81,7 @@ class LocalNodeTest extends LocalFilesystemTests
 
     public function test_permissions_for_unreachable_path_returns_false(): void
     {
-        self::$temp->file('foo/file');
-        $node = $this->node('foo/file/expanded', false);
-
+        $node = $this->node('foo/file/expanded', false, ['foo' => ['file' => '']]);
         $this->assertFalse($node->isReadable());
         $this->assertFalse($node->isWritable());
         $this->assertFalse($node->isRemovable());
@@ -97,17 +89,14 @@ class LocalNodeTest extends LocalFilesystemTests
 
     public function test_instance_validation_for_unreachable_paths_throws_exception(): void
     {
-        $file = self::$temp->file('foo/bar.file');
-        self::$temp->symlink($file, 'file.link');
-        self::$temp->symlink('', 'foo/dead.link');
-
+        $this->root(['foo' => ['bar.file' => '', 'dead.lnk' => 'not/exists'], 'file.lnk' => 'foo/bar.file']);
         $unreachablePaths = [
-            'foo/bar.file'       => Exception\UnexpectedNodeType::class,
-            'foo/bar.file/path'  => Exception\UnexpectedLeafNode::class,
-            'file.link'          => Exception\UnexpectedNodeType::class,
-            'file.link/path'     => Exception\UnexpectedLeafNode::class,
-            'foo/dead.link'      => Exception\UnexpectedNodeType::class,
-            'foo/dead.link/path' => Exception\UnexpectedLeafNode::class
+            'foo/bar.file'      => Exception\UnexpectedNodeType::class,
+            'foo/bar.file/path' => Exception\UnexpectedLeafNode::class,
+            'file.lnk'          => Exception\UnexpectedNodeType::class,
+            'file.lnk/path'     => Exception\UnexpectedLeafNode::class,
+            'foo/dead.lnk'      => Exception\UnexpectedNodeType::class,
+            'foo/dead.lnk/path' => Exception\UnexpectedLeafNode::class
         ];
 
         foreach ($unreachablePaths as $name => $expectedException) {
@@ -118,30 +107,28 @@ class LocalNodeTest extends LocalFilesystemTests
 
     public function test_instance_validation_with_access_permissions(): void
     {
-        $node = $this->node('foo/bar.txt', false);
+        $node = $this->node('foo/bar.txt', false, ['foo' => []]);
         $this->assertSame($node, $node->validated(Node::READ | Node::WRITE | Node::REMOVE));
 
-        $directory = self::$temp->directory('foo');
-        $this->override('is_readable', false, $directory);
+        $this->override('is_readable', false, $this->path('foo'));
         $check = fn () => $node->validated(Node::READ);
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
         $this->assertSame($node, $node->validated(Node::WRITE));
 
-        $this->override('is_writable', false, $directory);
+        $this->override('is_writable', false, $this->path('foo'));
         $check = fn () => $node->validated(Node::WRITE);
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
 
-        $file = self::$temp->file('foo/bar.txt');
-        $node = $this->node('foo/bar.txt');
+        $node = $this->node('foo/bar.txt', true, ['foo' => ['bar.txt' => '']]);
         $this->assertSame($node, $node->validated(Node::READ | Node::WRITE));
 
-        $this->override('is_writable', false, $file);
+        $this->override('is_writable', false, $this->path('foo/bar.txt'));
         $check = fn () => $node->validated(Node::WRITE | Node::READ);
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
         $this->assertSame($node, $node->validated(Node::READ));
 
-        $this->override('is_readable', false, $file);
-        $this->override('is_writable', true, $file);
+        $this->override('is_readable', false, $this->path('foo/bar.txt'));
+        $this->override('is_writable', true, $this->path('foo/bar.txt'));
         $check = fn () => $node->validated(Node::WRITE | Node::READ);
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
         $this->assertSame($node, $node->validated(Node::WRITE));
@@ -170,15 +157,15 @@ class LocalNodeTest extends LocalFilesystemTests
 
     public function test_node_of_non_writable_directory_cannot_be_removed(): void
     {
-        $path = self::$temp->directory('foo/bar');
-        $this->override('is_writable', false, dirname($path));
-        $node   = $this->node('foo/bar');
+        $node = $this->node('foo/bar', true, ['foo' => ['bar' => []]]);
+        $this->override('is_writable', false, $this->path('foo'));
         $remove = fn () => $node->remove();
         $this->assertExceptionType(Exception\FailedPermissionCheck::class, $remove);
     }
 
-    private function node(string $name = '', bool $exists = true): Doubles\FakeLocalNode
+    private function node(string $name = '', bool $exists = true, array $structure = []): Doubles\FakeLocalNode
     {
-        return new Doubles\FakeLocalNode(self::$temp->directory(), $name, $exists);
+        if ($structure) { $this->root($structure); }
+        return new Doubles\FakeLocalNode($this->path(), $name, $exists);
     }
 }
