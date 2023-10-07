@@ -142,30 +142,29 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
 
     public function test_files_returns_all_files_iterator(): void
     {
-        $fileStructure = $this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]);
+        $root = $this->root($this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]));
 
-        $directory = $this->root($fileStructure);
-        $expected  = $this->files(['bar.txt', 'foo/bar/baz.txt', 'foo/buzz', 'foo/fizz']);
-        $this->assertFiles($expected, $directory->files());
+        $expected = $this->files(['bar.txt', 'foo/bar/baz.txt', 'foo/buzz', 'foo/fizz'], $root);
+        $this->assertFiles($expected, $root->files());
 
-        $directory = $directory->subdirectory('foo');
-        $expected  = $this->files(['foo/bar/baz.txt', 'foo/buzz', 'foo/fizz']);
-        $this->assertFiles($expected, $directory->files());
+        $expected = $this->files(['foo/bar/baz.txt', 'foo/buzz', 'foo/fizz'], $root);
+        $this->assertFiles($expected, $root->subdirectory('foo')->files());
 
-        $directory = $directory->asRoot();
-        $expected  = $this->files(['bar/baz.txt', 'buzz', 'fizz'], 'vfs://foo/');
+        $directory = $root->subdirectory('foo')->asRoot();
+        $expected  = $this->files(['bar/baz.txt', 'buzz', 'fizz'], $directory);
         $this->assertFiles($expected, $directory->files());
     }
 
     public function test_files_will_iterate_over_currently_existing_files(): void
     {
-        $fileStructure = $this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]);
+        $directory = $this->root($this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]));
 
-        $directory = $this->root($fileStructure);
-        $files     = $directory->files();
+        $files = $directory->files();
         $directory->subdirectory('foo/bar')->remove();
         $directory->file('bar.txt')->remove();
-        $this->assertFiles($this->files(['foo/buzz', 'foo/fizz']), $files);
+
+        $expected = $this->files(['foo/buzz', 'foo/fizz'], $directory);
+        $this->assertFiles($expected, $files);
     }
 
     public function test_remove_method_deletes_existing_structure(): void
@@ -182,14 +181,5 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
         $root->subdirectory('bar.txt')->remove();
         $root->subdirectory('foo/empty/bar')->remove();
         $this->assertEquals($this->root(), $root);
-    }
-
-    private function files(array $filenames, string $root = 'vfs://'): array
-    {
-        $files = [];
-        foreach ($filenames as $name) {
-            $files[$name] = $root . $name;
-        }
-        return $files;
     }
 }

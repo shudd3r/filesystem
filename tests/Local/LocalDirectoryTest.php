@@ -133,27 +133,29 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_files_returns_all_files_iterator(): void
     {
-        $directory = $this->root($this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]));
+        $root = $this->root($this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]));
 
-        $expected = $this->files(['bar.txt', 'foo/bar/baz.txt', 'foo/buzz', 'foo/fizz']);
-        $this->assertFiles($expected, $directory->files());
+        $expected = $this->files(['bar.txt', 'foo/bar/baz.txt', 'foo/buzz', 'foo/fizz'], $root);
+        $this->assertFiles($expected, $root->files());
 
-        $directory = $directory->subdirectory('foo');
-        $expected  = $this->files(['foo/bar/baz.txt', 'foo/buzz', 'foo/fizz']);
-        $this->assertFiles($expected, $directory->files());
+        $expected = $this->files(['foo/bar/baz.txt', 'foo/buzz', 'foo/fizz'], $root);
+        $this->assertFiles($expected, $root->subdirectory('foo')->files());
 
-        $directory = $directory->asRoot();
+        $directory = $root->subdirectory('foo')->asRoot();
         $expected  = $this->files(['bar/baz.txt', 'buzz', 'fizz'], $directory);
         $this->assertFiles($expected, $directory->files());
     }
 
     public function test_files_will_iterate_over_currently_existing_files(): void
     {
-        $directory = $this->root(['foo' => ['bar' => ['file.txt' => '']], 'bar' => ['baz.txt' => ''], 'txt' => '']);
-        $files     = $directory->files();
-        $directory->subdirectory('foo')->remove();
-        $directory->file('txt')->remove();
-        $this->assertFiles($this->files(['bar/baz.txt']), $files);
+        $directory = $this->root($this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]));
+
+        $files = $directory->files();
+        $directory->subdirectory('foo/bar')->remove();
+        $directory->file('bar.txt')->remove();
+
+        $expected = $this->files(['foo/buzz', 'foo/fizz'], $directory);
+        $this->assertFiles($expected, $files);
     }
 
     public function test_remove_method_deletes_existing_structure(): void
@@ -212,16 +214,6 @@ class LocalDirectoryTest extends LocalFilesystemTests
         $create    = fn () => $directory->create();
         $exception = Exception\IOException\UnableToCreate::class;
         $this->assertIOException($exception, $create, 'mkdir', $directory->pathname());
-    }
-
-    private function files(array $filenames, LocalDirectory $root = null): array
-    {
-        $root ??= $this->root();
-        $files = [];
-        foreach ($filenames as $name) {
-            $files[$name] = $root->file($name)->pathname();
-        }
-        return $files;
     }
 
     private function invalidRootPaths(): array

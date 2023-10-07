@@ -61,6 +61,15 @@ abstract class FilesystemTests extends TestCase
         $this->assertSame([], $files, 'Some expected files were not found');
     }
 
+    protected function files(array $filenames, Directory $root): array
+    {
+        $files = [];
+        foreach ($filenames as $filename) {
+            $files[$filename] = $root->file($filename)->pathname();
+        }
+        return $files;
+    }
+
     protected function stream(string $contents = ''): ContentStream
     {
         $resource = fopen('php://memory', 'rb+');
