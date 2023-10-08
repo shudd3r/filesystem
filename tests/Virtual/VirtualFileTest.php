@@ -9,12 +9,12 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Tests\Local;
+namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use Shudd3r\Filesystem\Exception;
 
 
-class LocalFileTest extends LocalFilesystemTests
+class VirtualFileTest extends VirtualFilesystemTests
 {
     public function test_exists_for_existing_file_returns_true(): void
     {
@@ -34,17 +34,13 @@ class LocalFileTest extends LocalFilesystemTests
     public function test_remove_method_deletes_file(): void
     {
         $file = $this->root(['foo' => ['bar.txt' => '']])->file('foo/bar.txt');
-        $this->assertFileExists($file->pathname());
-        $this->assertTrue($file->exists());
         $file->remove();
-        $this->assertFileDoesNotExist($file->pathname());
         $this->assertFalse($file->exists());
     }
 
     public function test_contents_returns_file_contents(): void
     {
         $file = $this->root(['foo.txt' => 'contents...'])->file('foo.txt');
-        $this->assertSame('contents...', file_get_contents($file->pathname()));
         $this->assertSame('contents...', $file->contents());
     }
 
@@ -53,18 +49,11 @@ class LocalFileTest extends LocalFilesystemTests
         $this->assertEmpty($this->root()->file('not-exists.txt')->contents());
     }
 
-    public function test_write_for_not_existing_file_creates_file_with_given_contents(): void
-    {
-        $file = $this->root()->file('foo.txt');
-        $file->write('Written contents...');
-        $this->assertSame('Written contents...', $file->contents());
-    }
-
     public function test_write_for_existing_file_replaces_its_contents(): void
     {
         $file = $this->root(['foo.txt' => 'Old contents...'])->file('foo.txt');
         $file->write('New contents');
-        $this->assertSame('New contents', file_get_contents($file->pathname()));
+        $this->assertSame('New contents', $file->contents());
     }
 
     public function test_writeStream_for_not_existing_file_creates_file_with_given_contents(): void
@@ -103,16 +92,14 @@ class LocalFileTest extends LocalFilesystemTests
     {
         $root = $this->root();
         $file = $root->file('foo/bar/baz.txt');
-        $this->assertDirectoryDoesNotExist($this->path('foo'));
         $file->write('contents');
-        $this->assertFileExists($file->pathname());
-        $this->assertDirectoryExists($this->path('foo'));
+        $this->assertTrue($root->subdirectory('foo')->exists());
+        $this->assertTrue($root->subdirectory('foo/bar')->exists());
 
         $file = $root->file('foo/baz/file.txt');
-        $this->assertDirectoryDoesNotExist($this->path('foo/baz'));
+        $this->assertFalse($root->subdirectory('foo/baz')->exists());
         $file->append('...contents');
-        $this->assertFileExists($file->pathname());
-        $this->assertDirectoryExists($this->path('foo/baz'));
+        $this->assertTrue($root->subdirectory('foo/baz')->exists());
     }
 
     public function test_copy_duplicates_contents_of_given_file(): void
@@ -128,9 +115,7 @@ class LocalFileTest extends LocalFilesystemTests
         $root   = $this->root(['foo' => ['file.txt' => 'foo contents...']]);
         $file   = $root->file('foo/file.txt');
         $target = $root->file('bar/file.txt');
-        $this->assertFileDoesNotExist($target->pathname());
         $file->moveTo($root->subdirectory('bar'));
-        $this->assertFileExists($target->pathname());
         $this->assertSame('foo contents...', $target->contents());
         $this->assertFalse($file->exists());
     }
@@ -166,24 +151,19 @@ class LocalFileTest extends LocalFilesystemTests
         $this->assertFalse($file->exists());
     }
 
-    public function test_contentStream_for_not_existing_file_returns_null(): void
+    public function test_contentStream_returns_null(): void
     {
-        $this->assertNull($this->root()->file('foo.txt')->contentStream());
-    }
-
-    public function test_contentStream_for_existing_file_returns_streamable_contents(): void
-    {
-        $file = $this->root(['foo.txt' => 'foo contents...'])->file('foo.txt');
-        $this->assertSame($file->contents(), $file->contentStream()->contents());
+        $file = $this->root(['foo.txt' => 'contents'])->file('foo.txt');
+        $this->assertNull($file->contentStream());
     }
 
     public function test_method_calls_on_invalid_file_path_throw_exception(): void
     {
-        $root   = $this->root(['foo' => ['file.txt' => ''], 'bar.txt' => '']);
+        $root   = $this->root();
         $stream = $this->stream('contents');
         $copied = $root->file('bar.txt');
 
-        $file      = $root->file('foo/file.txt/bar.txt');
+        $file      = $root->file('foo/file.lnk/bar.txt');
         $exception = Exception\UnexpectedLeafNode::class;
         $this->assertExceptionType($exception, fn () => $file->contents(), 'contents');
         $this->assertExceptionType($exception, fn () => $file->write('contents'), 'write');
@@ -200,45 +180,20 @@ class LocalFileTest extends LocalFilesystemTests
         $this->assertExceptionType($exception, fn () => $file->copy($copied), 'copy');
     }
 
-    public function test_runtime_file_write_failures(): void
-    {
-        $file  = $this->root()->file('foo/bar/baz.txt');
-        $write = fn () => $file->write('something');
-        $this->assertIOException(Exception\IOException\UnableToCreate::class, $write, 'mkdir');
-        $this->assertIOException(Exception\IOException\UnableToCreate::class, $write, 'file_put_contents');
-        $this->assertIOException(Exception\IOException\UnableToSetPermissions::class, $write, 'chmod');
-        $this->assertIOException(Exception\IOException\UnableToWriteContents::class, $write, 'file_put_contents');
-    }
-
-    public function test_runtime_remove_file_failures(): void
-    {
-        $file   = $this->root(['foo' => ['bar.txt' => 'contents']])->file('foo/bar.txt');
-        $remove = fn () => $file->remove();
-        $this->assertIOException(Exception\IOException\UnableToRemove::class, $remove, 'unlink');
-    }
-
-    public function test_runtime_read_file_failures(): void
-    {
-        $file      = $this->root(['foo' => ['bar.txt' => 'contents']])->file('foo/bar.txt');
-        $read      = fn () => $file->contents();
-        $exception = Exception\IOException\UnableToReadContents::class;
-        $this->assertIOException($exception, $read, 'fopen');
-        $this->assertIOException($exception, $read, 'flock');
-        $this->assertIOException($exception, $read, 'file_get_contents');
-    }
-
     public function test_self_reference_write_is_ignored(): void
     {
-        $root = $this->root(['foo.txt' => 'contents']);
-        $file = $root->file('foo.txt');
+        $root = $this->root(['dir' => ['file.txt' => 'contents']]);
+        $file = $root->file('dir');
 
-        $file->writeStream($file->contentStream());
-        $this->assertSame('contents', $file->contents());
+        $this->assertNotSame($root->file('dir'), $file);
+        try {
+            $file->copy($root->file('dir'));
+        } catch (Exception\UnexpectedNodeType $ex) {
+            $this->fail('Exception should not be thrown for ignored operation');
+        }
 
-        $file->copy($file);
-        $this->assertSame('contents', $file->contents());
-
-        $file->moveTo($root);
-        $this->assertSame('contents', $file->contents());
+        $file = $root->file('dir/file.txt');
+        $file->moveTo($root->subdirectory('dir'));
+        $this->assertTrue($file->exists());
     }
 }

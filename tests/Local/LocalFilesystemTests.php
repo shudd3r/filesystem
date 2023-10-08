@@ -12,14 +12,15 @@
 namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Tests\FilesystemTests;
+use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Tests\Fixtures\TempFiles;
+use Shudd3r\Filesystem\Tests\Fixtures\Override;
 
 
 abstract class LocalFilesystemTests extends FilesystemTests
 {
-    protected static TempFiles $temp;
-
-    private static string $cwd;
+    private static TempFiles $temp;
+    private static string    $cwd;
 
     public static function setUpBeforeClass(): void
     {
@@ -36,7 +37,18 @@ abstract class LocalFilesystemTests extends FilesystemTests
     protected function tearDown(): void
     {
         self::$temp->clear();
-        parent::tearDown();
+        Override::reset();
+    }
+
+    protected function root(array $structure = null): LocalDirectory
+    {
+        $this->createNodes($structure ?? []);
+        return LocalDirectory::root(self::$temp->directory());
+    }
+
+    protected function path(string $name = ''): string
+    {
+        return self::$temp->pathname($name);
     }
 
     protected function assertIOException(string $exception, callable $procedure, string $override, $argValue = null): void
@@ -47,5 +59,62 @@ abstract class LocalFilesystemTests extends FilesystemTests
         }, $argValue);
         $this->assertExceptionType($exception, $procedure);
         $this->removeOverride($override);
+    }
+
+    /**
+     * @param string         $function
+     * @param callable|mixed $returnValue fn() => mixed
+     * @param mixed          $argValue    Trigger override for this value
+     */
+    protected function override(string $function, $returnValue, $argValue = null): void
+    {
+        Override::set($function, $returnValue, $argValue);
+    }
+
+    protected function removeOverride(string $function): void
+    {
+        Override::remove($function);
+    }
+
+    protected function invalidRootPaths(): array
+    {
+        chdir($this->path());
+        return [
+            'file path'         => self::$temp->file('foo/bar/baz.txt'),
+            'not existing path' => self::$temp->pathname('not/exists'),
+            'invalid symlink'   => self::$temp->symlink('', 'link'),
+            'valid symlink'     => self::$temp->symlink(self::$temp->pathname('foo/bar'), 'link'),
+            'relative path'     => self::$temp->relative('./foo/bar'),
+            'step-up path'      => self::$temp->pathname('foo/bar/..'),
+            'empty path'        => '',
+            'dot path'          => '.'
+        ];
+    }
+
+    private function createNodes(array $tree, string $path = ''): ?array
+    {
+        if (!$tree) { self::$temp->directory($path); }
+
+        $links = [];
+        foreach ($tree as $name => $value) {
+            $name     = $path ? $path . '/' . $name : $name;
+            $newLinks = is_array($value) ? $this->createNodes($value, $name) : $this->createLeaf($name, $value);
+            $newLinks && $links = array_merge($links, $newLinks);
+        }
+
+        if ($path) { return $links; }
+        foreach ($links as $name => $value) {
+            self::$temp->symlink($value, $name);
+        }
+        return null;
+    }
+
+    private function createLeaf(string $name, string $value): array
+    {
+        if (str_ends_with($name, '.lnk')) {
+            return [$name => self::$temp->pathname($value)];
+        }
+        self::$temp->file($name, $value);
+        return [];
     }
 }

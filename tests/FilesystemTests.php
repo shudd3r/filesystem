@@ -12,18 +12,27 @@
 namespace Shudd3r\Filesystem\Tests;
 
 use PHPUnit\Framework\TestCase;
+use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\File;
 use Shudd3r\Filesystem\Generic\FileIterator;
+use Shudd3r\Filesystem\Generic\ContentStream;
 use Shudd3r\Filesystem\FilesystemException;
-use Shudd3r\Filesystem\Tests\Fixtures\Override;
 
 
 abstract class FilesystemTests extends TestCase
 {
-    protected function tearDown(): void
-    {
-        Override::reset();
-    }
+    private const EXAMPLE_STRUCTURE = [
+        'foo' => [
+            'bar'      => ['baz.txt' => 'baz contents'],
+            'file.lnk' => 'bar.txt',
+            'empty'    => []
+        ],
+        'bar.txt' => 'bar contents',
+        'dir.lnk' => 'foo/bar',
+        'inv.lnk' => 'not/exists'
+    ];
+
+    abstract protected function root(array $structure = null): Directory;
 
     protected function assertExceptionType(string $expected, callable $procedure, string $case = ''): void
     {
@@ -52,27 +61,36 @@ abstract class FilesystemTests extends TestCase
         $this->assertSame([], $files, 'Some expected files were not found');
     }
 
-    /** @return resource */
-    protected function resource(string $contents = '')
+    protected function files(array $filenames, Directory $root): array
+    {
+        $files = [];
+        foreach ($filenames as $filename) {
+            $files[$filename] = $root->file($filename)->pathname();
+        }
+        return $files;
+    }
+
+    protected function stream(string $contents = ''): ContentStream
     {
         $resource = fopen('php://memory', 'rb+');
         fwrite($resource, $contents);
         rewind($resource);
-        return $resource;
+        return new ContentStream($resource);
     }
 
-    /**
-     * @param string         $function
-     * @param callable|mixed $returnValue fn() => mixed
-     * @param mixed          $argValue    Trigger override for this value
-     */
-    protected function override(string $function, $returnValue, $argValue = null): void
+    protected function exampleStructure(array $merge = []): array
     {
-        Override::set($function, $returnValue, $argValue);
+        return $this->mergeStructure(self::EXAMPLE_STRUCTURE, $merge);
     }
 
-    protected function removeOverride(string $function): void
+    private function mergeStructure($tree, $changes): array
     {
-        Override::remove($function);
+        foreach ($changes as $name => $value) {
+            $merge = is_array($value) && isset($tree[$name]);
+            $tree[$name] = $merge ? $this->mergeStructure($tree[$name], $value) : $value;
+            if ($value === null) { unset($tree[$name]); }
+        }
+
+        return $tree;
     }
 }

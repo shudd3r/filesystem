@@ -27,3 +27,9 @@ function get_resource_type($resource): string
 {
     return Override::call('get_resource_type') ?? \get_resource_type($resource);
 }
+
+/** @return false|string */
+function stream_get_contents($resource)
+{
+    return Override::call('stream_get_contents', $resource) ?? \stream_get_contents($resource);
+}
