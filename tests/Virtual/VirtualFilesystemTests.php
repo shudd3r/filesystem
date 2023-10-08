@@ -24,7 +24,7 @@ abstract class VirtualFilesystemTests extends FilesystemTests
         return VirtualDirectory::root('vfs://', $structure);
     }
 
-    private function createNodes(array $tree): TreeNode\Directory
+    protected function createNodes(array $tree): TreeNode\Directory
     {
         foreach ($tree as $name => &$value) {
             $value = is_array($value) ? $this->createNodes($value) : $this->leafNode($name, $value);
