@@ -42,7 +42,7 @@ class VirtualLinkTest extends VirtualFilesystemTests
 
     public function test_remove_method_deletes_link(): void
     {
-        $root = $this->root();
+        $root = $this->root($this->exampleStructure(['foo' => ['empty' => null]]));
         $link = $root->link('foo/file.lnk');
         $file = $root->file('bar.txt');
         $link->remove();
@@ -54,6 +54,13 @@ class VirtualLinkTest extends VirtualFilesystemTests
         $link->remove();
         $this->assertFalse($link->exists());
         $this->assertTrue($dir->exists());
+
+        $link = $root->link('inv.lnk');
+        $link->remove();
+        $this->assertFalse($link->exists());
+
+        $expected = $this->root(['foo' => ['bar' => ['baz.txt' => 'baz contents']], 'bar.txt' => 'bar contents']);
+        $this->assertEquals($expected, $root);
     }
 
     public function test_remove_method_for_linked_node_deletes_link(): void
