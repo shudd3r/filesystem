@@ -87,7 +87,7 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
         $root = $this->root();
         $root->subdirectory('foo')->create();
         $root->subdirectory('dir.lnk')->create();
-        $this->assertEquals($this->root(), $root);
+        $this->assertSameStructure($root);
     }
 
     public function test_create_for_writable_path_creates_directory(): void
@@ -96,11 +96,10 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
         $root->subdirectory('bar')->create();
         $root->subdirectory('foo/empty/dir')->create();
         $root->subdirectory('dir.lnk/baz')->create();
-        $expected = $this->root($this->exampleStructure([
+        $this->assertSameStructure($root, $this->exampleStructure([
             'foo' => ['bar' => ['baz' => []], 'empty' => ['dir' => []]],
             'bar' => []
         ]));
-        $this->assertEquals($expected, $root);
     }
 
     public function test_create_for_not_writable_path_throws_exception(): void
@@ -171,8 +170,7 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
     {
         $root = $this->root();
         $root->subdirectory('foo')->remove();
-        $expected = $this->root($this->exampleStructure(['foo' => null]));
-        $this->assertEquals($expected, $root);
+        $this->assertSameStructure($root, $this->exampleStructure(['foo' => null]));
     }
 
     public function test_remove_method_for_not_existing_directory_is_ignored(): void
@@ -180,6 +178,6 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
         $root = $this->root();
         $root->subdirectory('bar.txt')->remove();
         $root->subdirectory('foo/empty/bar')->remove();
-        $this->assertEquals($this->root(), $root);
+        $this->assertSameStructure($root);
     }
 }

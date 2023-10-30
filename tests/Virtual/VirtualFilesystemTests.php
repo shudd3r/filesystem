@@ -18,6 +18,11 @@ use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
 abstract class VirtualFilesystemTests extends FilesystemTests
 {
+    protected function assertSameStructure(VirtualDirectory $root, array $structure = null): void
+    {
+        $this->assertEquals($this->root($structure ?? $this->exampleStructure()), $root);
+    }
+
     protected function root(array $structure = null): VirtualDirectory
     {
         $structure = $this->createNodes($structure ?? $this->exampleStructure());
