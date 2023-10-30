@@ -64,7 +64,7 @@ class VirtualNodeTest extends VirtualFilesystemTests
 
     public function test_validated_for_stale_link_throws_exception(): void
     {
-        $node = $this->node('foo.lnk', ['foo.lnk' => 'bar.txt']);
+        $node = $this->node('foo.lnk', ['foo.lnk' => '@bar.txt']);
         $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $node->validated());
     }
 

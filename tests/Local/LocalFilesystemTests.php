@@ -111,8 +111,9 @@ abstract class LocalFilesystemTests extends FilesystemTests
 
     private function createLeaf(string $name, string $value): array
     {
-        if (str_ends_with($name, '.lnk')) {
-            return [$name => self::$temp->pathname($value)];
+        if (str_starts_with($value, '@')) {
+            $path = self::$temp->pathname(substr($value, 1));
+            return [$name => $path];
         }
         self::$temp->file($name, $value);
         return [];

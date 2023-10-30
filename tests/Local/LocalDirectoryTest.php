@@ -82,7 +82,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_exists_for_existing_directory_returns_true(): void
     {
-        $root = $this->root(['foo' => ['bar' => ['baz.dir' => []]], 'dir.lnk' => 'foo/bar/baz.dir']);
+        $root = $this->root(['foo' => ['bar' => ['baz.dir' => []]], 'dir.lnk' => '@foo/bar/baz.dir']);
         $this->assertTrue($root->exists());
         $this->assertTrue($root->subdirectory('foo/bar/baz.dir')->exists());
         $this->assertTrue($root->subdirectory('dir.lnk')->exists());
@@ -90,7 +90,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_exists_for_not_existing_directory_returns_false(): void
     {
-        $root = $this->root(['foo' => ['bar' => ['baz.file' => '']], 'file.lnk' => 'foo/bar/baz.file']);
+        $root = $this->root(['foo' => ['bar' => ['baz.file' => '']], 'file.lnk' => '@foo/bar/baz.file']);
         $this->assertFalse($root->subdirectory('foo/bar/baz.dir')->exists());
         $this->assertFalse($root->subdirectory('foo/bar/baz.file')->exists());
         $this->assertFalse($root->subdirectory('file.lnk')->exists());
@@ -161,8 +161,8 @@ class LocalDirectoryTest extends LocalFilesystemTests
     public function test_remove_method_deletes_existing_structure(): void
     {
         $root = $this->root([
-            'foo'     => ['bar' => ['baz.txt' => '', 'dir' => []], 'file.lnk' => 'foo/bar/baz.txt'],
-            'dir.lnk' => 'foo/bar/dir',
+            'foo'     => ['bar' => ['baz.txt' => '', 'dir' => []], 'file.lnk' => '@foo/bar/baz.txt'],
+            'dir.lnk' => '@foo/bar/dir',
             'bar'     => []
         ]);
         $this->assertDirectoryExists($link = $this->path('dir.lnk'));

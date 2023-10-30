@@ -18,14 +18,14 @@ class VirtualFileTest extends VirtualFilesystemTests
 {
     public function test_exists_for_existing_file_returns_true(): void
     {
-        $root = $this->root(['foo' => ['bar' => ['baz.txt' => 'contents']], 'file.lnk' => 'foo/bar/baz.txt']);
+        $root = $this->root(['foo' => ['bar' => ['baz.txt' => 'contents']], 'file.lnk' => '@foo/bar/baz.txt']);
         $this->assertTrue($root->file('foo/bar/baz.txt')->exists());
         $this->assertTrue($root->file('file.lnk')->exists());
     }
 
     public function test_exists_for_not_existing_file_returns_false(): void
     {
-        $root = $this->root(['foo' => ['bar' => ['dir' => []]], 'dir.lnk' => 'foo/bar/dir']);
+        $root = $this->root(['foo' => ['bar' => ['dir' => []]], 'dir.lnk' => '@foo/bar/dir']);
         $this->assertFalse($root->file('foo/bar/baz.txt')->exists());
         $this->assertFalse($root->file('foo/bar/dir')->exists());
         $this->assertFalse($root->file('dir.lnk')->exists());

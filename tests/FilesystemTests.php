@@ -24,12 +24,12 @@ abstract class FilesystemTests extends TestCase
     private const EXAMPLE_STRUCTURE = [
         'foo' => [
             'bar'      => ['baz.txt' => 'baz contents'],
-            'file.lnk' => 'bar.txt',
+            'file.lnk' => '@bar.txt',
             'empty'    => []
         ],
         'bar.txt' => 'bar contents',
-        'dir.lnk' => 'foo/bar',
-        'inv.lnk' => 'not/exists'
+        'dir.lnk' => '@foo/bar',
+        'inv.lnk' => '@not/exists'
     ];
 
     abstract protected function root(array $structure = null): Directory;

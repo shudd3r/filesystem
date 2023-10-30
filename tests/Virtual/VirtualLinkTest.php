@@ -81,14 +81,17 @@ class VirtualLinkTest extends VirtualFilesystemTests
 
     public function test_target_returns_absolute_target_pathname(): void
     {
-        $root = $this->root(['foo.txt' => '', 'foo.lnk' => 'foo.txt', 'foo' => ['bar' => []], 'bar.lnk' => 'foo/bar']);
+        $root = $this->root([
+            'foo.txt' => '', 'foo' => ['bar' => []],
+            'foo.lnk' => '@foo.txt', 'bar.lnk' => '@foo/bar'
+        ]);
         $this->assertSame('vfs://foo.txt', $root->link('foo.lnk')->target());
         $this->assertSame('vfs://foo/bar', $root->link('bar.lnk')->target());
     }
 
     public function test_target_for_stale_link_returns_null_unless_explicitly_requested(): void
     {
-        $link = $this->root(['stale.lnk' => 'not/exists'])->link('stale.lnk');
+        $link = $this->root(['stale.lnk' => '@not/exists'])->link('stale.lnk');
         $this->assertSame(null, $link->target());
         $this->assertSame('vfs://not/exists', $link->target(true));
     }
@@ -96,9 +99,9 @@ class VirtualLinkTest extends VirtualFilesystemTests
     public function test_target_node_type_checking(): void
     {
         $root = $this->root([
-            'foo.lnk' => 'foo.txt', 'foo.txt' => '',
-            'bar.lnk' => 'foo/bar', 'foo' => ['bar' => []],
-            'stale.lnk' => 'not/exists.txt'
+            'foo.lnk' => '@foo.txt', 'foo.txt' => '',
+            'bar.lnk' => '@foo/bar', 'foo' => ['bar' => []],
+            'stale.lnk' => '@not/exists.txt'
         ]);
 
         $fileLink = $root->link('foo.lnk');
@@ -131,8 +134,8 @@ class VirtualLinkTest extends VirtualFilesystemTests
         $root = $this->root([
             'foo'      => ['file.old' => '', 'dir.old' => []],
             'bar'      => ['file.new' => '', 'dir.new' => []],
-            'file.lnk' => 'foo/file.old',
-            'dir.lnk'  => 'foo/dir.old'
+            'file.lnk' => '@foo/file.old',
+            'dir.lnk'  => '@foo/dir.old'
         ]);
 
         $link = $root->link('file.lnk');
@@ -155,7 +158,7 @@ class VirtualLinkTest extends VirtualFilesystemTests
 
     public function test_setTarget_to_another_link_throws_exception(): void
     {
-        $root   = $this->root(['foo' => ['bar.txt' => ''], 'foo.lnk' => 'foo/bar.txt']);
+        $root   = $this->root(['foo' => ['bar.txt' => ''], 'foo.lnk' => '@foo/bar.txt']);
         $link   = $root->link('bar.lnk');
         $create = fn () => $link->setTarget($root->link('foo.lnk'));
         $this->assertExceptionType(Exception\IOException\UnableToCreate::class, $create);
@@ -171,7 +174,7 @@ class VirtualLinkTest extends VirtualFilesystemTests
 
     public function test_changing_target_to_different_type_throws_exception(): void
     {
-        $root = $this->root(['foo' => ['bar.file' => '', 'bar.dir' => []], 'bar.lnk' => 'foo/bar.file']);
+        $root = $this->root(['foo' => ['bar.file' => '', 'bar.dir' => []], 'bar.lnk' => '@foo/bar.file']);
         $node = $root->subdirectory('foo/bar.dir');
         $link = $root->link('bar.lnk');
         $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $link->setTarget($node));

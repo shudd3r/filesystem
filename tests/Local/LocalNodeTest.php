@@ -89,7 +89,7 @@ class LocalNodeTest extends LocalFilesystemTests
 
     public function test_instance_validation_for_unreachable_paths_throws_exception(): void
     {
-        $this->root(['foo' => ['bar.file' => '', 'dead.lnk' => 'not/exists'], 'file.lnk' => 'foo/bar.file']);
+        $this->root(['foo' => ['bar.file' => '', 'dead.lnk' => '@not/exists'], 'file.lnk' => '@foo/bar.file']);
         $unreachablePaths = [
             'foo/bar.file'      => Exception\UnexpectedNodeType::class,
             'foo/bar.file/path' => Exception\UnexpectedLeafNode::class,

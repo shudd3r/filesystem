@@ -26,14 +26,15 @@ abstract class VirtualFilesystemTests extends FilesystemTests
 
     protected function createNodes(array $tree): TreeNode\Directory
     {
-        foreach ($tree as $name => &$value) {
-            $value = is_array($value) ? $this->createNodes($value) : $this->leafNode($name, $value);
+        foreach ($tree as &$value) {
+            $value = is_array($value) ? $this->createNodes($value) : $this->leafNode($value);
         }
         return new TreeNode\Directory($tree);
     }
 
-    private function leafNode(string $name, string $value): TreeNode
+    private function leafNode(string $value): TreeNode
     {
-        return str_ends_with($name, '.lnk') ? new TreeNode\Link('vfs://' . $value) : new TreeNode\File($value);
+        $path = str_starts_with($value, '@') ? 'vfs://' . substr($value, 1) : null;
+        return $path ? new TreeNode\Link($path) : new TreeNode\File($value);
     }
 }
