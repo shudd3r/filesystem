@@ -14,6 +14,7 @@ namespace Shudd3r\Filesystem\Tests\Fixtures;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use FilesystemIterator;
+use Traversable;
 use RuntimeException;
 
 
@@ -36,12 +37,16 @@ class TempFiles
 
     public function clear(): void
     {
-        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
-        $nodes = new RecursiveDirectoryIterator($this->root, $flags);
-        $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
-        foreach ($nodes as $pathname) {
+        foreach ($this->nodes($this->root) as $pathname) {
             $this->remove($pathname);
         }
+    }
+
+    public function nodes(string $rootPath): Traversable
+    {
+        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
+        $nodes = new RecursiveDirectoryIterator($rootPath, $flags);
+        return new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
     }
 
     public function file(string $filename, string $contents = ''): string

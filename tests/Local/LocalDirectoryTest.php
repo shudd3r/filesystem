@@ -96,12 +96,24 @@ class LocalDirectoryTest extends LocalFilesystemTests
         $this->assertFalse($root->subdirectory('file.lnk')->exists());
     }
 
+    public function test_create_for_existing_directory_is_ignored(): void
+    {
+        $root = $this->root($this->exampleStructure());
+        $root->subdirectory('foo')->create();
+        $root->subdirectory('dir.lnk')->create();
+        $this->assertSameStructure($root);
+    }
+
     public function test_create_for_writable_path_creates_directory(): void
     {
-        $directory = $this->root()->subdirectory('foo');
-        $this->assertDirectoryDoesNotExist($directory->pathname());
-        $directory->create();
-        $this->assertDirectoryExists($directory->pathname());
+        $root = $this->root($this->exampleStructure());
+        $root->subdirectory('bar')->create();
+        $root->subdirectory('foo/empty/dir')->create();
+        $root->subdirectory('dir.lnk/baz')->create();
+        $this->assertSameStructure($root, $this->exampleStructure([
+            'foo' => ['bar' => ['baz' => []], 'empty' => ['dir' => []]],
+            'bar' => []
+        ]));
     }
 
     public function test_create_for_not_writable_path_throws_exception(): void
@@ -160,23 +172,17 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_remove_method_deletes_existing_structure(): void
     {
-        $root = $this->root([
-            'foo'     => ['bar' => ['baz.txt' => '', 'dir' => []], 'file.lnk' => '@foo/bar/baz.txt'],
-            'dir.lnk' => '@foo/bar/dir',
-            'bar'     => []
-        ]);
-        $this->assertDirectoryExists($link = $this->path('dir.lnk'));
+        $root = $this->root($this->exampleStructure());
         $root->subdirectory('foo')->remove();
-        $this->assertDirectoryDoesNotExist($this->path('foo'));
-        $this->assertDirectoryExists($this->path('bar'));
-        $this->assertDirectoryDoesNotExist($link);
-        $this->assertTrue(is_link($link));
+        $this->assertSameStructure($root, $this->exampleStructure(['foo' => null]));
     }
 
     public function test_remove_method_for_not_existing_directory_is_ignored(): void
     {
-        $this->root(['bar.txt' => ''])->subdirectory('bar.txt')->remove();
-        $this->assertFileExists($this->path('bar.txt'));
+        $root = $this->root($this->exampleStructure());
+        $root->subdirectory('bar.txt')->remove();
+        $root->subdirectory('foo/empty/bar')->remove();
+        $this->assertSameStructure($root);
     }
 
     public function test_root_instantiated_with_assert_flags_throws_exceptions_for_derived_nodes(): void

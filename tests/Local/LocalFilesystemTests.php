@@ -40,6 +40,33 @@ abstract class LocalFilesystemTests extends FilesystemTests
         Override::reset();
     }
 
+    protected function assertSameStructure(LocalDirectory $root, array $structure = null): void
+    {
+        $rootPath   = $root->pathname();
+        $rootLength = strlen($rootPath) + 1;
+
+        $tree = [];
+        foreach (self::$temp->nodes($rootPath) as $pathname) {
+            $path     = str_replace(DIRECTORY_SEPARATOR, '/', substr($pathname, $rootLength));
+            $segments = explode('/', $path);
+            $leafNode = array_pop($segments);
+            $current  = &$tree;
+            foreach ($segments as $value) {
+                $current[$value] ??= [];
+                $current = &$current[$value];
+            }
+            if (isset($current[$leafNode])) { continue; }
+            if (is_dir($pathname) && !is_link($pathname)) {
+                $current[$leafNode] = [];
+                continue;
+            }
+            $current[$leafNode] = is_link($pathname)
+                ? '@' . str_replace(DIRECTORY_SEPARATOR, '/', substr(readlink($pathname), $rootLength))
+                : file_get_contents($pathname);
+        }
+        $this->assertEquals($structure ?? $this->exampleStructure(), $tree);
+    }
+
     protected function root(array $structure = null): LocalDirectory
     {
         $this->createNodes($structure ?? []);
