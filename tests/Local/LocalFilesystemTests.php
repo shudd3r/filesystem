@@ -82,8 +82,8 @@ abstract class LocalFilesystemTests extends FilesystemTests
         return [
             'file path'         => self::$temp->file('foo/bar/baz.txt'),
             'not existing path' => self::$temp->pathname('not/exists'),
-            'invalid symlink'   => self::$temp->symlink('', 'link'),
-            'valid symlink'     => self::$temp->symlink(self::$temp->pathname('foo/bar'), 'link'),
+            'invalid symlink'   => self::$temp->symlink('not/exists', 'link1'),
+            'valid symlink'     => self::$temp->symlink('foo/bar', 'link2'),
             'relative path'     => self::$temp->relative('./foo/bar'),
             'step-up path'      => self::$temp->pathname('foo/bar/..'),
             'empty path'        => '',
@@ -112,8 +112,7 @@ abstract class LocalFilesystemTests extends FilesystemTests
     private function createLeaf(string $name, string $value): array
     {
         if (str_starts_with($value, '@')) {
-            $path = self::$temp->pathname(substr($value, 1));
-            return [$name => $path];
+            return [$name => substr($value, 1)];
         }
         self::$temp->file($name, $value);
         return [];

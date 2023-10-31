@@ -62,23 +62,23 @@ class TempFiles
 
     public function symlink(string $target, string $name): string
     {
-        if ($target && strpos($target, $this->root) !== 0) {
-            $target = '';
+        $targetPath = $this->pathname($target);
+        $remove     = [];
+        while (!file_exists($targetPath)) {
+            $remove[] = $targetPath;
+            $targetPath = dirname($targetPath);
         }
 
-        $invalid = false;
-        if (!$target || !file_exists($target)) {
-            $invalid = true;
-            $target  = $this->file($target ? substr($target, strlen($this->root . '/')) : 'remove.after.link');
-        }
-
+        $remove && $targetPath = $this->file($target);
         $this->directory($this->relative(dirname($name)));
 
-        if (!symlink($target, $name = $this->pathname($name))) {
-            throw new RuntimeException();
+        if (!@symlink($targetPath, $name = $this->pathname($name))) {
+            throw new RuntimeException(sprintf('Failed creating symlink in `%s` to `%s`', $name, $targetPath));
         }
 
-        if ($invalid) { $this->remove($target); }
+        foreach ($remove as $path) {
+            $this->remove($path);
+        }
 
         return $name;
     }
