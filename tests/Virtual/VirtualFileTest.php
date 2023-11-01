@@ -49,6 +49,13 @@ class VirtualFileTest extends VirtualFilesystemTests
         $this->assertEmpty($this->root()->file('not-exists.txt')->contents());
     }
 
+    public function test_write_for_not_existing_file_creates_file_with_given_contents(): void
+    {
+        $file = $this->root()->file('foo.txt');
+        $file->write('Written contents...');
+        $this->assertSame('Written contents...', $file->contents());
+    }
+
     public function test_write_for_existing_file_replaces_its_contents(): void
     {
         $file = $this->root(['foo.txt' => 'Old contents...'])->file('foo.txt');
@@ -90,16 +97,11 @@ class VirtualFileTest extends VirtualFilesystemTests
 
     public function test_creating_file_with_directory_structure(): void
     {
-        $root = $this->root();
-        $file = $root->file('foo/bar/baz.txt');
-        $file->write('contents');
-        $this->assertTrue($root->subdirectory('foo')->exists());
-        $this->assertTrue($root->subdirectory('foo/bar')->exists());
-
-        $file = $root->file('foo/baz/file.txt');
-        $this->assertFalse($root->subdirectory('foo/baz')->exists());
-        $file->append('...contents');
-        $this->assertTrue($root->subdirectory('foo/baz')->exists());
+        $root = $this->root([]);
+        $root->file('foo/bar/baz.txt')->write('contents');
+        $root->file('foo/baz/file.txt')->append('...contents');
+        $expected = ['foo' => ['bar' => ['baz.txt' => 'contents'], 'baz' => ['file.txt' => '...contents']]];
+        $this->assertSameStructure($root, $expected);
     }
 
     public function test_copy_duplicates_contents_of_given_file(): void
@@ -159,11 +161,11 @@ class VirtualFileTest extends VirtualFilesystemTests
 
     public function test_method_calls_on_invalid_file_path_throw_exception(): void
     {
-        $root   = $this->root();
+        $root   = $this->root(['foo' => ['file.txt' => ''], 'bar.txt' => '']);
         $stream = $this->stream('contents');
         $copied = $root->file('bar.txt');
 
-        $file      = $root->file('foo/file.lnk/bar.txt');
+        $file      = $root->file('foo/file.txt/bar.txt');
         $exception = Exception\UnexpectedLeafNode::class;
         $this->assertExceptionType($exception, fn () => $file->contents(), 'contents');
         $this->assertExceptionType($exception, fn () => $file->write('contents'), 'write');

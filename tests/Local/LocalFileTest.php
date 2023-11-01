@@ -34,17 +34,13 @@ class LocalFileTest extends LocalFilesystemTests
     public function test_remove_method_deletes_file(): void
     {
         $file = $this->root(['foo' => ['bar.txt' => '']])->file('foo/bar.txt');
-        $this->assertFileExists($file->pathname());
-        $this->assertTrue($file->exists());
         $file->remove();
-        $this->assertFileDoesNotExist($file->pathname());
         $this->assertFalse($file->exists());
     }
 
     public function test_contents_returns_file_contents(): void
     {
         $file = $this->root(['foo.txt' => 'contents...'])->file('foo.txt');
-        $this->assertSame('contents...', file_get_contents($file->pathname()));
         $this->assertSame('contents...', $file->contents());
     }
 
@@ -64,7 +60,7 @@ class LocalFileTest extends LocalFilesystemTests
     {
         $file = $this->root(['foo.txt' => 'Old contents...'])->file('foo.txt');
         $file->write('New contents');
-        $this->assertSame('New contents', file_get_contents($file->pathname()));
+        $this->assertSame('New contents', $file->contents());
     }
 
     public function test_writeStream_for_not_existing_file_creates_file_with_given_contents(): void
@@ -102,17 +98,10 @@ class LocalFileTest extends LocalFilesystemTests
     public function test_creating_file_with_directory_structure(): void
     {
         $root = $this->root([]);
-        $file = $root->file('foo/bar/baz.txt');
-        $this->assertDirectoryDoesNotExist($this->path('foo'));
-        $file->write('contents');
-        $this->assertFileExists($file->pathname());
-        $this->assertDirectoryExists($this->path('foo'));
-
-        $file = $root->file('foo/baz/file.txt');
-        $this->assertDirectoryDoesNotExist($this->path('foo/baz'));
-        $file->append('...contents');
-        $this->assertFileExists($file->pathname());
-        $this->assertDirectoryExists($this->path('foo/baz'));
+        $root->file('foo/bar/baz.txt')->write('contents');
+        $root->file('foo/baz/file.txt')->append('...contents');
+        $expected = ['foo' => ['bar' => ['baz.txt' => 'contents'], 'baz' => ['file.txt' => '...contents']]];
+        $this->assertSameStructure($root, $expected);
     }
 
     public function test_copy_duplicates_contents_of_given_file(): void
@@ -128,9 +117,7 @@ class LocalFileTest extends LocalFilesystemTests
         $root   = $this->root(['foo' => ['file.txt' => 'foo contents...']]);
         $file   = $root->file('foo/file.txt');
         $target = $root->file('bar/file.txt');
-        $this->assertFileDoesNotExist($target->pathname());
         $file->moveTo($root->subdirectory('bar'));
-        $this->assertFileExists($target->pathname());
         $this->assertSame('foo contents...', $target->contents());
         $this->assertFalse($file->exists());
     }
