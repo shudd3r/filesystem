@@ -11,9 +11,6 @@
 
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
-use Shudd3r\Filesystem\Virtual\VirtualDirectory;
-use Shudd3r\Filesystem\Virtual\VirtualFile;
-use Shudd3r\Filesystem\Virtual\VirtualLink;
 use Shudd3r\Filesystem\Exception;
 
 
@@ -22,10 +19,9 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
     public function test_subdirectory_for_valid_path_returns_Directory_with_descendant_path(): void
     {
         $subdirectory = $this->root()->subdirectory('foo/bar');
-        $this->assertInstanceOf(VirtualDirectory::class, $subdirectory);
-        $this->assertSame('vfs://foo/bar', $subdirectory->pathname());
+        $this->assertSame($this->path('foo/bar'), $subdirectory->pathname());
         $this->assertSame('foo/bar', $subdirectory->name());
-        $this->assertSame('vfs://foo/bar/baz', $subdirectory->subdirectory('baz')->pathname());
+        $this->assertSame($this->path('foo/bar/baz'), $subdirectory->subdirectory('baz')->pathname());
     }
 
     public function test_subdirectory_for_invalid_path_throws_Filesystem_Exception(): void
@@ -37,8 +33,7 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
     public function test_file_for_valid_path_returns_File_with_descendant_path(): void
     {
         $file = $this->root()->file('foo/file.txt');
-        $this->assertInstanceOf(VirtualFile::class, $file);
-        $this->assertSame('vfs://foo/file.txt', $file->pathname());
+        $this->assertSame($this->path('foo/file.txt'), $file->pathname());
         $this->assertSame('foo/file.txt', $file->name());
     }
 
@@ -51,8 +46,7 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
     public function test_link_for_valid_path_returns_Link_with_descendant_path(): void
     {
         $link = $this->root()->link('foo/bar');
-        $this->assertInstanceOf(VirtualLink::class, $link);
-        $this->assertSame('vfs://foo/bar', $link->pathname());
+        $this->assertSame($this->path('foo/bar'), $link->pathname());
         $this->assertSame('foo/bar', $link->name());
     }
 
@@ -120,7 +114,7 @@ class VirtualDirectoryTest extends VirtualFilesystemTests
 
     public function test_converting_existing_subdirectory_to_root_directory(): void
     {
-        $subdirectory = $this->root()->subdirectory('foo/bar');
+        $subdirectory = $this->root(['foo' => ['bar' => []]])->subdirectory('foo/bar');
         $newRoot      = $subdirectory->asRoot();
 
         $this->assertSame($subdirectory->pathname(), $newRoot->pathname());

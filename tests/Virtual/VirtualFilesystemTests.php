@@ -25,6 +25,11 @@ abstract class VirtualFilesystemTests extends FilesystemTests
         return VirtualDirectory::root('vfs://', $structure);
     }
 
+    protected function path(string $name = ''): string
+    {
+        return 'vfs://' . $name;
+    }
+
     protected function assertSameStructure(Directory $root, array $structure = null): void
     {
         $this->assertEquals($this->root($structure ?? $this->exampleStructure()), $root);

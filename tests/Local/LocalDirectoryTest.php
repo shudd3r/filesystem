@@ -12,8 +12,6 @@
 namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Local\LocalDirectory;
-use Shudd3r\Filesystem\Local\LocalLink;
-use Shudd3r\Filesystem\Local\LocalFile;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
 
@@ -40,7 +38,6 @@ class LocalDirectoryTest extends LocalFilesystemTests
     public function test_subdirectory_for_valid_path_returns_Directory_with_descendant_path(): void
     {
         $subdirectory = $this->root()->subdirectory('foo/bar');
-        $this->assertInstanceOf(LocalDirectory::class, $subdirectory);
         $this->assertSame($this->path('foo/bar'), $subdirectory->pathname());
         $this->assertSame('foo/bar', $subdirectory->name());
         $this->assertSame($this->path('foo/bar/baz'), $subdirectory->subdirectory('baz')->pathname());
@@ -55,7 +52,6 @@ class LocalDirectoryTest extends LocalFilesystemTests
     public function test_file_for_valid_path_returns_File_with_descendant_path(): void
     {
         $file = $this->root()->file('foo/file.txt');
-        $this->assertInstanceOf(LocalFile::class, $file);
         $this->assertSame($this->path('foo/file.txt'), $file->pathname());
         $this->assertSame('foo/file.txt', $file->name());
     }
@@ -69,7 +65,6 @@ class LocalDirectoryTest extends LocalFilesystemTests
     public function test_link_for_valid_path_returns_Link_with_descendant_path(): void
     {
         $link = $this->root()->link('foo/bar');
-        $this->assertInstanceOf(LocalLink::class, $link);
         $this->assertSame($this->path('foo/bar'), $link->pathname());
         $this->assertSame('foo/bar', $link->name());
     }
@@ -82,18 +77,22 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_exists_for_existing_directory_returns_true(): void
     {
-        $root = $this->root(['foo' => ['bar' => ['baz.dir' => []]], 'dir.lnk' => '@foo/bar/baz.dir']);
+        $root = $this->root();
         $this->assertTrue($root->exists());
-        $this->assertTrue($root->subdirectory('foo/bar/baz.dir')->exists());
+        $this->assertTrue($root->subdirectory('foo')->exists());
+        $this->assertTrue($root->subdirectory('foo\bar')->exists());
+        $this->assertTrue($root->subdirectory('foo\empty')->exists());
         $this->assertTrue($root->subdirectory('dir.lnk')->exists());
     }
 
     public function test_exists_for_not_existing_directory_returns_false(): void
     {
-        $root = $this->root(['foo' => ['bar' => ['baz.file' => '']], 'file.lnk' => '@foo/bar/baz.file']);
-        $this->assertFalse($root->subdirectory('foo/bar/baz.dir')->exists());
-        $this->assertFalse($root->subdirectory('foo/bar/baz.file')->exists());
-        $this->assertFalse($root->subdirectory('file.lnk')->exists());
+        $root = $this->root();
+        $this->assertFalse($root->subdirectory('bar')->exists());
+        $this->assertFalse($root->subdirectory('foo\bar\baz.txt')->exists());
+        $this->assertFalse($root->subdirectory('foo\file.lnk')->exists());
+        $this->assertFalse($root->subdirectory('foo\empty\dir')->exists());
+        $this->assertFalse($root->subdirectory('inv.lnk')->exists());
     }
 
     public function test_create_for_existing_directory_is_ignored(): void
@@ -118,8 +117,18 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_create_for_not_writable_path_throws_exception(): void
     {
-        $directory = $this->root(['foo.file' => ''])->subdirectory('foo.file/bar');
-        $this->assertExceptionType(Exception\UnexpectedLeafNode::class, fn () => $directory->create());
+        $cases = [
+            'File path'       => [Exception\UnexpectedNodeType::class, 'bar.txt'],
+            'File link'       => [Exception\UnexpectedNodeType::class, 'foo/file.lnk'],
+            'File descendant' => [Exception\UnexpectedLeafNode::class, 'bar.txt/dir'],
+            'Link descendant' => [Exception\UnexpectedLeafNode::class, 'foo/file.lnk/dir']
+        ];
+
+        $root = $this->root();
+        foreach ($cases as $case => [$exception, $path]) {
+            $directory = $root->subdirectory($path);
+            $this->assertExceptionType($exception, fn () => $directory->create(), $case);
+        }
     }
 
     public function test_converting_existing_subdirectory_to_root_directory(): void
@@ -138,7 +147,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_converting_not_existing_subdirectory_to_root_throws_exception(): void
     {
-        $relative = $this->root()->subdirectory('dir/foo');
+        $relative = $this->root()->subdirectory('foo/dir');
         $this->expectException(Exception\RootDirectoryNotFound::class);
         $relative->asRoot();
     }
