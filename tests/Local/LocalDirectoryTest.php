@@ -98,7 +98,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_create_for_existing_directory_is_ignored(): void
     {
-        $root = $this->root($this->exampleStructure());
+        $root = $this->root();
         $root->subdirectory('foo')->create();
         $root->subdirectory('dir.lnk')->create();
         $this->assertSameStructure($root);
@@ -106,7 +106,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_create_for_writable_path_creates_directory(): void
     {
-        $root = $this->root($this->exampleStructure());
+        $root = $this->root();
         $root->subdirectory('bar')->create();
         $root->subdirectory('foo/empty/dir')->create();
         $root->subdirectory('dir.lnk/baz')->create();
@@ -172,14 +172,14 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_remove_method_deletes_existing_structure(): void
     {
-        $root = $this->root($this->exampleStructure());
+        $root = $this->root();
         $root->subdirectory('foo')->remove();
         $this->assertSameStructure($root, $this->exampleStructure(['foo' => null]));
     }
 
     public function test_remove_method_for_not_existing_directory_is_ignored(): void
     {
-        $root = $this->root($this->exampleStructure());
+        $root = $this->root();
         $root->subdirectory('bar.txt')->remove();
         $root->subdirectory('foo/empty/bar')->remove();
         $this->assertSameStructure($root);
@@ -216,7 +216,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_runtime_create_directory_failure(): void
     {
-        $directory = $this->root()->subdirectory('foo');
+        $directory = $this->root([])->subdirectory('foo');
         $create    = fn () => $directory->create();
         $exception = Exception\IOException\UnableToCreate::class;
         $this->assertIOException($exception, $create, 'mkdir', $directory->pathname());

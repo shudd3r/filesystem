@@ -101,7 +101,7 @@ class LocalFileTest extends LocalFilesystemTests
 
     public function test_creating_file_with_directory_structure(): void
     {
-        $root = $this->root();
+        $root = $this->root([]);
         $file = $root->file('foo/bar/baz.txt');
         $this->assertDirectoryDoesNotExist($this->path('foo'));
         $file->write('contents');
@@ -202,7 +202,7 @@ class LocalFileTest extends LocalFilesystemTests
 
     public function test_runtime_file_write_failures(): void
     {
-        $file  = $this->root()->file('foo/bar/baz.txt');
+        $file  = $this->root([])->file('foo/bar/baz.txt');
         $write = fn () => $file->write('something');
         $this->assertIOException(Exception\IOException\UnableToCreate::class, $write, 'mkdir');
         $this->assertIOException(Exception\IOException\UnableToCreate::class, $write, 'file_put_contents');

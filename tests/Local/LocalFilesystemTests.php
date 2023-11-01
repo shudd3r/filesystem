@@ -69,7 +69,7 @@ abstract class LocalFilesystemTests extends FilesystemTests
 
     protected function root(array $structure = null): LocalDirectory
     {
-        $this->createNodes($structure ?? []);
+        $this->createNodes($structure ?? $this->exampleStructure());
         return LocalDirectory::root(self::$temp->directory());
     }
 
