@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Local\LocalDirectory;
+use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Tests\Fixtures\TempFiles;
 use Shudd3r\Filesystem\Tests\Fixtures\Override;
 
@@ -40,7 +41,18 @@ abstract class LocalFilesystemTests extends FilesystemTests
         Override::reset();
     }
 
-    protected function assertSameStructure(LocalDirectory $root, array $structure = null): void
+    protected function root(array $structure = null): LocalDirectory
+    {
+        $this->createNodes($structure ?? $this->exampleStructure());
+        return LocalDirectory::root(self::$temp->directory());
+    }
+
+    protected function path(string $name = ''): string
+    {
+        return self::$temp->pathname($name);
+    }
+
+    protected function assertSameStructure(Directory $root, array $structure = null): void
     {
         $rootPath   = $root->pathname();
         $rootLength = strlen($rootPath) + 1;
@@ -65,17 +77,6 @@ abstract class LocalFilesystemTests extends FilesystemTests
                 : file_get_contents($pathname);
         }
         $this->assertEquals($structure ?? $this->exampleStructure(), $tree);
-    }
-
-    protected function root(array $structure = null): LocalDirectory
-    {
-        $this->createNodes($structure ?? $this->exampleStructure());
-        return LocalDirectory::root(self::$temp->directory());
-    }
-
-    protected function path(string $name = ''): string
-    {
-        return self::$temp->pathname($name);
     }
 
     protected function assertIOException(string $exception, callable $procedure, string $override, $argValue = null): void

@@ -13,20 +13,21 @@ namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Virtual\VirtualDirectory;
+use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
 
 abstract class VirtualFilesystemTests extends FilesystemTests
 {
-    protected function assertSameStructure(VirtualDirectory $root, array $structure = null): void
-    {
-        $this->assertEquals($this->root($structure ?? $this->exampleStructure()), $root);
-    }
-
     protected function root(array $structure = null): VirtualDirectory
     {
         $structure = $this->createNodes($structure ?? $this->exampleStructure());
         return VirtualDirectory::root('vfs://', $structure);
+    }
+
+    protected function assertSameStructure(Directory $root, array $structure = null): void
+    {
+        $this->assertEquals($this->root($structure ?? $this->exampleStructure()), $root);
     }
 
     protected function createNodes(array $tree): TreeNode\Directory
