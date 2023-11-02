@@ -19,59 +19,49 @@ class LocalLinkTest extends LocalFilesystemTests
 {
     public function test_exists_method(): void
     {
-        $root = $this->root(['foo' => ['baz.lnk' => '@']]);
+        $root = $this->root();
+        $this->assertTrue($root->link('foo/file.lnk')->exists());
+        $this->assertTrue($root->link('dir.lnk')->exists());
+        $this->assertTrue($root->link('inv.lnk')->exists());
         $this->assertFalse($root->link('foo/bar.lnk')->exists());
-        $this->assertTrue($root->link('foo/baz.lnk')->exists());
+        $this->assertFalse($root->link('foo/bar')->exists());
+        $this->assertFalse($root->link('foo/empty/dir.lnk')->exists());
+        $this->assertFalse($root->link('dir.lnk/baz.txt')->exists());
+    }
+
+    public function test_exists_for_linked_nodes(): void
+    {
+        $root = $this->root();
+        $this->assertTrue($root->file('foo/file.lnk')->exists());
+        $this->assertFalse($root->subdirectory('foo/file.lnk')->exists());
+        $this->assertTrue($root->subdirectory('dir.lnk')->exists());
+        $this->assertTrue($root->file('dir.lnk/baz.txt')->exists());
+        $this->assertFalse($root->file('inv.lnk')->exists());
+        $this->assertFalse($root->subdirectory('inv.lnk')->exists());
     }
 
     public function test_remove_method_deletes_link(): void
     {
-        $root = $this->root([
-            'foo.lnk' => '@foo.txt', 'foo.txt' => '',
-            'bar.lnk' => '@foo/bar', 'foo' => ['bar' => []],
-            'inv.lnk' => '@not/exists.txt'
+        $root = $this->root();
+        $root->link('foo/file.lnk')->remove();
+        $root->link('dir.lnk')->remove();
+        $root->link('inv.lnk')->remove();
+        $this->assertSameStructure($root, [
+            'foo'     => ['bar' => ['baz.txt' => 'baz contents'], 'empty' => []],
+            'bar.txt' => 'bar contents'
         ]);
-
-        $file     = $root->file('foo.txt');
-        $fileLink = $root->link('foo.lnk');
-        $this->assertTrue($fileLink->exists());
-        $this->assertFileExists($fileLink->pathname());
-        $fileLink->remove();
-        $this->assertFalse($fileLink->exists());
-        $this->assertFileDoesNotExist($fileLink->pathname());
-        $this->assertFileExists($file->pathname());
-
-        $dir     = $root->subdirectory('foo/bar');
-        $dirLink = $root->link('bar.lnk');
-        $this->assertTrue($dirLink->exists());
-        $this->assertDirectoryExists($dirLink->pathname());
-        $dirLink->remove();
-        $this->assertFalse($dirLink->exists());
-        $this->assertDirectoryDoesNotExist($dirLink->pathname());
-        $this->assertDirectoryExists($dir->pathname());
-
-        $staleLink = $root->link('inv.lnk');
-        $this->assertTrue($staleLink->exists());
-        $this->assertTrue(is_link($staleLink->pathname()));
-        $staleLink->remove();
-        $this->assertFalse(is_link($staleLink->pathname()));
-        $this->assertFalse($staleLink->exists());
-    }
-
-    public function test_runtime_remove_failure(): void
-    {
-        $fileLink = $this->root(['foo.lnk' => '@foo/bar'])->link('foo.lnk');
-        $this->assertIOException(Exception\IOException\UnableToRemove::class, fn () => $fileLink->remove(), 'unlink');
     }
 
     public function test_target_returns_absolute_target_pathname(): void
     {
         $root = $this->root([
-            'foo.txt' => '', 'foo' => ['bar' => []],
-            'foo.lnk' => '@foo.txt', 'bar.lnk' => '@foo/bar'
+            'foo.txt' => '',
+            'foo.lnk' => '@foo.txt',
+            'dir'     => ['bar' => []],
+            'bar.lnk' => '@dir/bar'
         ]);
         $this->assertSame($this->path('foo.txt'), $root->link('foo.lnk')->target());
-        $this->assertSame($this->path('foo/bar'), $root->link('bar.lnk')->target());
+        $this->assertSame($this->path('dir/bar'), $root->link('bar.lnk')->target());
     }
 
     public function test_target_for_stale_link_returns_null_unless_explicitly_requested(): void
@@ -81,43 +71,16 @@ class LocalLinkTest extends LocalFilesystemTests
         $this->assertSame($this->path('not/exists'), $link->target(true));
     }
 
-    public function test_target_node_type_checking(): void
-    {
-        $root = $this->root([
-            'foo.lnk' => '@foo.txt', 'foo.txt' => '',
-            'bar.lnk' => '@foo/bar', 'foo' => ['bar' => []],
-            'stale.lnk' => '@not/exists.txt'
-        ]);
-
-        $fileLink = $root->link('foo.lnk');
-        $this->assertTrue($fileLink->isFile());
-        $this->assertFalse($fileLink->isDirectory());
-
-        $dirLink = $root->link('bar.lnk');
-        $this->assertFalse($dirLink->isFile());
-        $this->assertTrue($dirLink->isDirectory());
-
-        $staleLink = $root->link('stale.lnk');
-        $this->assertFalse($staleLink->isFile());
-        $this->assertFalse($staleLink->isDirectory());
-    }
-
     public function test_setTarget_for_not_existing_link_creates_link(): void
     {
         $root = $this->root(['foo' => ['bar' => ['baz.txt' => 'contents']]]);
-        $link = $root->link('bar.lnk');
-        $path = $link->pathname();
-        $this->assertFalse(is_link($path) || is_file($path) || is_dir($path) || file_exists($path));
-        $link->setTarget($root->subdirectory('foo/bar'));
-        $this->assertDirectoryExists($path);
-        $this->assertTrue(is_link($path) && is_dir($path));
-
-        $link = $root->link('baz.lnk');
-        $path = $link->pathname();
-        $this->assertFalse(is_link($path) || is_file($path) || is_dir($path) || file_exists($path));
-        $link->setTarget($root->file('foo/bar/baz.txt'));
-        $this->assertFileExists($path);
-        $this->assertTrue(is_link($path) && is_file($path));
+        $root->link('bar.lnk')->setTarget($root->subdirectory('foo/bar'));
+        $root->link('baz.lnk')->setTarget($root->file('foo/bar/baz.txt'));
+        $this->assertSameStructure($root, [
+            'foo'     => ['bar' => ['baz.txt' => 'contents']],
+            'bar.lnk' => '@foo/bar',
+            'baz.lnk' => '@foo/bar/baz.txt'
+        ]);
     }
 
     public function test_setTarget_for_existing_link_changes_target(): void
@@ -129,46 +92,66 @@ class LocalLinkTest extends LocalFilesystemTests
             'dir.lnk'  => '@foo/dir.old'
         ]);
 
-        $link = $root->link('file.lnk');
-        $this->assertSame($this->path('foo/file.old'), $link->target());
-        $link->setTarget($root->file('bar/file.new'));
-        $this->assertSame($this->path('bar/file.new'), $link->target());
+        $root->link('file.lnk')->setTarget($root->file('bar/file.new'));
+        $root->link('dir.lnk')->setTarget($root->subdirectory('bar/dir.new'));
 
-        $link = $root->link('dir.lnk');
-        $this->assertSame($this->path('foo/dir.old'), $link->target());
-        $link->setTarget($root->subdirectory('bar/dir.new'));
-        $this->assertSame($this->path('bar/dir.new'), $link->target());
+        $this->assertSameStructure($root, [
+            'foo'      => ['file.old' => '', 'dir.old' => []],
+            'bar'      => ['file.new' => '', 'dir.new' => []],
+            'file.lnk' => '@bar/file.new',
+            'dir.lnk'  => '@bar/dir.new'
+        ]);
     }
 
     public function test_setTarget_to_external_filesystem_throws_exception(): void
     {
-        $node = new Doubles\FakeFile('fake/file.txt', 'contents');
-        $link = $this->root()->link('foo.lnk');
-        $this->assertExceptionType(Exception\IOException\UnableToCreate::class, fn () => $link->setTarget($node));
+        $link   = $this->root([])->link('foo.lnk');
+        $create = fn () => $link->setTarget(new Doubles\FakeFile('fake/file.txt', 'contents'));
+        $this->assertExceptionType(Exception\IOException\UnableToCreate::class, $create);
     }
 
     public function test_setTarget_to_another_link_throws_exception(): void
     {
-        $root = $this->root(['foo' => ['bar.txt' => ''], 'foo.lnk' => '@foo/bar.txt']);
-        $node = $root->link('foo.lnk');
-        $link = $root->link('bar.lnk');
-        $this->assertExceptionType(Exception\IOException\UnableToCreate::class, fn () => $link->setTarget($node));
+        $root   = $this->root(['foo' => ['bar.txt' => ''], 'foo.lnk' => '@foo/bar.txt']);
+        $create = fn () => $root->link('bar.lnk')->setTarget($root->link('foo.lnk'));
+        $this->assertExceptionType(Exception\IOException\UnableToCreate::class, $create);
     }
 
     public function test_setTarget_to_not_existing_node_throws_exception(): void
     {
-        $root = $this->root();
-        $node = $root->file('foo/bar.txt');
-        $link = $root->link('bar.lnk');
-        $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $link->setTarget($node));
+        $root   = $this->root([]);
+        $create = fn () => $root->link('bar.lnk')->setTarget($root->file('foo/bar.txt'));
+        $this->assertExceptionType(Exception\NodeNotFound::class, $create);
     }
 
     public function test_changing_target_to_different_type_throws_exception(): void
     {
-        $root = $this->root(['foo' => ['bar.file' => '', 'bar.dir' => []], 'bar.lnk' => '@foo/bar.file']);
-        $node = $root->subdirectory('foo/bar.dir');
-        $link = $root->link('bar.lnk');
-        $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $link->setTarget($node));
+        $root   = $this->root(['foo' => ['bar.file' => '', 'bar.dir' => []], 'bar.lnk' => '@foo/bar.file']);
+        $change = fn () => $root->link('bar.lnk')->setTarget($root->subdirectory('foo/bar.dir'));
+        $this->assertExceptionType(Exception\UnexpectedNodeType::class, $change);
+    }
+
+    public function test_target_node_type_checking(): void
+    {
+        $root = $this->root();
+
+        $fileLink = $root->link('foo/file.lnk');
+        $this->assertTrue($fileLink->isFile());
+        $this->assertFalse($fileLink->isDirectory());
+
+        $dirLink = $root->link('dir.lnk');
+        $this->assertFalse($dirLink->isFile());
+        $this->assertTrue($dirLink->isDirectory());
+
+        $staleLink = $root->link('inv.lnk');
+        $this->assertFalse($staleLink->isFile());
+        $this->assertFalse($staleLink->isDirectory());
+    }
+
+    public function test_runtime_remove_failure(): void
+    {
+        $fileLink = $this->root(['foo.lnk' => '@foo/bar'])->link('foo.lnk');
+        $this->assertIOException(Exception\IOException\UnableToRemove::class, fn () => $fileLink->remove(), 'unlink');
     }
 
     public function test_runtime_setTarget_failures(): void
