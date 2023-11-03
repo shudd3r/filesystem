@@ -14,6 +14,7 @@ namespace Shudd3r\Filesystem\Tests\Fixtures;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use FilesystemIterator;
+use Traversable;
 use RuntimeException;
 
 
@@ -36,12 +37,16 @@ class TempFiles
 
     public function clear(): void
     {
-        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
-        $nodes = new RecursiveDirectoryIterator($this->root, $flags);
-        $nodes = new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
-        foreach ($nodes as $pathname) {
+        foreach ($this->nodes($this->root) as $pathname) {
             $this->remove($pathname);
         }
+    }
+
+    public function nodes(string $rootPath): Traversable
+    {
+        $flags = FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_PATHNAME;
+        $nodes = new RecursiveDirectoryIterator($rootPath, $flags);
+        return new RecursiveIteratorIterator($nodes, RecursiveIteratorIterator::CHILD_FIRST);
     }
 
     public function file(string $filename, string $contents = ''): string
@@ -62,23 +67,23 @@ class TempFiles
 
     public function symlink(string $target, string $name): string
     {
-        if ($target && strpos($target, $this->root) !== 0) {
-            $target = '';
+        $targetPath = $this->pathname($target);
+        $remove     = [];
+        while (!file_exists($targetPath)) {
+            $remove[] = $targetPath;
+            $targetPath = dirname($targetPath);
         }
 
-        $invalid = false;
-        if (!$target || !file_exists($target)) {
-            $invalid = true;
-            $target  = $this->file($target ? substr($target, strlen($this->root . '/')) : 'remove.after.link');
-        }
-
+        $remove && $targetPath = $this->file($target);
         $this->directory($this->relative(dirname($name)));
 
-        if (!symlink($target, $name = $this->pathname($name))) {
-            throw new RuntimeException();
+        if (!@symlink($targetPath, $name = $this->pathname($name))) {
+            throw new RuntimeException(sprintf('Failed creating symlink in `%s` to `%s`', $name, $targetPath));
         }
 
-        if ($invalid) { $this->remove($target); }
+        foreach ($remove as $path) {
+            $this->remove($path);
+        }
 
         return $name;
     }

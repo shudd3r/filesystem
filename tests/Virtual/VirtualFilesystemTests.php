@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Virtual\VirtualDirectory;
+use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
 
@@ -24,16 +25,27 @@ abstract class VirtualFilesystemTests extends FilesystemTests
         return VirtualDirectory::root('vfs://', $structure);
     }
 
+    protected function path(string $name = ''): string
+    {
+        return 'vfs://' . $name;
+    }
+
+    protected function assertSameStructure(Directory $root, array $structure = null): void
+    {
+        $this->assertEquals($this->root($structure ?? $this->exampleStructure()), $root);
+    }
+
     protected function createNodes(array $tree): TreeNode\Directory
     {
-        foreach ($tree as $name => &$value) {
-            $value = is_array($value) ? $this->createNodes($value) : $this->leafNode($name, $value);
+        foreach ($tree as &$value) {
+            $value = is_array($value) ? $this->createNodes($value) : $this->leafNode($value);
         }
         return new TreeNode\Directory($tree);
     }
 
-    private function leafNode(string $name, string $value): TreeNode
+    private function leafNode(string $value): TreeNode
     {
-        return str_ends_with($name, '.lnk') ? new TreeNode\Link('vfs://' . $value) : new TreeNode\File($value);
+        $path = str_starts_with($value, '@') ? 'vfs://' . substr($value, 1) : null;
+        return $path ? new TreeNode\Link($path) : new TreeNode\File($value);
     }
 }

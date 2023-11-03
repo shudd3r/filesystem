@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Local\LocalDirectory;
+use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Tests\Fixtures\TempFiles;
 use Shudd3r\Filesystem\Tests\Fixtures\Override;
 
@@ -42,13 +43,40 @@ abstract class LocalFilesystemTests extends FilesystemTests
 
     protected function root(array $structure = null): LocalDirectory
     {
-        $this->createNodes($structure ?? []);
+        $this->createNodes($structure ?? $this->exampleStructure());
         return LocalDirectory::root(self::$temp->directory());
     }
 
     protected function path(string $name = ''): string
     {
         return self::$temp->pathname($name);
+    }
+
+    protected function assertSameStructure(Directory $root, array $structure = null): void
+    {
+        $rootPath   = $root->pathname();
+        $rootLength = strlen($rootPath) + 1;
+
+        $tree = [];
+        foreach (self::$temp->nodes($rootPath) as $pathname) {
+            $path     = str_replace(DIRECTORY_SEPARATOR, '/', substr($pathname, $rootLength));
+            $segments = explode('/', $path);
+            $leafNode = array_pop($segments);
+            $current  = &$tree;
+            foreach ($segments as $value) {
+                $current[$value] ??= [];
+                $current = &$current[$value];
+            }
+            if (isset($current[$leafNode])) { continue; }
+            if (is_dir($pathname) && !is_link($pathname)) {
+                $current[$leafNode] = [];
+                continue;
+            }
+            $current[$leafNode] = is_link($pathname)
+                ? '@' . str_replace(DIRECTORY_SEPARATOR, '/', substr(readlink($pathname), $rootLength))
+                : file_get_contents($pathname);
+        }
+        $this->assertEquals($structure ?? $this->exampleStructure(), $tree);
     }
 
     protected function assertIOException(string $exception, callable $procedure, string $override, $argValue = null): void
@@ -82,8 +110,8 @@ abstract class LocalFilesystemTests extends FilesystemTests
         return [
             'file path'         => self::$temp->file('foo/bar/baz.txt'),
             'not existing path' => self::$temp->pathname('not/exists'),
-            'invalid symlink'   => self::$temp->symlink('', 'link'),
-            'valid symlink'     => self::$temp->symlink(self::$temp->pathname('foo/bar'), 'link'),
+            'invalid symlink'   => self::$temp->symlink('not/exists', 'link1'),
+            'valid symlink'     => self::$temp->symlink('foo/bar', 'link2'),
             'relative path'     => self::$temp->relative('./foo/bar'),
             'step-up path'      => self::$temp->pathname('foo/bar/..'),
             'empty path'        => '',
@@ -111,8 +139,8 @@ abstract class LocalFilesystemTests extends FilesystemTests
 
     private function createLeaf(string $name, string $value): array
     {
-        if (str_ends_with($name, '.lnk')) {
-            return [$name => self::$temp->pathname($value)];
+        if (str_starts_with($value, '@')) {
+            return [$name => substr($value, 1)];
         }
         self::$temp->file($name, $value);
         return [];

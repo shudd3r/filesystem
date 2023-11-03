@@ -24,15 +24,19 @@ abstract class FilesystemTests extends TestCase
     private const EXAMPLE_STRUCTURE = [
         'foo' => [
             'bar'      => ['baz.txt' => 'baz contents'],
-            'file.lnk' => 'bar.txt',
+            'file.lnk' => '@bar.txt',
             'empty'    => []
         ],
         'bar.txt' => 'bar contents',
-        'dir.lnk' => 'foo/bar',
-        'inv.lnk' => 'not/exists'
+        'dir.lnk' => '@foo/bar',
+        'inv.lnk' => '@not/exists'
     ];
 
     abstract protected function root(array $structure = null): Directory;
+
+    abstract protected function path(string $name = ''): string;
+
+    abstract protected function assertSameStructure(Directory $root, array $structure = null): void;
 
     protected function assertExceptionType(string $expected, callable $procedure, string $case = ''): void
     {
