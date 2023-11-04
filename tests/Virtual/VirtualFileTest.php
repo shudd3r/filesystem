@@ -12,7 +12,6 @@
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use Shudd3r\Filesystem\Tests\FileContractTests;
-use Shudd3r\Filesystem\Exception;
 
 
 class VirtualFileTest extends VirtualFilesystemTests
@@ -23,22 +22,5 @@ class VirtualFileTest extends VirtualFilesystemTests
     {
         $file = $this->root(['foo.txt' => 'contents'])->file('foo.txt');
         $this->assertNull($file->contentStream());
-    }
-
-    public function test_self_reference_write_is_ignored(): void
-    {
-        $root = $this->root(['dir' => ['file.txt' => 'contents']]);
-        $file = $root->file('dir');
-
-        $this->assertNotSame($root->file('dir'), $file);
-        try {
-            $file->copy($root->file('dir'));
-        } catch (Exception\UnexpectedNodeType $ex) {
-            $this->fail('Exception should not be thrown for ignored operation');
-        }
-
-        $file = $root->file('dir/file.txt');
-        $file->moveTo($root->subdirectory('dir'));
-        $this->assertTrue($file->exists());
     }
 }

@@ -54,6 +54,24 @@ class Root
         return $node->exists() || $node->isLink() ? new TreeNode\ParentContext($node, $parent, $basename) : $node;
     }
 
+    public function realpath(string $path): string
+    {
+        $segments = $this->pathSegments($path);
+        $node     = $segments ? $this->nodes->node(...$segments) : $this->nodes;
+
+        $segments      = [];
+        $resolvedPaths = [];
+        while ($node instanceof TreeNode\Link) {
+            $path = $node->target();
+            if (in_array($path, $resolvedPaths, true)) { return ''; }
+            $segments = $node->missingSegments();
+            $node     = $this->nodes->node(...$this->pathSegments($path), ...$segments);
+            $resolvedPaths[] = $path;
+        }
+
+        return $segments ? $path . '/' . implode('/', $segments) : $path;
+    }
+
     private function targetNode(TreeNode\Link $node): TreeNode
     {
         $resolvedPaths = [];
