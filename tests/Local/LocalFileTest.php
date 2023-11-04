@@ -57,18 +57,43 @@ class LocalFileTest extends LocalFilesystemTests
         $this->assertIOException($exception, $read, 'file_get_contents');
     }
 
-    public function test_self_reference_write_is_ignored(): void
+    public function test_self_reference_writes_are_ignored(): void
     {
-        $root = $this->root(['foo.txt' => 'contents']);
-        $file = $root->file('foo.txt');
+        $initialStructure = [
+            'foo' => ['foo.txt' => 'contents'],
+            'bar' => ['bar.txt' => '@foo/foo.txt', 'foo.lnk' => '@foo']
+        ];
 
-        $file->writeStream($file->contentStream());
-        $this->assertSame('contents', $file->contents());
+        $root = $this->root($initialStructure);
+        $file = $root->file('foo/foo.txt');
+        $link = $root->file('bar/bar.txt');
+
+        if ($fileStream = $file->contentStream()) {
+            $linkStream = $link->contentStream();
+            $file->writeStream($fileStream);
+            $link->writeStream($fileStream);
+            $link->writeStream($linkStream);
+            $file->writeStream($linkStream);
+            $this->assertSameStructure($root, $initialStructure);
+        }
 
         $file->copy($file);
-        $this->assertSame('contents', $file->contents());
+        $link->copy($file);
+        $file->copy($link);
+        $link->copy($link);
+        $this->assertSameStructure($root, $initialStructure);
 
-        $file->moveTo($root);
-        $this->assertSame('contents', $file->contents());
+        $fileDirectory = $root->subdirectory('foo');
+        $linkDirectory = $root->subdirectory('bar');
+        $file->moveTo($fileDirectory);
+        $link->moveTo($fileDirectory, 'foo.txt');
+        $file->moveTo($linkDirectory, 'bar.txt');
+        $link->moveTo($linkDirectory);
+        $this->assertSameStructure($root, $initialStructure);
+
+        $fileDirectoryLink = $root->subdirectory('bar/foo.lnk');
+        $file->moveTo($fileDirectoryLink);
+        $link->moveTo($fileDirectoryLink, 'foo.txt');
+        $this->assertSameStructure($root, $initialStructure);
     }
 }
