@@ -17,16 +17,4 @@ use Shudd3r\Filesystem\Tests\LinkContractTests;
 class VirtualLinkTest extends VirtualFilesystemTests
 {
     use LinkContractTests;
-
-    public function test_remove_method_for_linked_node_deletes_link(): void
-    {
-        $root = $this->root();
-        $root->file('foo/file.lnk')->remove();
-        $root->subdirectory('dir.lnk')->remove();
-        $this->assertSameStructure($root, [
-            'foo'     => ['bar' => ['baz.txt' => 'baz contents'], 'empty' => []],
-            'bar.txt' => 'bar contents',
-            'inv.lnk' => '@not/exists'
-        ]);
-    }
 }

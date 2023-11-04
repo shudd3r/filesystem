@@ -92,14 +92,10 @@ class LocalDirectory extends LocalNode implements Directory
 
     protected function removeNode(): void
     {
-        foreach ($this->descendantPaths() as $pathname) {
-            if (!$this->delete($pathname->absolute())) {
-                throw Exception\IOException\UnableToRemove::directoryNode($this, $pathname->absolute());
-            }
-        }
-        if (!@rmdir($this->pathname())) {
-            throw Exception\IOException\UnableToRemove::node($this);
-        }
+        $path = $this->pathname();
+        if (!is_link($path)) { $this->removeDescendants(); }
+        if (@rmdir($path) || @unlink($path)) { return; }
+        throw Exception\IOException\UnableToRemove::node($this);
     }
 
     private function generateFiles(): Generator
@@ -107,6 +103,14 @@ class LocalDirectory extends LocalNode implements Directory
         $filter = fn (string $path) => is_file($path) && !is_link($path);
         foreach ($this->descendantPaths($filter) as $pathname) {
             yield new LocalFile($pathname);
+        }
+    }
+
+    private function removeDescendants(): void
+    {
+        foreach ($this->descendantPaths() as $pathname) {
+            if ($this->delete($pathname->absolute())) { continue; }
+            throw Exception\IOException\UnableToRemove::directoryNode($this, $pathname->absolute());
         }
     }
 

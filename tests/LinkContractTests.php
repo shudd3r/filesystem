@@ -51,6 +51,18 @@ trait LinkContractTests
         ]);
     }
 
+    public function test_remove_method_for_linked_node_deletes_link(): void
+    {
+        $root = $this->root();
+        $root->file('foo/file.lnk')->remove();
+        $root->subdirectory('dir.lnk')->remove();
+        $this->assertSameStructure($root, [
+            'foo'     => ['bar' => ['baz.txt' => 'baz contents'], 'empty' => []],
+            'bar.txt' => 'bar contents',
+            'inv.lnk' => '@not/exists'
+        ]);
+    }
+
     public function test_target_returns_absolute_target_pathname(): void
     {
         $root = $this->root([
