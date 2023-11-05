@@ -16,7 +16,7 @@ use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\File;
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Generic\ContentStream;
-use Shudd3r\Filesystem\FilesystemException;
+use Shudd3r\Filesystem\Exception as FilesystemException;
 
 
 abstract class FilesystemTests extends TestCase

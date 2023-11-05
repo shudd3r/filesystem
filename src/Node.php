@@ -15,6 +15,7 @@ use Shudd3r\Filesystem\Exception\NodeNotFound;
 use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
 use Shudd3r\Filesystem\Exception\UnexpectedLeafNode;
 use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
+use Shudd3r\Filesystem\Exception as FilesystemException;
 
 
 interface Node

@@ -11,6 +11,8 @@
 
 namespace Shudd3r\Filesystem;
 
+use Shudd3r\Filesystem\Exception as FilesystemException;
+
 
 interface Link extends Node
 {

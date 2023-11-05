@@ -12,12 +12,13 @@
 namespace Shudd3r\Filesystem;
 
 use Shudd3r\Filesystem\Generic\ContentStream;
+use Shudd3r\Filesystem\Exception as FilesystemException;
 
 
 interface File extends Node
 {
     /**
-     *@throws FilesystemException
+     * @throws FilesystemException
      *
      * @return string Contents of this file or empty string if file does
      *                not exist

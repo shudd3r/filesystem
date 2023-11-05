@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem;
 
 use Shudd3r\Filesystem\Exception\InvalidNodeName;
 use Shudd3r\Filesystem\Exception\RootDirectoryNotFound;
+use Shudd3r\Filesystem\Exception as FilesystemException;
 
 
 interface Directory extends Files, Node

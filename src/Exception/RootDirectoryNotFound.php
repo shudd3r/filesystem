@@ -11,7 +11,7 @@
 
 namespace Shudd3r\Filesystem\Exception;
 
-use Shudd3r\Filesystem\FilesystemException;
+use Shudd3r\Filesystem\Exception as FilesystemException;
 use Shudd3r\Filesystem\Directory;
 
 

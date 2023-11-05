@@ -11,10 +11,10 @@
 
 namespace Shudd3r\Filesystem;
 
-use Exception;
+use Exception as BaseException;
 
 
-class FilesystemException extends Exception
+class Exception extends BaseException
 {
     protected static function nodeType(Node $node): string
     {

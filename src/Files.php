@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem;
 
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Exception\InvalidNodeName;
+use Shudd3r\Filesystem\Exception as FilesystemException;
 
 
 interface Files
