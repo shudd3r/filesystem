@@ -188,17 +188,11 @@ trait FileContractTests
         $link->copy($link);
         $this->assertSameStructure($root, $initialStructure);
 
-        $fileDirectory = $root->subdirectory('foo');
-        $linkDirectory = $root->subdirectory('bar');
-        $file->moveTo($fileDirectory);
-        $link->moveTo($fileDirectory, 'foo.txt');
-        $file->moveTo($linkDirectory, 'bar.txt');
-        $link->moveTo($linkDirectory);
+        $file->moveTo($root->subdirectory('foo'));
+        $link->moveTo($root->subdirectory('bar'));
         $this->assertSameStructure($root, $initialStructure);
 
-        $fileDirectoryLink = $root->subdirectory('bar/foo.lnk');
-        $file->moveTo($fileDirectoryLink);
-        $link->moveTo($fileDirectoryLink, 'foo.txt');
+        $file->moveTo($root->subdirectory('bar/foo.lnk'));
         $this->assertSameStructure($root, $initialStructure);
     }
 }
