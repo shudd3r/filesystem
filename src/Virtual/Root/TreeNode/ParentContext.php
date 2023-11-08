@@ -61,6 +61,7 @@ class ParentContext extends TreeNode
     public function remove(): void
     {
         $this->parent->unlink($this->name);
+        $this->node = new MissingNode($this->parent, $this->name);
     }
 
     public function contents(): string
