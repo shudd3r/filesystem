@@ -83,7 +83,8 @@ class LocalFile extends LocalNode implements File
         }
 
         if (!$file->exists()) { $file->createDirectory(); }
-        rename($from, $to);
+        if (@rename($from, $to)) { return; }
+        throw IOException\UnableToMove::node($this, $directory);
     }
 
     public function contentStream(): ?ContentStream
