@@ -80,4 +80,13 @@ class LinkedNode extends TreeNode
     {
         return $this->node->missingSegments();
     }
+
+    protected function rootInstance(TreeNode $node = null): ?TreeNode
+    {
+        if (!$node) { return $this->link; }
+        if ($node === $this->node) { return $this->node; }
+
+        $selfReference = $node instanceof self && $node->rootInstance() === $this->link;
+        return $selfReference ? null : $this->link;
+    }
 }

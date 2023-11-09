@@ -50,6 +50,12 @@ class MissingNode extends TreeNode
         $this->attachNode(new Link($path));
     }
 
+    public function pull(TreeNode $node): void
+    {
+        $this->attachNode($node->rootInstance());
+        $node->remove();
+    }
+
     public function missingSegments(): array
     {
         return $this->missingSegments;

@@ -83,4 +83,18 @@ class ParentContext extends TreeNode
     {
         $this->node->setTarget($path);
     }
+
+    public function pull(TreeNode $node): void
+    {
+        $rootInstance = $node->rootInstance($this->node);
+        if (!$rootInstance) { return; }
+        $this->parent->add($this->name, $rootInstance);
+        $node->remove();
+    }
+
+    protected function rootInstance(TreeNode $node = null): ?TreeNode
+    {
+        if ($node === $this->node) { return null; }
+        return $this->node instanceof LinkedNode ? $this->node->rootInstance($node) : $this->node;
+    }
 }

@@ -14,10 +14,23 @@ namespace Shudd3r\Filesystem\Tests\Virtual\Root\TreeNode;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\ParentContext;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Exception;
 
 
 class ParentContextTest extends TestCase
 {
+    public static function nonContextNodes(): array
+    {
+        return [
+            [new TreeNode\File()],
+            [new TreeNode\Directory()],
+            [new TreeNode\Link('vfs://')],
+            [new TreeNode\InvalidNode()],
+            [new TreeNode\MissingNode(new TreeNode\Directory())],
+            [new TreeNode\LinkedNode(new TreeNode\Link('vfs://file.txt'), new TreeNode\File())]
+        ];
+    }
+
     public function test_remove_method_removes_node_from_parent_directory(): void
     {
         $directory = new TreeNode\Directory(['foo' => new TreeNode\File('contents...')]);
@@ -25,7 +38,69 @@ class ParentContextTest extends TestCase
         $this->assertEquals(new TreeNode\Directory(), $directory);
     }
 
-    public function test_other_methods_are_delegated_to_wrapped_node(): void
+    /**
+     * @dataProvider nonContextNodes
+     *
+     * @param TreeNode $node
+     */
+    public function test_pull_from_non_context_node_throws_Exception(TreeNode $node): void
+    {
+        $this->expectException(Exception\UnsupportedOperation::class);
+        $this->context(new TreeNode\File(), new TreeNode\Directory())->pull($node);
+    }
+
+    public function test_pull_replaces_directory_node(): void
+    {
+        $parent = new TreeNode\Directory([
+            'foo' => $foo = new TreeNode\File('moved'),
+            'bar' => $bar = new TreeNode\File('replaced')
+        ]);
+
+        $node    = new ParentContext($foo, $parent, 'foo');
+        $context = new ParentContext($bar, $parent, 'bar');
+        $context->pull($node);
+
+        $this->assertEquals(new TreeNode\Directory(['bar' => $foo]), $parent);
+    }
+
+    public function test_pull_replaces_directory_link_node(): void
+    {
+        $parent = new TreeNode\Directory([
+            'bar'     => $bar = new TreeNode\File('replaced'),
+            'foo.lnk' => $foo = new TreeNode\Link('overwritten'),
+            'baz.lnk' => $baz = new TreeNode\Link('moved')
+        ]);
+
+        $node    = new ParentContext(new TreeNode\LinkedNode($baz, $this->stub()), $parent, 'baz.lnk');
+        $context = new ParentContext(new TreeNode\LinkedNode($foo, $this->stub()), $parent, 'foo.lnk');
+        $context->pull($node);
+        $this->assertEquals(new TreeNode\Directory(['bar' => $bar, 'foo.lnk' => $baz]), $parent);
+
+        $node    = new ParentContext(new TreeNode\LinkedNode($baz, $this->stub()), $parent, 'foo.lnk');
+        $context = new ParentContext($bar, $parent, 'bar');
+        $context->pull($node);
+        $this->assertEquals(new TreeNode\Directory(['bar' => $baz]), $parent);
+    }
+
+    public function test_pull_for_currently_assigned_node_is_ignored(): void
+    {
+        $parent = new TreeNode\Directory([
+            'foo' => $foo = new TreeNode\File('foo'),
+            'bar' => $bar = new TreeNode\Link('vfs://foo')
+        ]);
+
+        $expected = clone $parent;
+
+        $node = $this->context($foo, $parent);
+        $this->context($foo, $parent)->pull($node);
+        $this->assertEquals($expected, $parent);
+
+        $node = $this->context(new TreeNode\LinkedNode($bar, $this->stub()), $parent);
+        $this->context(new TreeNode\LinkedNode($bar, $this->stub()), $parent)->pull($node);
+        $this->assertEquals($expected, $parent);
+    }
+
+    public function test_methods_delegated_to_wrapped_node(): void
     {
         $node    = new TreeNode\Directory(['file.txt' => new TreeNode\File('foo file')]);
         $context = $this->context($node, new TreeNode\Directory());
@@ -60,5 +135,10 @@ class ParentContextTest extends TestCase
     private function context(TreeNode $node, TreeNode\Directory $parent): ParentContext
     {
         return new ParentContext($node, $parent, 'foo');
+    }
+
+    private function stub(): TreeNode
+    {
+        return new TreeNode\File('stub');
     }
 }
