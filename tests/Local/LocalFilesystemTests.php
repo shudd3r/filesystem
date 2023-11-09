@@ -52,7 +52,7 @@ abstract class LocalFilesystemTests extends FilesystemTests
         return self::$temp->pathname($name);
     }
 
-    protected function assertSameStructure(Directory $root, array $structure = null): void
+    protected function assertSameStructure(Directory $root, array $structure = null, string $message = ''): void
     {
         $rootPath   = $root->pathname();
         $rootLength = strlen($rootPath) + 1;
@@ -76,7 +76,7 @@ abstract class LocalFilesystemTests extends FilesystemTests
                 ? '@' . str_replace(DIRECTORY_SEPARATOR, '/', substr(readlink($pathname), $rootLength))
                 : file_get_contents($pathname);
         }
-        $this->assertEquals($structure ?? $this->exampleStructure(), $tree);
+        $this->assertEquals($structure ?? $this->exampleStructure(), $tree, $message);
     }
 
     protected function assertIOException(string $exception, callable $procedure, string $override, $argValue = null): void

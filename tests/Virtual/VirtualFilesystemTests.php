@@ -30,9 +30,9 @@ abstract class VirtualFilesystemTests extends FilesystemTests
         return 'vfs://' . $name;
     }
 
-    protected function assertSameStructure(Directory $root, array $structure = null): void
+    protected function assertSameStructure(Directory $root, array $structure = null, string $message = ''): void
     {
-        $this->assertEquals($this->root($structure ?? $this->exampleStructure()), $root);
+        $this->assertEquals($this->root($structure ?? $this->exampleStructure()), $root, $message);
     }
 
     protected function createNodes(array $tree): TreeNode\Directory

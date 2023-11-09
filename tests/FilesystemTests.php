@@ -36,7 +36,7 @@ abstract class FilesystemTests extends TestCase
 
     abstract protected function path(string $name = ''): string;
 
-    abstract protected function assertSameStructure(Directory $root, array $structure = null): void;
+    abstract protected function assertSameStructure(Directory $root, array $structure = null, string $message = ''): void;
 
     protected function assertExceptionType(string $expected, callable $procedure, string $case = ''): void
     {
