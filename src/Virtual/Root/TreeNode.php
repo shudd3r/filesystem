@@ -86,4 +86,14 @@ abstract class TreeNode
     {
         return [];
     }
+
+    public function moveTo(TreeNode $target): void
+    {
+        throw new Exception\UnsupportedOperation();
+    }
+
+    protected function setNode(TreeNode $node): bool
+    {
+        throw new Exception\UnsupportedOperation();
+    }
 }

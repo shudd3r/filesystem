@@ -49,12 +49,11 @@ class VirtualFile extends VirtualNode implements File
 
     public function moveTo(Directory $directory, string $name = null): void
     {
-        $node = $this->node();
+        $node = $this->validated(self::READ | self::REMOVE)->node();
         if (!$this->nodeExists($node)) { return; }
+
         $file = $directory->file($name ?? basename($this->pathname()));
-        if ($this->selfReference($file)) { return; }
-        $file->copy($this);
-        $this->remove();
+        $this->sameRoot($file) ? $this->moveNode($node, $file) : $this->moveToFilesystem($node, $file);
     }
 
     public function contentStream(): ?ContentStream
@@ -69,11 +68,28 @@ class VirtualFile extends VirtualNode implements File
 
     private function selfReference(File $file): bool
     {
-        return $file instanceof self && $this->root === $file->root && $this->samePath($file->pathname());
+        return $this->sameRoot($file) && $this->samePath($file);
     }
 
-    private function samePath(string $pathname): bool
+    private function sameRoot(File $file): bool
     {
-        return $this->root->realpath($this->pathname()) === $this->root->realpath($pathname);
+        return $file instanceof self && $this->root === $file->root;
+    }
+
+    private function samePath(File $file): bool
+    {
+        return $this->root->realpath($this->pathname()) === $this->root->realpath($file->pathname());
+    }
+
+    private function moveNode(TreeNode $node, File $file): void
+    {
+        $targetNode = $this->root->node($file->validated(self::WRITE)->pathname());
+        $node->moveTo($targetNode);
+    }
+
+    private function moveToFilesystem(TreeNode $node, File $file): void
+    {
+        $file->copy($this);
+        $node->remove();
     }
 }

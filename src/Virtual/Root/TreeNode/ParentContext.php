@@ -61,6 +61,7 @@ class ParentContext extends TreeNode
     public function remove(): void
     {
         $this->parent->unlink($this->name);
+        $this->node = new MissingNode($this->parent, $this->name);
     }
 
     public function contents(): string
@@ -81,5 +82,23 @@ class ParentContext extends TreeNode
     public function setTarget(string $path): void
     {
         $this->node->setTarget($path);
+    }
+
+    public function moveTo(TreeNode $target): void
+    {
+        if ($target->setNode($this->node)) { $this->remove(); }
+    }
+
+    protected function setNode(TreeNode $node): bool
+    {
+        if (!$node = $this->movableNode($node)) { return false; }
+        $this->parent->add($this->name, $node);
+        return true;
+    }
+
+    private function movableNode(TreeNode $node): ?TreeNode
+    {
+        if ($node === $this->node) { return null; }
+        return $node instanceof LinkedNode ? $node->originalNode($this->node) : $node;
     }
 }

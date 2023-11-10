@@ -55,6 +55,12 @@ class MissingNode extends TreeNode
         return $this->missingSegments;
     }
 
+    protected function setNode(TreeNode $node): bool
+    {
+        $this->attachNode($node instanceof LinkedNode ? $node->originalNode() : $node);
+        return true;
+    }
+
     private function attachNode(TreeNode $node): void
     {
         $attachName = array_shift($this->missingSegments);

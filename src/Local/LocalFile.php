@@ -64,13 +64,27 @@ class LocalFile extends LocalNode implements File
 
     public function moveTo(Directory $directory, string $name = null): void
     {
-        if (!$this->exists()) { return; }
+        if (!$this->validated(self::READ | self::REMOVE)->exists()) { return; }
 
-        $targetFile = $directory->file($name ?? basename($this->pathname->relative()));
-        if ($this->selfReference($targetFile)) { return; }
+        $file = $directory->file($name ?? basename($this->pathname()));
+        if (!$file instanceof self) {
+            $file->copy($this);
+            $this->remove();
+            return;
+        }
 
-        $targetFile->copy($this);
-        $this->remove();
+        $from = $this->pathname();
+        $to   = $file->validated(self::WRITE)->pathname();
+
+        $fileToLink = $file->exists() && is_link($from) && !is_link($to);
+        if ($fileToLink && $this->samePath($to)) {
+            $this->remove();
+            return;
+        }
+
+        if (!$file->exists()) { $file->createDirectory(); }
+        if (@rename($from, $to)) { return; }
+        throw IOException\UnableToMove::node($this, $directory);
     }
 
     public function contentStream(): ?ContentStream

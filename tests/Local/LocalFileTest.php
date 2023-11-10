@@ -55,4 +55,11 @@ class LocalFileTest extends LocalFilesystemTests
         $this->assertIOException(IOException\UnableToReadContents::class, $read, 'flock');
         $this->assertIOException(IOException\UnableToReadContents::class, $read, 'file_get_contents');
     }
+
+    public function test_runtime_move_file_failures(): void
+    {
+        $root = $this->root(['foo.txt' => 'contents']);
+        $move = fn () => $root->file('foo.txt')->moveTo($root->subdirectory('foo'));
+        $this->assertIOException(IOException\UnableToMove::class, $move, 'rename');
+    }
 }
