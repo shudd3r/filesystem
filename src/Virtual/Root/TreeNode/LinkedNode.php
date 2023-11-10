@@ -81,12 +81,12 @@ class LinkedNode extends TreeNode
         return $this->node->missingSegments();
     }
 
-    protected function rootInstance(TreeNode $node = null): ?TreeNode
+    public function originalNode(TreeNode $overwrite = null): ?TreeNode
     {
-        if (!$node) { return $this->link; }
-        if ($node === $this->node) { return $this->node; }
+        if (!$overwrite) { return $this->link; }
+        if ($overwrite === $this->node) { return $this->node; }
 
-        $selfReference = $node instanceof self && $node->rootInstance() === $this->link;
+        $selfReference = $overwrite instanceof self && $overwrite->originalNode() === $this->link;
         return $selfReference ? null : $this->link;
     }
 }

@@ -36,7 +36,7 @@ class TreeNodeTest extends TestCase
         $this->assertNull($node->target());
         $this->assertException(fn () => $node->setTarget('foo'));
         $this->assertSame([], $node->missingSegments());
-        $this->assertException(fn () => $node->pull($node));
+        $this->assertException(fn () => $node->moveTo($node));
     }
 
     private function assertException(callable $methodCall): void

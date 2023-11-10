@@ -84,7 +84,7 @@ class VirtualFile extends VirtualNode implements File
     private function moveNode(TreeNode $node, File $file): void
     {
         $targetNode = $this->root->node($file->validated(self::WRITE)->pathname());
-        $targetNode->pull($node);
+        $node->moveTo($targetNode);
     }
 
     private function moveToFilesystem(TreeNode $node, File $file): void

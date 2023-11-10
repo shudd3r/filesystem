@@ -26,7 +26,6 @@ class ParentContextTest extends TestCase
             [new TreeNode\Directory()],
             [new TreeNode\Link('vfs://')],
             [new TreeNode\InvalidNode()],
-            [new TreeNode\MissingNode(new TreeNode\Directory())],
             [new TreeNode\LinkedNode(new TreeNode\Link('vfs://file.txt'), new TreeNode\File())]
         ];
     }
@@ -41,29 +40,44 @@ class ParentContextTest extends TestCase
     /**
      * @dataProvider nonContextNodes
      *
-     * @param TreeNode $node
+     * @param TreeNode $target
      */
-    public function test_pull_from_non_context_node_throws_Exception(TreeNode $node): void
+    public function test_moveTo_non_context_node_throws_Exception(TreeNode $target): void
     {
+        $node = new ParentContext(new TreeNode\File(), new TreeNode\Directory(), 'foo');
         $this->expectException(Exception\UnsupportedOperation::class);
-        $this->context(new TreeNode\File(), new TreeNode\Directory())->pull($node);
+        $node->moveTo($target);
     }
 
-    public function test_pull_replaces_directory_node(): void
+    public function test_moveTo_not_existing_node_moves_node_within_directory(): void
+    {
+        $parent = new TreeNode\Directory([
+            'foo' => $dir = new TreeNode\Directory(['file' => $file = new TreeNode\File('moved')])
+        ]);
+
+        $target = new TreeNode\MissingNode($parent, 'bar');
+        $node   = new ParentContext($file, $dir, 'file');
+        $node->moveTo($target);
+
+        $this->assertEquals(new TreeNode\Directory([]), $dir);
+        $this->assertEquals(new TreeNode\Directory(['foo' => $dir, 'bar' => $file]), $parent);
+    }
+
+    public function test_moveTo_replaces_existing_node(): void
     {
         $parent = new TreeNode\Directory([
             'foo' => $foo = new TreeNode\File('moved'),
             'bar' => $bar = new TreeNode\File('replaced')
         ]);
 
-        $node    = new ParentContext($foo, $parent, 'foo');
-        $context = new ParentContext($bar, $parent, 'bar');
-        $context->pull($node);
+        $target = new ParentContext($bar, $parent, 'bar');
+        $node   = new ParentContext($foo, $parent, 'foo');
+        $node->moveTo($target);
 
         $this->assertEquals(new TreeNode\Directory(['bar' => $foo]), $parent);
     }
 
-    public function test_pull_replaces_directory_link_node(): void
+    public function test_moveTo_replaces_directory_link_node(): void
     {
         $parent = new TreeNode\Directory([
             'bar'     => $bar = new TreeNode\File('replaced'),
@@ -71,18 +85,18 @@ class ParentContextTest extends TestCase
             'baz.lnk' => $baz = new TreeNode\Link('moved')
         ]);
 
-        $node    = new ParentContext(new TreeNode\LinkedNode($baz, $this->stub()), $parent, 'baz.lnk');
-        $context = new ParentContext(new TreeNode\LinkedNode($foo, $this->stub()), $parent, 'foo.lnk');
-        $context->pull($node);
+        $node   = new ParentContext(new TreeNode\LinkedNode($baz, $this->stub()), $parent, 'baz.lnk');
+        $target = new ParentContext(new TreeNode\LinkedNode($foo, $this->stub()), $parent, 'foo.lnk');
+        $node->moveTo($target);
         $this->assertEquals(new TreeNode\Directory(['bar' => $bar, 'foo.lnk' => $baz]), $parent);
 
-        $node    = new ParentContext(new TreeNode\LinkedNode($baz, $this->stub()), $parent, 'foo.lnk');
-        $context = new ParentContext($bar, $parent, 'bar');
-        $context->pull($node);
+        $node   = new ParentContext(new TreeNode\LinkedNode($baz, $this->stub()), $parent, 'foo.lnk');
+        $target = new ParentContext($bar, $parent, 'bar');
+        $node->moveTo($target);
         $this->assertEquals(new TreeNode\Directory(['bar' => $baz]), $parent);
     }
 
-    public function test_pull_for_currently_assigned_node_is_ignored(): void
+    public function test_moveTo_for_currently_assigned_node_is_ignored(): void
     {
         $parent = new TreeNode\Directory([
             'foo' => $foo = new TreeNode\File('foo'),
@@ -92,11 +106,11 @@ class ParentContextTest extends TestCase
         $expected = clone $parent;
 
         $node = $this->context($foo, $parent);
-        $this->context($foo, $parent)->pull($node);
+        $this->context($foo, $parent)->moveTo($node);
         $this->assertEquals($expected, $parent);
 
         $node = $this->context(new TreeNode\LinkedNode($bar, $this->stub()), $parent);
-        $this->context(new TreeNode\LinkedNode($bar, $this->stub()), $parent)->pull($node);
+        $this->context(new TreeNode\LinkedNode($bar, $this->stub()), $parent)->moveTo($node);
         $this->assertEquals($expected, $parent);
     }
 

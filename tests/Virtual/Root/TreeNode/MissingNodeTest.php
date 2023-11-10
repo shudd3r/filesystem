@@ -16,8 +16,6 @@ use Shudd3r\Filesystem\Virtual\Root\TreeNode\MissingNode;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\File;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\ParentContext;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\LinkedNode;
 
 
 class MissingNodeTest extends TestCase
@@ -55,24 +53,6 @@ class MissingNodeTest extends TestCase
     {
         $this->missingNode($directory, 'foo', 'bar.lnk')->setTarget('vfs://foo/bar');
         $this->assertEquals(new Link('vfs://foo/bar'), $directory->node('foo', 'bar.lnk'));
-    }
-
-    public function test_pull_moves_directory_node(): void
-    {
-        $directory = new Directory([
-            'foo'     => $file = new File('foo'),
-            'foo.lnk' => $link = new Link('vfs://foo')
-        ]);
-
-        $node = new ParentContext($file, $directory, 'foo');
-        $this->missingNode($directory, 'foo.txt')->pull($node);
-        $expected = new Directory(['foo.txt' => $file, 'foo.lnk' => $link]);
-        $this->assertEquals($expected, $directory);
-
-        $node = new ParentContext(new LinkedNode($link, $file), $directory, 'foo.lnk');
-        $this->missingNode($directory, 'bar', 'foo.lnk')->pull($node);
-        $expected = new Directory(['foo.txt' => $file, 'bar' => new Directory(['foo.lnk' => $link])]);
-        $this->assertEquals($expected, $directory);
     }
 
     private function missingNode(Directory &$directory = null, string ...$missingSegments): MissingNode
