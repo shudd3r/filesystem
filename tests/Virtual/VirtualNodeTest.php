@@ -39,12 +39,20 @@ class VirtualNodeTest extends VirtualFilesystemTests
         $this->assertFalse($this->node('bar', ['foo' => ''])->exists());
     }
 
-    public function test_node_permissions_return_true(): void
+    public function test_node_permissions_for_valid_node_return_true(): void
     {
-        $node = $this->node('foo/bar/baz.txt');
+        $node = $this->node('foo.txt', ['foo.txt' => 'contents...']);
         $this->assertTrue($node->isReadable());
         $this->assertTrue($node->isWritable());
         $this->assertTrue($node->isRemovable());
+    }
+
+    public function test_permissions_for_invalid_node_return_false(): void
+    {
+        $node = $this->node('foo.txt/exists', ['foo.txt' => 'contents...']);
+        $this->assertFalse($node->isReadable());
+        $this->assertFalse($node->isWritable());
+        $this->assertFalse($node->isRemovable());
     }
 
     public function test_validated_for_existing_node_returns_node_instance(): void
