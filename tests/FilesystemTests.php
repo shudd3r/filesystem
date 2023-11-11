@@ -34,6 +34,8 @@ abstract class FilesystemTests extends TestCase
 
     abstract protected function root(array $structure = null): Directory;
 
+    abstract protected function nodes(array $structure = []): Doubles\FakeNodes;
+
     abstract protected function path(string $name = ''): string;
 
     abstract protected function assertSameStructure(Directory $root, array $structure = null, string $message = ''): void;

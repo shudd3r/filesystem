@@ -13,9 +13,11 @@ namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Local\LocalDirectory;
+use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Tests\Fixtures\TempFiles;
 use Shudd3r\Filesystem\Tests\Fixtures\Override;
+use Shudd3r\Filesystem\Tests\Doubles\FakeNodes;
 
 
 abstract class LocalFilesystemTests extends FilesystemTests
@@ -45,6 +47,12 @@ abstract class LocalFilesystemTests extends FilesystemTests
     {
         $this->createNodes($structure ?? $this->exampleStructure());
         return LocalDirectory::root(self::$temp->directory());
+    }
+
+    protected function nodes(array $structure = []): FakeNodes
+    {
+        $rootPath = Pathname::root($this->root($structure)->pathname(), DIRECTORY_SEPARATOR);
+        return new FakeNodes\FakeLocalNodes($rootPath);
     }
 
     protected function path(string $name = ''): string

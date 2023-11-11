@@ -13,8 +13,10 @@ namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Virtual\VirtualDirectory;
+use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Tests\Doubles\FakeNodes;
 
 
 abstract class VirtualFilesystemTests extends FilesystemTests
@@ -23,6 +25,11 @@ abstract class VirtualFilesystemTests extends FilesystemTests
     {
         $structure = $this->createNodes($structure ?? $this->exampleStructure());
         return VirtualDirectory::root('vfs://', $structure);
+    }
+
+    protected function nodes(array $structure = []): FakeNodes
+    {
+        return new FakeNodes\FakeVirtualNodes($this->createNodes($structure), Pathname::root('vfs://'));
     }
 
     protected function path(string $name = ''): string
