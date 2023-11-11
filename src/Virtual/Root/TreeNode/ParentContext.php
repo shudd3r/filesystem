@@ -86,19 +86,19 @@ class ParentContext extends TreeNode
 
     public function moveTo(TreeNode $target): void
     {
-        if ($target->setNode($this->node)) { $this->remove(); }
+        $overwrite = $target->baseNode();
+        if (!$nodeToMove = $this->baseNode($overwrite)) { return; }
+        $target->attachNode($nodeToMove);
+        $this->remove();
     }
 
-    protected function setNode(TreeNode $node): bool
+    protected function attachNode(TreeNode $node): void
     {
-        if (!$node = $this->movableNode($node)) { return false; }
         $this->parent->add($this->name, $node);
-        return true;
     }
 
-    private function movableNode(TreeNode $node): ?TreeNode
+    protected function baseNode(TreeNode $overwrite = null): ?TreeNode
     {
-        if ($node === $this->node) { return null; }
-        return $node instanceof LinkedNode ? $node->originalNode($this->node) : $node;
+        return $this->node->baseNode($overwrite);
     }
 }

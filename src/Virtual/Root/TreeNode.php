@@ -92,8 +92,13 @@ abstract class TreeNode
         throw new Exception\UnsupportedOperation();
     }
 
-    protected function setNode(TreeNode $node): bool
+    protected function attachNode(TreeNode $node): void
     {
         throw new Exception\UnsupportedOperation();
+    }
+
+    protected function baseNode(TreeNode $overwrite = null): ?TreeNode
+    {
+        return $this === $overwrite ? null : $this;
     }
 }
