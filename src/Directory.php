@@ -13,7 +13,6 @@ namespace Shudd3r\Filesystem;
 
 use Shudd3r\Filesystem\Exception\InvalidNodeName;
 use Shudd3r\Filesystem\Exception\RootDirectoryNotFound;
-use Shudd3r\Filesystem\Exception as FilesystemException;
 
 
 interface Directory extends Files, Node
@@ -24,14 +23,13 @@ interface Directory extends Files, Node
     public function create(): void;
 
     /**
-     * Unless precondition assertion fails, Relative Directory instance
-     * MUST be returned whether directory with given name exists within
-     * this directory structure or not.
+     * Relative Directory instance MUST be returned whether directory with
+     * given name exists within this directory structure or not.
      *
      * Relative directory allows iterating child node objects, but their
-     * names will remain relative to root directory. Also nodes created
+     * names will remain relative to root directory, and nodes created
      * from this directory, despite name argument being relative to its
-     * pathname will be instantiated with names relative to root directory.
+     * pathname, will be instantiated with names relative to root directory.
      *
      * For invalid subdirectory name syntax Exception is thrown.
      *
@@ -44,22 +42,17 @@ interface Directory extends Files, Node
      *
      * @param string $name Directory basename or relative directory pathname
      *
-     * @throws InvalidNodeName     when given subdirectory name with invalid syntax
-     * @throws FilesystemException when asserted precondition fails
+     * @throws InvalidNodeName when given subdirectory name with invalid syntax
      *
      * @return self Relative directory instance
      *
-     * @see self::asRoot() method converting relative subdirectory to root
-     * directory
-     * @see Node::validated() method for explicit precondition checks and
-     * concrete FilesystemException types
+     * @see self::asRoot() method converting subdirectory to root directory
      */
     public function subdirectory(string $name): self;
 
     /**
-     * Unless precondition assertion fails, Link instance MUST be returned
-     * whether link with given name exists within this directory structure
-     * or not.
+     * Link instance MUST be returned whether link with given name exists
+     * within this directory structure or not.
      *
      * Concrete implementations MAY specify different syntax accepted for
      * link name. If phpDoc does not include implementation specific
@@ -70,13 +63,9 @@ interface Directory extends Files, Node
      *
      * @param string $name Link basename or relative link pathname
      *
-     * @throws InvalidNodeName     when given link name with invalid syntax
-     * @throws FilesystemException when asserted precondition fails
+     * @throws InvalidNodeName when given link name with invalid syntax
      *
      * @return Link
-     *
-     * @see Node::validated() method for explicit precondition checks and
-     * concrete FilesystemException types
      */
     public function link(string $name): Link;
 

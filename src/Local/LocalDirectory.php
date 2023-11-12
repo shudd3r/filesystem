@@ -24,25 +24,14 @@ use Generator;
 
 class LocalDirectory extends LocalNode implements Directory
 {
-    private ?int $assert;
-
-    protected function __construct(Pathname $pathname, int $assert = null)
-    {
-        $this->assert = $assert;
-        parent::__construct($pathname);
-    }
-
     /**
-     * @param string $path   Real path to existing directory
-     * @param ?int   $assert Flags for derived Nodes assertions
-     *
-     * @see Node::validated()
+     * @param string $path Real path to existing directory
      */
-    public static function root(string $path, int $assert = null): ?self
+    public static function root(string $path): ?self
     {
         $path   = rtrim(str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
         $isReal = $path === realpath($path) && is_dir($path);
-        return $isReal ? new self(Pathname::root($path, DIRECTORY_SEPARATOR), $assert) : null;
+        return $isReal ? new self(Pathname::root($path, DIRECTORY_SEPARATOR)) : null;
     }
 
     public function exists(): bool
@@ -59,20 +48,17 @@ class LocalDirectory extends LocalNode implements Directory
 
     public function subdirectory(string $name): self
     {
-        $directory = new self($this->pathname->forChildNode($name), $this->assert);
-        return isset($this->assert) ? $directory->validated($this->assert) : $directory;
+        return new self($this->pathname->forChildNode($name));
     }
 
     public function link(string $name): LocalLink
     {
-        $link = new LocalLink($this->pathname->forChildNode($name));
-        return isset($this->assert) ? $link->validated($this->assert) : $link;
+        return new LocalLink($this->pathname->forChildNode($name));
     }
 
     public function file(string $name): LocalFile
     {
-        $file = new LocalFile($this->pathname->forChildNode($name));
-        return isset($this->assert) ? $file->validated($this->assert) : $file;
+        return new LocalFile($this->pathname->forChildNode($name));
     }
 
     public function files(): FileIterator
@@ -87,7 +73,7 @@ class LocalDirectory extends LocalNode implements Directory
             throw Exception\RootDirectoryNotFound::forRoot($this);
         }
 
-        return new self($this->pathname->asRoot(), $this->assert);
+        return new self($this->pathname->asRoot());
     }
 
     protected function removeNode(): void

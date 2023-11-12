@@ -13,8 +13,7 @@ namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Tests\DirectoryContractTests;
 use Shudd3r\Filesystem\Local\LocalDirectory;
-use Shudd3r\Filesystem\Node;
-use Shudd3r\Filesystem\Exception;
+use Shudd3r\Filesystem\Exception\IOException;
 
 
 class LocalDirectoryTest extends LocalFilesystemTests
@@ -38,30 +37,13 @@ class LocalDirectoryTest extends LocalFilesystemTests
         $this->assertTrue($root->exists());
     }
 
-    public function test_root_instantiated_with_assert_flags_throws_exceptions_for_derived_nodes(): void
-    {
-        $this->root(['foo' => ['bar.txt' => '']]);
-
-        $root = LocalDirectory::root($this->path(), Node::PATH);
-        $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $root->subdirectory('foo/bar.txt'));
-        $this->assertExceptionType(Exception\UnexpectedLeafNode::class, fn () => $root->file('foo/bar.txt/file.txt'));
-        $this->assertInstanceOf(Node::class, $root->file('foo.file'));
-
-        $root = LocalDirectory::root($this->path(), Node::EXISTS | Node::WRITE);
-        $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $root->file('foo.file'));
-        $this->assertInstanceOf(Node::class, $root->file('foo/bar.txt'));
-
-        $this->override('is_writable', false, $this->path('foo/bar.txt'));
-        $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $root->file('foo/bar.txt'));
-    }
-
     public function test_runtime_remove_directory_failures(): void
     {
         $remove = function (): void {
             $this->root(['foo' => ['bar' => ['baz.txt' => '', 'sub' => []]]])->subdirectory('foo')->remove();
         };
 
-        $exception = Exception\IOException\UnableToRemove::class;
+        $exception = IOException\UnableToRemove::class;
         $this->assertIOException($exception, $remove, 'unlink', $this->path('foo/bar/baz.txt'));
         $this->assertIOException($exception, $remove, 'rmdir', $this->path('foo/bar/sub'));
         $this->assertIOException($exception, $remove, 'rmdir', $this->path('foo'));
@@ -71,7 +53,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
     {
         $directory = $this->root([])->subdirectory('foo');
         $create    = fn () => $directory->create();
-        $exception = Exception\IOException\UnableToCreate::class;
+        $exception = IOException\UnableToCreate::class;
         $this->assertIOException($exception, $create, 'mkdir', $directory->pathname());
     }
 }
