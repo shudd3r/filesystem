@@ -148,16 +148,24 @@ trait DirectoryContractTests
         $this->assertFiles($expected, $directory->files());
     }
 
+    public function test_files_for_not_existing_directory_returns_empty_iterator(): void
+    {
+        $directory = $this->root([])->subdirectory('foo');
+        $this->assertFiles([], $directory->files());
+    }
+
     public function test_files_will_iterate_over_currently_existing_files(): void
     {
-        $directory = $this->root($this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]));
+        $directory = $this->root(['foo' => ['bar' => ['baz' => ''], 'fizz' => '', 'buzz' => '']]);
+        $files     = $directory->files();
 
-        $files = $directory->files();
         $directory->subdirectory('foo/bar')->remove();
-        $directory->file('bar.txt')->remove();
+        $this->assertFiles([], $directory->subdirectory('foo/bar')->files());
+        $this->assertFiles($this->files(['foo/buzz', 'foo/fizz'], $directory), $files);
 
-        $expected = $this->files(['foo/buzz', 'foo/fizz'], $directory);
-        $this->assertFiles($expected, $files);
+        $directory->file('foo/bar/baz')->write('file in foo/bar directory');
+        $this->assertFiles($this->files(['foo/bar/baz'], $directory), $directory->subdirectory('foo/bar')->files());
+        $this->assertFiles($this->files(['foo/buzz', 'foo/fizz', 'foo/bar/baz'], $directory), $files);
     }
 
     public function test_remove_method_deletes_existing_structure(): void

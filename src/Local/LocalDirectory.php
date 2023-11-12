@@ -121,6 +121,11 @@ class LocalDirectory extends LocalNode implements Directory
      */
     private function descendantPaths(callable $filter = null): Generator
     {
+        if (!$this->exists()) {
+            yield from [];
+            return;
+        }
+
         $pathname = $this->pathname->absolute();
         $length   = strlen($pathname) + 1;
 
