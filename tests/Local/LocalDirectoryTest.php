@@ -29,7 +29,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_static_constructor_for_existing_directory_path_returns_root_directory_instance(): void
     {
-        $this->assertInstanceOf(LocalDirectory::class, $this->root(['foo' => ['bar' => []]]));
+        $this->assertInstanceOf(LocalDirectory::class, $this->root(['foo' => ['bar' => []]])->directory());
 
         $root = LocalDirectory::root($path = $this->path('foo/bar'));
         $this->assertSame($path, $root->pathname());
@@ -39,10 +39,8 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_runtime_remove_directory_failures(): void
     {
-        $remove = function (): void {
-            $this->root(['foo' => ['bar' => ['baz.txt' => '', 'sub' => []]]])->subdirectory('foo')->remove();
-        };
-
+        $directory = $this->root(['foo' => ['bar' => ['baz.txt' => '', 'sub' => []]]])->directory('foo');
+        $remove    = fn () => $directory->remove();
         $exception = IOException\UnableToRemove::class;
         $this->assertIOException($exception, $remove, 'unlink', $this->path('foo/bar/baz.txt'));
         $this->assertIOException($exception, $remove, 'rmdir', $this->path('foo/bar/sub'));
@@ -51,7 +49,7 @@ class LocalDirectoryTest extends LocalFilesystemTests
 
     public function test_runtime_create_directory_failure(): void
     {
-        $directory = $this->root([])->subdirectory('foo');
+        $directory = $this->root([])->directory('foo');
         $create    = fn () => $directory->create();
         $exception = IOException\UnableToCreate::class;
         $this->assertIOException($exception, $create, 'mkdir', $directory->pathname());

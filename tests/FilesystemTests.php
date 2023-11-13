@@ -14,8 +14,8 @@ namespace Shudd3r\Filesystem\Tests;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\File;
-use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Generic\ContentStream;
+use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Exception as FilesystemException;
 
 
@@ -32,13 +32,9 @@ abstract class FilesystemTests extends TestCase
         'inv.lnk' => '@not/exists'
     ];
 
-    abstract protected function root(array $structure = null): Directory;
-
-    abstract protected function nodes(array $structure = []): Doubles\FakeNodes;
+    abstract protected function root(array $structure = null): Fixtures\TestRoot;
 
     abstract protected function path(string $name = ''): string;
-
-    abstract protected function assertSameStructure(Directory $root, array $structure = null, string $message = ''): void;
 
     protected function assertExceptionType(string $expected, callable $procedure, string $case = ''): void
     {

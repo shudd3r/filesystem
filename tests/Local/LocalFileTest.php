@@ -59,7 +59,7 @@ class LocalFileTest extends LocalFilesystemTests
     public function test_runtime_move_file_failures(): void
     {
         $root = $this->root(['foo.txt' => 'contents']);
-        $move = fn () => $root->file('foo.txt')->moveTo($root->subdirectory('foo'));
+        $move = fn () => $root->file('foo.txt')->moveTo($root->directory('foo'));
         $this->assertIOException(IOException\UnableToMove::class, $move, 'rename');
     }
 }

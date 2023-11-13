@@ -12,12 +12,9 @@
 namespace Shudd3r\Filesystem\Tests\Local;
 
 use Shudd3r\Filesystem\Tests\FilesystemTests;
-use Shudd3r\Filesystem\Local\LocalDirectory;
-use Shudd3r\Filesystem\Generic\Pathname;
-use Shudd3r\Filesystem\Directory;
+use Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
 use Shudd3r\Filesystem\Tests\Fixtures\TempFiles;
 use Shudd3r\Filesystem\Tests\Fixtures\Override;
-use Shudd3r\Filesystem\Tests\Doubles\FakeNodes;
 
 
 abstract class LocalFilesystemTests extends FilesystemTests
@@ -43,48 +40,14 @@ abstract class LocalFilesystemTests extends FilesystemTests
         Override::reset();
     }
 
-    protected function root(array $structure = null): LocalDirectory
+    protected function root(array $structure = null): TestRoot\LocalTestRoot
     {
-        $this->createNodes($structure ?? $this->exampleStructure());
-        return LocalDirectory::root(self::$temp->directory());
-    }
-
-    protected function nodes(array $structure = []): FakeNodes
-    {
-        $rootPath = Pathname::root($this->root($structure)->pathname(), DIRECTORY_SEPARATOR);
-        return new FakeNodes\FakeLocalNodes($rootPath);
+        return new TestRoot\LocalTestRoot(self::$temp, $structure ?? $this->exampleStructure());
     }
 
     protected function path(string $name = ''): string
     {
         return self::$temp->pathname($name);
-    }
-
-    protected function assertSameStructure(Directory $root, array $structure = null, string $message = ''): void
-    {
-        $rootPath   = $root->pathname();
-        $rootLength = strlen($rootPath) + 1;
-
-        $tree = [];
-        foreach (self::$temp->nodes($rootPath) as $pathname) {
-            $path     = str_replace(DIRECTORY_SEPARATOR, '/', substr($pathname, $rootLength));
-            $segments = explode('/', $path);
-            $leafNode = array_pop($segments);
-            $current  = &$tree;
-            foreach ($segments as $value) {
-                $current[$value] ??= [];
-                $current = &$current[$value];
-            }
-            if (isset($current[$leafNode])) { continue; }
-            if (is_dir($pathname) && !is_link($pathname)) {
-                $current[$leafNode] = [];
-                continue;
-            }
-            $current[$leafNode] = is_link($pathname)
-                ? '@' . str_replace(DIRECTORY_SEPARATOR, '/', substr(readlink($pathname), $rootLength))
-                : file_get_contents($pathname);
-        }
-        $this->assertEquals($structure ?? $this->exampleStructure(), $tree, $message);
     }
 
     protected function assertIOException(string $exception, callable $procedure, string $override, $argValue = null): void
@@ -125,32 +88,5 @@ abstract class LocalFilesystemTests extends FilesystemTests
             'empty path'        => '',
             'dot path'          => '.'
         ];
-    }
-
-    private function createNodes(array $tree, string $path = ''): ?array
-    {
-        if (!$tree) { self::$temp->directory($path); }
-
-        $links = [];
-        foreach ($tree as $name => $value) {
-            $name     = $path ? $path . '/' . $name : $name;
-            $newLinks = is_array($value) ? $this->createNodes($value, $name) : $this->createLeaf($name, $value);
-            $newLinks && $links = array_merge($links, $newLinks);
-        }
-
-        if ($path) { return $links; }
-        foreach ($links as $name => $value) {
-            self::$temp->symlink($value, $name);
-        }
-        return null;
-    }
-
-    private function createLeaf(string $name, string $value): array
-    {
-        if (str_starts_with($value, '@')) {
-            return [$name => substr($value, 1)];
-        }
-        self::$temp->file($name, $value);
-        return [];
     }
 }

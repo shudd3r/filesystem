@@ -36,7 +36,7 @@ trait FileContractTests
     {
         $root = $this->root(['foo' => ['bar.txt' => '']]);
         $root->file('foo/bar.txt')->remove();
-        $this->assertSameStructure($root, ['foo' => []]);
+        $root->assertStructure(['foo' => []]);
     }
 
     public function test_contents_returns_file_contents(): void
@@ -54,35 +54,35 @@ trait FileContractTests
     {
         $root = $this->root([]);
         $root->file('foo.txt')->write('contents');
-        $this->assertSameStructure($root, ['foo.txt' => 'contents']);
+        $root->assertStructure(['foo.txt' => 'contents']);
     }
 
     public function test_write_for_existing_file_replaces_its_contents(): void
     {
         $root = $this->root(['foo.txt' => 'old']);
         $root->file('foo.txt')->write('new');
-        $this->assertSameStructure($root, ['foo.txt' => 'new']);
+        $root->assertStructure(['foo.txt' => 'new']);
     }
 
     public function test_writeStream_for_not_existing_file_creates_file_with_given_contents(): void
     {
         $root = $this->root([]);
         $root->file('foo.txt')->writeStream($this->stream('foo contents...'));
-        $this->assertSameStructure($root, ['foo.txt' => 'foo contents...']);
+        $root->assertStructure(['foo.txt' => 'foo contents...']);
     }
 
     public function test_writeStream_for_existing_file_replaces_its_contents(): void
     {
         $root = $this->root(['bar.txt' => 'old contents']);
         $root->file('bar.txt')->writeStream($this->stream('new contents'));
-        $this->assertSameStructure($root, ['bar.txt' => 'new contents']);
+        $root->assertStructure(['bar.txt' => 'new contents']);
     }
 
     public function test_append_to_not_existing_file_creates_file(): void
     {
         $root = $this->root([]);
         $root->file('file.txt')->append('contents...');
-        $this->assertSameStructure($root, ['file.txt' => 'contents...']);
+        $root->assertStructure(['file.txt' => 'contents...']);
     }
 
     public function test_append_to_existing_file_appends_to_existing_contents(): void
@@ -91,7 +91,7 @@ trait FileContractTests
         $file = $root->file('file.txt');
         $file->append('...added');
         $file->append(' more');
-        $this->assertSameStructure($root, ['file.txt' => 'content...added more']);
+        $root->assertStructure(['file.txt' => 'content...added more']);
     }
 
     public function test_creating_file_with_directory_structure(): void
@@ -99,7 +99,7 @@ trait FileContractTests
         $root = $this->root(['foo' => []]);
         $root->file('foo/bar/baz.txt')->write('contents');
         $root->file('baz/dir/file.txt')->append('...contents');
-        $this->assertSameStructure($root, [
+        $root->assertStructure([
             'foo' => ['bar' => ['baz.txt' => 'contents']],
             'baz' => ['dir' => ['file.txt' => '...contents']]
         ]);
@@ -109,35 +109,35 @@ trait FileContractTests
     {
         $root = $this->root(['foo.txt' => 'Foo contents']);
         $root->file('bar.txt')->copy($root->file('foo.txt'));
-        $this->assertSameStructure($root, ['foo.txt' => 'Foo contents', 'bar.txt' => 'Foo contents']);
+        $root->assertStructure(['foo.txt' => 'Foo contents', 'bar.txt' => 'Foo contents']);
     }
 
     public function test_moveTo_moves_file_to_given_directory(): void
     {
         $root = $this->root(['foo' => ['file.txt' => 'foo contents...']]);
-        $root->file('foo/file.txt')->moveTo($root->subdirectory('bar'));
-        $this->assertSameStructure($root, ['foo' => [], 'bar' => ['file.txt' => 'foo contents...']]);
+        $root->file('foo/file.txt')->moveTo($root->directory('bar'));
+        $root->assertStructure(['foo' => [], 'bar' => ['file.txt' => 'foo contents...']]);
     }
 
     public function test_moveTo_with_specified_name_moves_file_with_changed_name(): void
     {
         $root = $this->root(['baz.txt' => 'baz contents...']);
-        $root->file('baz.txt')->moveTo($root, 'foo/bar/moved.file');
-        $this->assertSameStructure($root, ['foo' => ['bar' => ['moved.file' => 'baz contents...']]]);
+        $root->file('baz.txt')->moveTo($root->directory(), 'foo/bar/moved.file');
+        $root->assertStructure(['foo' => ['bar' => ['moved.file' => 'baz contents...']]]);
     }
 
     public function test_moveTo_overwrites_existing_file(): void
     {
         $root = $this->root(['foo' => ['bar' => ['baz.txt' => 'old contents']], 'foo.txt' => 'new contents']);
-        $root->file('foo.txt')->moveTo($root->subdirectory('foo'), 'bar/baz.txt');
-        $this->assertSameStructure($root, ['foo' => ['bar' => ['baz.txt' => 'new contents']]]);
+        $root->file('foo.txt')->moveTo($root->directory('foo'), 'bar/baz.txt');
+        $root->assertStructure(['foo' => ['bar' => ['baz.txt' => 'new contents']]]);
     }
 
     public function test_moveTo_for_not_existing_file_is_ignored(): void
     {
         $root = $this->root(['foo' => []]);
-        $root->file('bar.txt')->moveTo($root->subdirectory('foo'));
-        $this->assertSameStructure($root, ['foo' => []]);
+        $root->file('bar.txt')->moveTo($root->directory('foo'));
+        $root->assertStructure(['foo' => []]);
     }
 
     public function test_moveTo_for_linked_file_moves_link(): void
@@ -146,8 +146,8 @@ trait FileContractTests
             'foo'     => ['foo.txt' => 'foo'],
             'foo.lnk' => '@foo/foo.txt'
         ]);
-        $root->file('foo.lnk')->moveTo($root->subdirectory('bar'), 'bar.lnk');
-        $this->assertSameStructure($root, [
+        $root->file('foo.lnk')->moveTo($root->directory('bar'), 'bar.lnk');
+        $root->assertStructure([
             'foo' => ['foo.txt' => 'foo'],
             'bar' => ['bar.lnk' => '@foo/foo.txt']
         ]);
@@ -163,37 +163,37 @@ trait FileContractTests
             'foo3.lnk' => '@foo/foo.txt'
         ]);
 
-        $targetDir = $root->subdirectory('bar');
+        $targetDir = $root->directory('bar');
 
-        $root->file('foo3.lnk')->moveTo($root->subdirectory('foo'), 'foo.txt');
-        $this->assertSameStructure($root, [
+        $root->file('foo3.lnk')->moveTo($root->directory('foo'), 'foo.txt');
+        $root->assertStructure([
             'foo'      => ['foo.txt' => 'foo'],
             'bar'      => ['bar.txt' => 'bar', 'bar.lnk' => '@bar/bar.txt'],
             'foo1.lnk' => '@foo/foo.txt',
             'foo2.lnk' => '@foo/foo.txt'
         ], 'Moved link overwriting its target should be removed');
 
-        $root->file('foo2.lnk')->moveTo($root, 'foo1.lnk');
-        $this->assertSameStructure($root, [
+        $root->file('foo2.lnk')->moveTo($root->directory(), 'foo1.lnk');
+        $root->assertStructure([
             'foo'      => ['foo.txt' => 'foo'],
             'bar'      => ['bar.txt' => 'bar', 'bar.lnk' => '@bar/bar.txt'],
             'foo1.lnk' => '@foo/foo.txt'
         ], 'Moved link with the same file target should be removed');
 
         $root->file('foo1.lnk')->moveTo($targetDir, 'bar.lnk');
-        $this->assertSameStructure($root, [
+        $root->assertStructure([
             'foo' => ['foo.txt' => 'foo'],
             'bar' => ['bar.txt' => 'bar', 'bar.lnk' => '@foo/foo.txt']
         ], 'Link with different file target should overwrite previous target');
 
         $root->file('bar/bar.lnk')->moveTo($targetDir, 'bar.txt');
-        $this->assertSameStructure($root, [
+        $root->assertStructure([
             'foo' => ['foo.txt' => 'foo'],
             'bar' => ['bar.txt' => '@foo/foo.txt']
         ], 'Link should overwrite non-target file');
 
         $root->file('foo/foo.txt')->moveTo($targetDir, 'bar.txt');
-        $this->assertSameStructure($root, [
+        $root->assertStructure([
             'foo' => [],
             'bar' => ['bar.txt' => 'foo']
         ], 'Target file should overwrite link');
@@ -205,7 +205,7 @@ trait FileContractTests
 
         $root->file('foo.txt')->moveTo($targetDir = VirtualDirectory::root());
         $this->assertSame('foo contents', $targetDir->file('foo.txt')->contents());
-        $this->assertSameStructure($root, []);
+        $root->assertStructure([]);
     }
 
     public function test_method_calls_on_invalid_file_path_throw_exception(): void
@@ -248,20 +248,20 @@ trait FileContractTests
             $link->writeStream($fileStream);
             $link->writeStream($linkStream);
             $file->writeStream($linkStream);
-            $this->assertSameStructure($root, $initialStructure);
+            $root->assertStructure($initialStructure);
         }
 
         $file->copy($file);
         $link->copy($file);
         $file->copy($link);
         $link->copy($link);
-        $this->assertSameStructure($root, $initialStructure);
+        $root->assertStructure($initialStructure);
 
-        $file->moveTo($root->subdirectory('foo'));
-        $link->moveTo($root->subdirectory('bar'));
-        $this->assertSameStructure($root, $initialStructure);
+        $file->moveTo($root->directory('foo'));
+        $link->moveTo($root->directory('bar'));
+        $root->assertStructure($initialStructure);
 
-        $file->moveTo($root->subdirectory('bar/foo.lnk'));
-        $this->assertSameStructure($root, $initialStructure);
+        $file->moveTo($root->directory('bar/foo.lnk'));
+        $root->assertStructure($initialStructure);
     }
 }
