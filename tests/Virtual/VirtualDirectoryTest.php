@@ -11,10 +11,10 @@
 
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
-use Shudd3r\Filesystem\Tests\DirectoryContractTests;
+use Shudd3r\Filesystem\Tests\DirectoryTests;
 
 
-class VirtualDirectoryTest extends VirtualFilesystemTests
+class VirtualDirectoryTest extends DirectoryTests
 {
-    use DirectoryContractTests;
+    use VirtualFilesystemSetup;
 }

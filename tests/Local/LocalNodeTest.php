@@ -11,12 +11,15 @@
 
 namespace Shudd3r\Filesystem\Tests\Local;
 
+use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
 
 
-class LocalNodeTest extends LocalFilesystemTests
+class LocalNodeTest extends FilesystemTests
 {
+    use LocalFilesystemSetup;
+
     public function test_root_node_name_is_empty(): void
     {
         $this->assertEmpty($this->root([])->node()->name());

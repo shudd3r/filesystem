@@ -11,12 +11,15 @@
 
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
+use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
 
 
-class VirtualNodeTest extends VirtualFilesystemTests
+class VirtualNodeTest extends FilesystemTests
 {
+    use VirtualFilesystemSetup;
+
     public function test_root_node_name_is_empty(): void
     {
         $this->assertEmpty($this->root([])->node()->name());

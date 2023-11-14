@@ -11,12 +11,12 @@
 
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
-use Shudd3r\Filesystem\Tests\FileContractTests;
+use Shudd3r\Filesystem\Tests\FileTests;
 
 
-class VirtualFileTest extends VirtualFilesystemTests
+class VirtualFileTest extends FileTests
 {
-    use FileContractTests;
+    use VirtualFilesystemSetup;
 
     public function test_contentStream_returns_null(): void
     {

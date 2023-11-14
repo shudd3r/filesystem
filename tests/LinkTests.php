@@ -14,7 +14,7 @@ namespace Shudd3r\Filesystem\Tests;
 use Shudd3r\Filesystem\Exception;
 
 
-trait LinkContractTests
+abstract class LinkTests extends FilesystemTests
 {
     public function test_exists_method(): void
     {

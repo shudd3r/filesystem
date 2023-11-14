@@ -11,13 +11,12 @@
 
 namespace Shudd3r\Filesystem\Tests\Local;
 
-use Shudd3r\Filesystem\Tests\FilesystemTests;
 use Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
 use Shudd3r\Filesystem\Tests\Fixtures\TempFiles;
 use Shudd3r\Filesystem\Tests\Fixtures\Override;
 
 
-abstract class LocalFilesystemTests extends FilesystemTests
+trait LocalFilesystemSetup
 {
     private static TempFiles $temp;
     private static string    $cwd;
@@ -50,7 +49,7 @@ abstract class LocalFilesystemTests extends FilesystemTests
         return self::$temp->pathname($name);
     }
 
-    protected function assertIOException(string $exception, callable $procedure, string $override, $argValue = null): void
+    private function assertIOException(string $exception, callable $procedure, string $override, $argValue = null): void
     {
         $this->override($override, function () {
             trigger_error('emulated warning', E_USER_WARNING);
@@ -65,28 +64,13 @@ abstract class LocalFilesystemTests extends FilesystemTests
      * @param callable|mixed $returnValue fn() => mixed
      * @param mixed          $argValue    Trigger override for this value
      */
-    protected function override(string $function, $returnValue, $argValue = null): void
+    private function override(string $function, $returnValue, $argValue = null): void
     {
         Override::set($function, $returnValue, $argValue);
     }
 
-    protected function removeOverride(string $function): void
+    private function removeOverride(string $function): void
     {
         Override::remove($function);
-    }
-
-    protected function invalidRootPaths(): array
-    {
-        chdir($this->path());
-        return [
-            'file path'         => self::$temp->file('foo/bar/baz.txt'),
-            'not existing path' => self::$temp->pathname('not/exists'),
-            'invalid symlink'   => self::$temp->symlink('not/exists', 'link1'),
-            'valid symlink'     => self::$temp->symlink('foo/bar', 'link2'),
-            'relative path'     => self::$temp->relative('./foo/bar'),
-            'step-up path'      => self::$temp->pathname('foo/bar/..'),
-            'empty path'        => '',
-            'dot path'          => '.'
-        ];
     }
 }

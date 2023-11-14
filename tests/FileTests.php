@@ -15,7 +15,7 @@ use Shudd3r\Filesystem\Exception;
 use Shudd3r\Filesystem\Virtual\VirtualDirectory;
 
 
-trait FileContractTests
+abstract class FileTests extends FilesystemTests
 {
     public function test_exists_for_existing_file_returns_true(): void
     {

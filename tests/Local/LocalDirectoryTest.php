@@ -11,18 +11,30 @@
 
 namespace Shudd3r\Filesystem\Tests\Local;
 
-use Shudd3r\Filesystem\Tests\DirectoryContractTests;
+use Shudd3r\Filesystem\Tests\DirectoryTests;
 use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Exception\IOException;
 
 
-class LocalDirectoryTest extends LocalFilesystemTests
+class LocalDirectoryTest extends DirectoryTests
 {
-    use DirectoryContractTests;
+    use LocalFilesystemSetup;
 
     public function test_static_constructor_for_not_real_directory_path_returns_null(): void
     {
-        foreach ($this->invalidRootPaths() as $type => $path) {
+        chdir($this->path());
+        $invalidRootPaths = [
+            'file path'         => self::$temp->file('foo/bar/baz.txt'),
+            'not existing path' => self::$temp->pathname('not/exists'),
+            'invalid symlink'   => self::$temp->symlink('not/exists', 'link1'),
+            'valid symlink'     => self::$temp->symlink('foo/bar', 'link2'),
+            'relative path'     => self::$temp->relative('./foo/bar'),
+            'step-up path'      => self::$temp->pathname('foo/bar/..'),
+            'empty path'        => '',
+            'dot path'          => '.'
+        ];
+
+        foreach ($invalidRootPaths as $type => $path) {
             $this->assertNull(LocalDirectory::root($path), sprintf('Failed for `%s`', $type));
         }
     }

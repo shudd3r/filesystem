@@ -14,7 +14,7 @@ namespace Shudd3r\Filesystem\Tests;
 use Shudd3r\Filesystem\Exception;
 
 
-trait DirectoryContractTests
+abstract class DirectoryTests extends FilesystemTests
 {
     public function test_subdirectory_for_valid_path_returns_Directory_with_descendant_path(): void
     {

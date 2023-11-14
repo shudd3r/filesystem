@@ -11,10 +11,10 @@
 
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
-use Shudd3r\Filesystem\Tests\LinkContractTests;
+use Shudd3r\Filesystem\Tests\LinkTests;
 
 
-class VirtualLinkTest extends VirtualFilesystemTests
+class VirtualLinkTest extends LinkTests
 {
-    use LinkContractTests;
+    use VirtualFilesystemSetup;
 }

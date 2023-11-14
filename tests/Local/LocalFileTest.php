@@ -11,13 +11,13 @@
 
 namespace Shudd3r\Filesystem\Tests\Local;
 
-use Shudd3r\Filesystem\Tests\FileContractTests;
+use Shudd3r\Filesystem\Tests\FileTests;
 use Shudd3r\Filesystem\Exception\IOException;
 
 
-class LocalFileTest extends LocalFilesystemTests
+class LocalFileTest extends FileTests
 {
-    use FileContractTests;
+    use LocalFilesystemSetup;
 
     public function test_contentStream_for_not_existing_file_returns_null(): void
     {
