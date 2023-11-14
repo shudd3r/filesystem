@@ -11,11 +11,12 @@
 
 namespace Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
 
-use Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
-use Shudd3r\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Filesystem\Virtual\VirtualNode;
+use Shudd3r\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Filesystem\Virtual\Root;
 use Shudd3r\Filesystem\Generic\Pathname;
+use Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
+use Shudd3r\Filesystem\Tests\Doubles\FakeVirtualNode;
 use PHPUnit\Framework\Assert;
 
 
@@ -31,22 +32,8 @@ class VirtualTestRoot extends TestRoot
 
     public function node(string $name = '', bool $typeMatch = true): VirtualNode
     {
-        $root     = new Root($this->rootDir->pathname(), $this->tree);
-        $pathname = $this->pathname($name);
-        return new class($root, $pathname, $typeMatch) extends VirtualNode {
-            private bool $typeMatch;
-
-            public function __construct(Root $root, Pathname $path, bool $typeMatch = true)
-            {
-                parent::__construct($root, $path);
-                $this->typeMatch = $typeMatch;
-            }
-
-            protected function nodeExists(Root\TreeNode $node): bool
-            {
-                return $node->exists() && $this->typeMatch;
-            }
-        };
+        $root = new Root($this->rootDir->pathname(), $this->tree);
+        return new FakeVirtualNode($root, $this->pathname($name), $typeMatch);
     }
 
     public function assertStructure(array $structure, string $message = ''): void
@@ -56,10 +43,8 @@ class VirtualTestRoot extends TestRoot
 
     private function createNodes(array $tree): Root\TreeNode\Directory
     {
-        foreach ($tree as &$value) {
-            $value = is_array($value) ? $this->createNodes($value) : $this->leafNode($value);
-        }
-        return new Root\TreeNode\Directory($tree);
+        $createNode = fn ($value) => is_array($value) ? $this->createNodes($value) : $this->leafNode($value);
+        return new Root\TreeNode\Directory(array_map($createNode, $tree));
     }
 
     private function leafNode(string $value): Root\TreeNode

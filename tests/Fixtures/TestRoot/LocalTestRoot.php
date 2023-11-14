@@ -11,11 +11,12 @@
 
 namespace Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
 
+use Shudd3r\Filesystem\Local\LocalNode;
+use Shudd3r\Filesystem\Local\LocalDirectory;
+use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
 use Shudd3r\Filesystem\Tests\Fixtures\TempFiles;
-use Shudd3r\Filesystem\Local\LocalDirectory;
-use Shudd3r\Filesystem\Local\LocalNode;
-use Shudd3r\Filesystem\Generic\Pathname;
+use Shudd3r\Filesystem\Tests\Doubles\FakeLocalNode;
 use PHPUnit\Framework\Assert;
 
 
@@ -33,28 +34,7 @@ class LocalTestRoot extends TestRoot
 
     public function node(string $name = '', bool $typeMatch = true): LocalNode
     {
-        return new class($this->pathname($name), $typeMatch) extends LocalNode {
-            private bool $typeMatch;
-            private bool $removed = false;
-
-            public function __construct(Pathname $pathname, bool $typeMatch)
-            {
-                parent::__construct($pathname);
-                $this->typeMatch = $typeMatch;
-            }
-
-            public function exists(): bool
-            {
-                if ($this->removed) { return false; }
-                $path = $this->pathname->absolute();
-                return $this->typeMatch && (file_exists($path) || is_link($path));
-            }
-
-            protected function removeNode(): void
-            {
-                $this->removed = true;
-            }
-        };
+        return new FakeLocalNode($this->pathname($name), $typeMatch);
     }
 
     public function assertStructure(array $structure, string $message = ''): void
@@ -96,18 +76,14 @@ class LocalTestRoot extends TestRoot
         }
 
         if ($path) { return $links; }
-        foreach ($links as $name => $value) {
-            $this->temp->symlink($value, $name);
-        }
+
+        array_walk($links, fn ($path, $name) => $this->temp->symlink($path, $name));
         return null;
     }
 
     private function createLeaf(string $name, string $value): array
     {
-        if (str_starts_with($value, '@')) {
-            return [$name => substr($value, 1)];
-        }
-        $this->temp->file($name, $value);
-        return [];
+        $file = !str_starts_with($value, '@') && $this->temp->file($name, $value);
+        return $file ? [] : [$name => substr($value, 1)];
     }
 }
