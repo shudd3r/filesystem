@@ -45,17 +45,17 @@ abstract class VirtualNode implements Node
 
     public function isReadable(): bool
     {
-        return $this->node()->isValid();
+        return $this->node()->isAllowed(self::READ);
     }
 
     public function isWritable(): bool
     {
-        return $this->node()->isValid();
+        return $this->node()->isAllowed(self::WRITE);
     }
 
     public function isRemovable(): bool
     {
-        return $this->node()->isValid();
+        return $this->node()->isAllowed(self::REMOVE);
     }
 
     public function validated(int $flags = self::PATH): self

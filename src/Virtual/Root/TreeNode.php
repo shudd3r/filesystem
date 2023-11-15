@@ -92,6 +92,11 @@ abstract class TreeNode
         throw new Exception\UnsupportedOperation();
     }
 
+    public function isAllowed(int $access): bool
+    {
+        return true;
+    }
+
     protected function attachNode(TreeNode $node): void
     {
         throw new Exception\UnsupportedOperation();

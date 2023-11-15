@@ -42,4 +42,9 @@ class InvalidNode extends TreeNode
     {
         return $this->missingSegments;
     }
+
+    public function isAllowed(int $access): bool
+    {
+        return false;
+    }
 }
