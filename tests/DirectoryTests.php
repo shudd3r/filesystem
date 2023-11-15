@@ -14,11 +14,11 @@ namespace Shudd3r\Filesystem\Tests;
 use Shudd3r\Filesystem\Exception;
 
 
-trait DirectoryContractTests
+abstract class DirectoryTests extends FilesystemTests
 {
     public function test_subdirectory_for_valid_path_returns_Directory_with_descendant_path(): void
     {
-        $subdirectory = $this->root()->subdirectory('foo/bar');
+        $subdirectory = $this->root([])->directory()->subdirectory('foo/bar');
         $this->assertSame($this->path('foo/bar'), $subdirectory->pathname());
         $this->assertSame('foo/bar', $subdirectory->name());
         $this->assertSame($this->path('foo/bar/baz'), $subdirectory->subdirectory('baz')->pathname());
@@ -26,39 +26,39 @@ trait DirectoryContractTests
 
     public function test_subdirectory_for_invalid_path_throws_Filesystem_Exception(): void
     {
-        $procedure = fn () => $this->root()->subdirectory('foo//bar');
-        $this->assertExceptionType(Exception\InvalidNodeName::class, $procedure);
+        $directory = $this->root([])->directory();
+        $this->assertExceptionType(Exception\InvalidNodeName::class, fn () => $directory->subdirectory('foo//bar'));
     }
 
     public function test_file_for_valid_path_returns_File_with_descendant_path(): void
     {
-        $file = $this->root()->file('foo/file.txt');
+        $file = $this->root([])->directory()->file('foo/file.txt');
         $this->assertSame($this->path('foo/file.txt'), $file->pathname());
         $this->assertSame('foo/file.txt', $file->name());
     }
 
     public function test_file_for_invalid_path_throws_Filesystem_Exception(): void
     {
-        $procedure = fn () => $this->root()->file('');
-        $this->assertExceptionType(Exception\InvalidNodeName::class, $procedure);
+        $directory = $this->root([])->directory();
+        $this->assertExceptionType(Exception\InvalidNodeName::class, fn () => $directory->file(''));
     }
 
     public function test_link_for_valid_path_returns_Link_with_descendant_path(): void
     {
-        $link = $this->root()->link('foo/bar');
+        $link = $this->root([])->directory()->link('foo/bar');
         $this->assertSame($this->path('foo/bar'), $link->pathname());
         $this->assertSame('foo/bar', $link->name());
     }
 
     public function test_link_for_invalid_path_throws_Filesystem_Exception(): void
     {
-        $procedure = fn () => $this->root()->link('foo/bar/../bar');
-        $this->assertExceptionType(Exception\InvalidNodeName::class, $procedure);
+        $directory = $this->root([])->directory();
+        $this->assertExceptionType(Exception\InvalidNodeName::class, fn () => $directory->link('foo/bar/../bar'));
     }
 
     public function test_exists_for_existing_directory_returns_true(): void
     {
-        $root = $this->root();
+        $root = $this->root()->directory();
         $this->assertTrue($root->exists());
         $this->assertTrue($root->subdirectory('foo')->exists());
         $this->assertTrue($root->subdirectory('foo\bar')->exists());
@@ -68,7 +68,7 @@ trait DirectoryContractTests
 
     public function test_exists_for_not_existing_directory_returns_false(): void
     {
-        $root = $this->root();
+        $root = $this->root()->directory();
         $this->assertFalse($root->subdirectory('bar')->exists());
         $this->assertFalse($root->subdirectory('foo\bar\baz.txt')->exists());
         $this->assertFalse($root->subdirectory('foo\file.lnk')->exists());
@@ -79,18 +79,18 @@ trait DirectoryContractTests
     public function test_create_for_existing_directory_is_ignored(): void
     {
         $root = $this->root();
-        $root->subdirectory('foo')->create();
-        $root->subdirectory('dir.lnk')->create();
-        $this->assertSameStructure($root);
+        $root->directory('foo')->create();
+        $root->directory('dir.lnk')->create();
+        $root->assertStructure($this->exampleStructure());
     }
 
     public function test_create_for_writable_path_creates_directory(): void
     {
         $root = $this->root();
-        $root->subdirectory('bar')->create();
-        $root->subdirectory('foo/empty/dir')->create();
-        $root->subdirectory('dir.lnk/baz')->create();
-        $this->assertSameStructure($root, $this->exampleStructure([
+        $root->directory('bar')->create();
+        $root->directory('foo/empty/dir')->create();
+        $root->directory('dir.lnk/baz')->create();
+        $root->assertStructure($this->exampleStructure([
             'foo' => ['bar' => ['baz' => []], 'empty' => ['dir' => []]],
             'bar' => []
         ]));
@@ -107,14 +107,14 @@ trait DirectoryContractTests
 
         $root = $this->root();
         foreach ($cases as $case => [$exception, $path]) {
-            $directory = $root->subdirectory($path);
+            $directory = $root->directory($path);
             $this->assertExceptionType($exception, fn () => $directory->create(), $case);
         }
     }
 
     public function test_converting_existing_subdirectory_to_root_directory(): void
     {
-        $subdirectory = $this->root(['foo' => ['bar' => []]])->subdirectory('foo/bar');
+        $subdirectory = $this->root(['foo' => ['bar' => []]])->directory('foo/bar');
         $newRoot      = $subdirectory->asRoot();
 
         $this->assertSame($subdirectory->pathname(), $newRoot->pathname());
@@ -128,35 +128,34 @@ trait DirectoryContractTests
 
     public function test_converting_not_existing_subdirectory_to_root_throws_exception(): void
     {
-        $relative = $this->root()->subdirectory('foo/dir');
-        $this->expectException(Exception\RootDirectoryNotFound::class);
-        $relative->asRoot();
+        $directory = $this->root(['foo' => []])->directory('foo/dir');
+        $toRoot    = fn () => $directory->asRoot();
+        $this->assertExceptionType(Exception\RootDirectoryNotFound::class, $toRoot);
     }
 
     public function test_files_returns_all_files_iterator(): void
     {
-        $root = $this->root($this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]));
+        $directory = $this->root($this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]))->directory();
+        $expected  = $this->files(['bar.txt', 'foo/bar/baz.txt', 'foo/buzz', 'foo/fizz'], $directory);
+        $this->assertFiles($expected, $directory->files());
 
-        $expected = $this->files(['bar.txt', 'foo/bar/baz.txt', 'foo/buzz', 'foo/fizz'], $root);
-        $this->assertFiles($expected, $root->files());
+        $expected = $this->files(['foo/bar/baz.txt', 'foo/buzz', 'foo/fizz'], $directory);
+        $this->assertFiles($expected, $directory->subdirectory('foo')->files());
 
-        $expected = $this->files(['foo/bar/baz.txt', 'foo/buzz', 'foo/fizz'], $root);
-        $this->assertFiles($expected, $root->subdirectory('foo')->files());
-
-        $directory = $root->subdirectory('foo')->asRoot();
+        $directory = $directory->subdirectory('foo')->asRoot();
         $expected  = $this->files(['bar/baz.txt', 'buzz', 'fizz'], $directory);
         $this->assertFiles($expected, $directory->files());
     }
 
     public function test_files_for_not_existing_directory_returns_empty_iterator(): void
     {
-        $directory = $this->root([])->subdirectory('foo');
+        $directory = $this->root([])->directory('foo');
         $this->assertFiles([], $directory->files());
     }
 
     public function test_files_will_iterate_over_currently_existing_files(): void
     {
-        $directory = $this->root(['foo' => ['bar' => ['baz' => ''], 'fizz' => '', 'buzz' => '']]);
+        $directory = $this->root(['foo' => ['bar' => ['baz' => ''], 'fizz' => '', 'buzz' => '']])->directory();
         $files     = $directory->files();
 
         $directory->subdirectory('foo/bar')->remove();
@@ -171,15 +170,15 @@ trait DirectoryContractTests
     public function test_remove_method_deletes_existing_structure(): void
     {
         $root = $this->root();
-        $root->subdirectory('foo')->remove();
-        $this->assertSameStructure($root, $this->exampleStructure(['foo' => null]));
+        $root->directory('foo')->remove();
+        $root->assertStructure($this->exampleStructure(['foo' => null]));
     }
 
     public function test_remove_method_for_not_existing_directory_is_ignored(): void
     {
         $root = $this->root();
-        $root->subdirectory('bar.txt')->remove();
-        $root->subdirectory('foo/empty/bar')->remove();
-        $this->assertSameStructure($root);
+        $root->directory('bar.txt')->remove();
+        $root->directory('foo/empty/bar')->remove();
+        $root->assertStructure($this->exampleStructure());
     }
 }

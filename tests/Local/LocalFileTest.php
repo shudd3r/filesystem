@@ -11,24 +11,13 @@
 
 namespace Shudd3r\Filesystem\Tests\Local;
 
-use Shudd3r\Filesystem\Tests\FileContractTests;
+use Shudd3r\Filesystem\Tests\FileTests;
 use Shudd3r\Filesystem\Exception\IOException;
 
 
-class LocalFileTest extends LocalFilesystemTests
+class LocalFileTest extends FileTests
 {
-    use FileContractTests;
-
-    public function test_contentStream_for_not_existing_file_returns_null(): void
-    {
-        $this->assertNull($this->root([])->file('foo.txt')->contentStream());
-    }
-
-    public function test_contentStream_for_existing_file_returns_streamable_contents(): void
-    {
-        $file = $this->root(['foo.txt' => 'foo contents...'])->file('foo.txt');
-        $this->assertSame('foo contents...', $file->contentStream()->contents());
-    }
+    use LocalFilesystemSetup;
 
     public function test_runtime_file_write_failures(): void
     {
@@ -59,7 +48,7 @@ class LocalFileTest extends LocalFilesystemTests
     public function test_runtime_move_file_failures(): void
     {
         $root = $this->root(['foo.txt' => 'contents']);
-        $move = fn () => $root->file('foo.txt')->moveTo($root->subdirectory('foo'));
+        $move = fn () => $root->file('foo.txt')->moveTo($root->directory('foo'));
         $this->assertIOException(IOException\UnableToMove::class, $move, 'rename');
     }
 }

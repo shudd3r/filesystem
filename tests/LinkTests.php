@@ -14,7 +14,7 @@ namespace Shudd3r\Filesystem\Tests;
 use Shudd3r\Filesystem\Exception;
 
 
-trait LinkContractTests
+abstract class LinkTests extends FilesystemTests
 {
     public function test_exists_method(): void
     {
@@ -32,11 +32,11 @@ trait LinkContractTests
     {
         $root = $this->root();
         $this->assertTrue($root->file('foo/file.lnk')->exists());
-        $this->assertFalse($root->subdirectory('foo/file.lnk')->exists());
-        $this->assertTrue($root->subdirectory('dir.lnk')->exists());
+        $this->assertFalse($root->directory('foo/file.lnk')->exists());
+        $this->assertTrue($root->directory('dir.lnk')->exists());
         $this->assertTrue($root->file('dir.lnk/baz.txt')->exists());
         $this->assertFalse($root->file('inv.lnk')->exists());
-        $this->assertFalse($root->subdirectory('inv.lnk')->exists());
+        $this->assertFalse($root->directory('inv.lnk')->exists());
     }
 
     public function test_remove_method_deletes_link(): void
@@ -45,7 +45,7 @@ trait LinkContractTests
         $root->link('foo/file.lnk')->remove();
         $root->link('dir.lnk')->remove();
         $root->link('inv.lnk')->remove();
-        $this->assertSameStructure($root, [
+        $root->assertStructure([
             'foo'     => ['bar' => ['baz.txt' => 'baz contents'], 'empty' => []],
             'bar.txt' => 'bar contents'
         ]);
@@ -55,8 +55,8 @@ trait LinkContractTests
     {
         $root = $this->root();
         $root->file('foo/file.lnk')->remove();
-        $root->subdirectory('dir.lnk')->remove();
-        $this->assertSameStructure($root, [
+        $root->directory('dir.lnk')->remove();
+        $root->assertStructure([
             'foo'     => ['bar' => ['baz.txt' => 'baz contents'], 'empty' => []],
             'bar.txt' => 'bar contents',
             'inv.lnk' => '@not/exists'
@@ -85,9 +85,9 @@ trait LinkContractTests
     public function test_setTarget_for_not_existing_link_creates_link(): void
     {
         $root = $this->root(['foo' => ['bar' => ['baz.txt' => 'contents']]]);
-        $root->link('bar.lnk')->setTarget($root->subdirectory('foo/bar'));
+        $root->link('bar.lnk')->setTarget($root->directory('foo/bar'));
         $root->link('baz.lnk')->setTarget($root->file('foo/bar/baz.txt'));
-        $this->assertSameStructure($root, [
+        $root->assertStructure([
             'foo'     => ['bar' => ['baz.txt' => 'contents']],
             'bar.lnk' => '@foo/bar',
             'baz.lnk' => '@foo/bar/baz.txt'
@@ -104,9 +104,9 @@ trait LinkContractTests
         ]);
 
         $root->link('file.lnk')->setTarget($root->file('bar/file.new'));
-        $root->link('dir.lnk')->setTarget($root->subdirectory('bar/dir.new'));
+        $root->link('dir.lnk')->setTarget($root->directory('bar/dir.new'));
 
-        $this->assertSameStructure($root, [
+        $root->assertStructure([
             'foo'      => ['file.old' => '', 'dir.old' => []],
             'bar'      => ['file.new' => '', 'dir.new' => []],
             'file.lnk' => '@bar/file.new',
@@ -138,7 +138,7 @@ trait LinkContractTests
     public function test_changing_target_to_different_type_throws_exception(): void
     {
         $root   = $this->root(['foo' => ['bar.file' => '', 'bar.dir' => []], 'bar.lnk' => '@foo/bar.file']);
-        $change = fn () => $root->link('bar.lnk')->setTarget($root->subdirectory('foo/bar.dir'));
+        $change = fn () => $root->link('bar.lnk')->setTarget($root->directory('foo/bar.dir'));
         $this->assertExceptionType(Exception\UnexpectedNodeType::class, $change);
     }
 

@@ -11,13 +11,13 @@
 
 namespace Shudd3r\Filesystem\Tests\Local;
 
-use Shudd3r\Filesystem\Tests\LinkContractTests;
+use Shudd3r\Filesystem\Tests\LinkTests;
 use Shudd3r\Filesystem\Exception;
 
 
-class LocalLinkTest extends LocalFilesystemTests
+class LocalLinkTest extends LinkTests
 {
-    use LinkContractTests;
+    use LocalFilesystemSetup;
 
     public function test_runtime_remove_failure(): void
     {
