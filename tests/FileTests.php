@@ -64,6 +64,17 @@ abstract class FileTests extends FilesystemTests
         $root->assertStructure(['foo.txt' => 'new']);
     }
 
+    public function test_contentStream_for_not_existing_file_returns_null(): void
+    {
+        $this->assertNull($this->root([])->file('foo.txt')->contentStream());
+    }
+
+    public function test_contentStream_for_streamable_file_returns_streamable_contents(): void
+    {
+        $file = $this->root(['foo.txt' => 'foo contents...'])->file('foo.txt');
+        $this->assertSame('foo contents...', $file->contentStream()->contents());
+    }
+
     public function test_writeStream_for_not_existing_file_creates_file_with_given_contents(): void
     {
         $root = $this->root([]);

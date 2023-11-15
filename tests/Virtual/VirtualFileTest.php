@@ -18,9 +18,9 @@ class VirtualFileTest extends FileTests
 {
     use VirtualFilesystemSetup;
 
-    public function test_contentStream_returns_null(): void
+    public function test_contentStream_for_streamable_file_returns_streamable_contents(): void
     {
-        $file = $this->root(['foo.txt' => 'contents'])->file('foo.txt');
-        $this->assertNull($file->contentStream());
+        $file = $this->root(['foo.txt' => 'foo contents...'])->file('foo.txt');
+        $this->assertNull($file->contentStream(), 'VirtualFile is not streamable - contentStream should return null');
     }
 }
