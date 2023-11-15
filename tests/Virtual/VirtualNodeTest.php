@@ -11,41 +11,14 @@
 
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
-use Shudd3r\Filesystem\Tests\FilesystemTests;
+use Shudd3r\Filesystem\Tests\NodeTests;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
 
 
-class VirtualNodeTest extends FilesystemTests
+class VirtualNodeTest extends NodeTests
 {
     use VirtualFilesystemSetup;
-
-    public function test_root_node_name_is_empty(): void
-    {
-        $this->assertEmpty($this->root([])->node()->name());
-    }
-
-    public function test_name_returns_relative_pathname(): void
-    {
-        $this->assertSame('foo/bar/baz', $this->root([])->node('foo/bar/baz')->name());
-    }
-
-    public function test_pathname_returns_absolute_filesystem_path(): void
-    {
-        $this->assertSame($this->path('foo/bar/baz'), $this->root([])->node('foo/bar/baz')->pathname());
-    }
-
-    public function test_exists_for_existing_node_returns_true(): void
-    {
-        $this->assertTrue($this->root(['foo' => ''])->node('foo')->exists());
-    }
-
-    public function test_exists_for_not_existing_node_returns_false(): void
-    {
-        $root = $this->root(['foo' => []]);
-        $this->assertFalse($root->node('bar')->exists());
-        $this->assertFalse($root->node('foo', false)->exists());
-    }
 
     public function test_node_permissions_for_valid_node_return_true(): void
     {
@@ -88,19 +61,5 @@ class VirtualNodeTest extends FilesystemTests
     {
         $node = $this->root(['bar' => ''])->node('foo');
         $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $node->validated(Node::EXISTS));
-    }
-
-    public function test_remove_for_not_existing_node_is_ignored(): void
-    {
-        $node = $this->root(['foo' => ['bar' => []]])->node('foo/bar', false);
-        $node->remove();
-        $this->assertFalse($node->exists());
-    }
-
-    public function test_remove_for_existing_node_deletes_node(): void
-    {
-        $node = $this->root(['foo' => ['empty' => []]])->node('foo/empty');
-        $node->remove();
-        $this->assertFalse($node->exists());
     }
 }
