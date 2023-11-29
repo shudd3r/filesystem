@@ -12,6 +12,7 @@
 namespace Shudd3r\Filesystem\Tests\Virtual\Root\TreeNode;
 
 use PHPUnit\Framework\TestCase;
+use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\MissingNode;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\File;
@@ -53,6 +54,21 @@ class MissingNodeTest extends TestCase
     {
         $this->missingNode($directory, 'foo', 'bar.lnk')->setTarget('vfs://foo/bar');
         $this->assertEquals(new Link('vfs://foo/bar'), $directory->node('foo', 'bar.lnk'));
+    }
+
+    public function test_isAllowed_returns_permissions_of_parent_directory(): void
+    {
+        $parent = new Directory([], Node::WRITE);
+        $node   = $this->missingNode($parent, 'foo');
+        $this->assertTrue($node->isAllowed(Node::WRITE));
+        $this->assertFalse($node->isAllowed(Node::READ));
+    }
+
+    public function test_remove_permission_depends_on_directory_write_access(): void
+    {
+        $parent = new Directory([], Node::READ);
+        $node   = $this->missingNode($parent, 'foo');
+        $this->assertFalse($node->isAllowed(Node::REMOVE));
     }
 
     private function missingNode(Directory &$directory = null, string ...$missingSegments): MissingNode

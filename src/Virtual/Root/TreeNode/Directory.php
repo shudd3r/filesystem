@@ -22,9 +22,10 @@ class Directory extends TreeNode
     /**
      * @param array<string, TreeNode> $nodes
      */
-    public function __construct(array $nodes = [])
+    public function __construct(array $nodes = [], int $access = null)
     {
-        $this->nodes = $nodes;
+        $this->nodes  = $nodes;
+        $this->access = $access ?? $this->access;
     }
 
     public function add(string $name, TreeNode $node): void

@@ -14,6 +14,7 @@ namespace Shudd3r\Filesystem\Tests\Virtual\Root\TreeNode;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\ParentContext;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
 
 
@@ -33,7 +34,7 @@ class ParentContextTest extends TestCase
     public function test_remove_method_removes_node_from_parent_directory(): void
     {
         $directory = new TreeNode\Directory(['foo' => new TreeNode\File('contents...')]);
-        $this->context(new TreeNode\File('contents...'), $directory)->remove();
+        $this->node(new TreeNode\File('contents...'), $directory)->remove();
         $this->assertEquals(new TreeNode\Directory(), $directory);
     }
 
@@ -44,7 +45,7 @@ class ParentContextTest extends TestCase
      */
     public function test_moveTo_non_context_node_throws_Exception(TreeNode $target): void
     {
-        $node = new ParentContext(new TreeNode\File(), new TreeNode\Directory(), 'foo');
+        $node = $this->node(new TreeNode\File());
         $this->expectException(Exception\UnsupportedOperation::class);
         $node->moveTo($target);
     }
@@ -56,7 +57,7 @@ class ParentContextTest extends TestCase
         ]);
 
         $target = new TreeNode\MissingNode($parent, 'bar');
-        $node   = new ParentContext($file, $dir, 'file');
+        $node   = $this->node($file, $dir, 'file');
         $node->moveTo($target);
 
         $this->assertEquals(new TreeNode\Directory([]), $dir);
@@ -66,15 +67,15 @@ class ParentContextTest extends TestCase
     public function test_moveTo_replaces_existing_node(): void
     {
         $parent = new TreeNode\Directory([
-            'foo' => $foo = new TreeNode\File('moved'),
-            'bar' => $bar = new TreeNode\File('replaced')
+            'moved'    => $moved = new TreeNode\File('moved'),
+            'replaced' => $replaced = new TreeNode\File('replaced')
         ]);
 
-        $target = new ParentContext($bar, $parent, 'bar');
-        $node   = new ParentContext($foo, $parent, 'foo');
+        $target = $this->node($replaced, $parent, 'replaced');
+        $node   = $this->node($moved, $parent, 'moved');
         $node->moveTo($target);
 
-        $this->assertEquals(new TreeNode\Directory(['bar' => $foo]), $parent);
+        $this->assertEquals(new TreeNode\Directory(['replaced' => $moved]), $parent);
     }
 
     public function test_moveTo_replaces_directory_link_node(): void
@@ -85,13 +86,13 @@ class ParentContextTest extends TestCase
             'baz.lnk' => $baz = new TreeNode\Link('moved')
         ]);
 
-        $node   = new ParentContext(new TreeNode\LinkedNode($baz, $this->stub()), $parent, 'baz.lnk');
-        $target = new ParentContext(new TreeNode\LinkedNode($foo, $this->stub()), $parent, 'foo.lnk');
+        $node   = $this->node(new TreeNode\LinkedNode($baz, $this->stub()), $parent, 'baz.lnk');
+        $target = $this->node(new TreeNode\LinkedNode($foo, $this->stub()), $parent, 'foo.lnk');
         $node->moveTo($target);
         $this->assertEquals(new TreeNode\Directory(['bar' => $bar, 'foo.lnk' => $baz]), $parent);
 
-        $node   = new ParentContext(new TreeNode\LinkedNode($baz, $this->stub()), $parent, 'foo.lnk');
-        $target = new ParentContext($bar, $parent, 'bar');
+        $node   = $this->node(new TreeNode\LinkedNode($baz, $this->stub()), $parent, 'foo.lnk');
+        $target = $this->node($bar, $parent, 'bar');
         $node->moveTo($target);
         $this->assertEquals(new TreeNode\Directory(['bar' => $baz]), $parent);
     }
@@ -105,50 +106,67 @@ class ParentContextTest extends TestCase
 
         $expected = clone $parent;
 
-        $node = $this->context($foo, $parent);
-        $this->context($foo, $parent)->moveTo($node);
+        $node = $this->node($foo, $parent);
+        $this->node($foo, $parent)->moveTo($node);
         $this->assertEquals($expected, $parent);
 
-        $node = $this->context(new TreeNode\LinkedNode($bar, $this->stub()), $parent);
-        $this->context(new TreeNode\LinkedNode($bar, $this->stub()), $parent)->moveTo($node);
+        $node = $this->node(new TreeNode\LinkedNode($bar, $this->stub()), $parent);
+        $this->node(new TreeNode\LinkedNode($bar, $this->stub()), $parent)->moveTo($node);
         $this->assertEquals($expected, $parent);
     }
 
     public function test_methods_delegated_to_wrapped_node(): void
     {
-        $node    = new TreeNode\Directory(['file.txt' => new TreeNode\File('foo file')]);
-        $context = $this->context($node, new TreeNode\Directory());
-        $this->assertTrue($context->exists());
-        $this->assertTrue($context->isDir());
-        $this->assertTrue($context->isValid());
-        $this->assertSame(['file.txt'], iterator_to_array($context->filenames(), false));
+        $node = $this->node(new TreeNode\Directory(['file.txt' => new TreeNode\File('foo file')]));
+        $this->assertTrue($node->exists());
+        $this->assertTrue($node->isDir());
+        $this->assertTrue($node->isValid());
+        $this->assertSame(['file.txt'], iterator_to_array($node->filenames(), false));
 
-        $node    = new TreeNode\File('foo file');
-        $context = $this->context($node, new TreeNode\Directory());
-        $this->assertTrue($context->isFile());
-        $this->assertSame('foo file', $context->contents());
-        $context->putContents('new contents');
-        $this->assertSame('new contents', $context->contents());
+        $node = $this->node(new TreeNode\File('foo file'));
+        $this->assertTrue($node->isFile());
+        $this->assertSame('foo file', $node->contents());
+        $node->putContents('new contents');
+        $this->assertSame('new contents', $node->contents());
 
-        $node    = new TreeNode\Link('vfs://node/path');
-        $context = $this->context($node, new TreeNode\Directory());
-        $this->assertTrue($context->isLink());
-        $this->assertSame('vfs://node/path', $context->target());
-        $context->setTarget('vfs://new/node');
-        $this->assertSame('vfs://new/node', $context->target());
+        $node = $this->node(new TreeNode\Link('vfs://node/path'));
+        $this->assertTrue($node->isLink());
+        $this->assertSame('vfs://node/path', $node->target());
+        $node->setTarget('vfs://new/node');
+        $this->assertSame('vfs://new/node', $node->target());
 
-        $node    = new TreeNode\InvalidNode('foo', 'bar');
-        $context = $this->context($node, new TreeNode\Directory());
-        $this->assertFalse($context->exists());
-        $this->assertFalse($context->isDir());
-        $this->assertFalse($context->isFile());
-        $this->assertFalse($context->isLink());
-        $this->assertFalse($context->isValid());
+        $node = $this->node(new TreeNode\InvalidNode('foo', 'bar'));
+        $this->assertFalse($node->exists());
+        $this->assertFalse($node->isDir());
+        $this->assertFalse($node->isFile());
+        $this->assertFalse($node->isLink());
+        $this->assertFalse($node->isValid());
     }
 
-    private function context(TreeNode $node, TreeNode\Directory $parent): ParentContext
+    public function test_context_permissions_depend_on_wrapped_node(): void
     {
-        return new ParentContext($node, $parent, 'foo');
+        $node = $this->node(new TreeNode\File(''));
+        $this->assertTrue($node->isAllowed(Node::READ | Node::WRITE));
+
+        $node = $this->node(new TreeNode\File('', Node::READ));
+        $this->assertFalse($node->isAllowed(Node::READ | Node::WRITE));
+        $this->assertTrue($node->isAllowed(Node::READ));
+        $this->assertFalse($node->isAllowed(Node::WRITE));
+
+        $node = $this->node(new TreeNode\File('', Node::WRITE));
+        $this->assertFalse($node->isAllowed(Node::READ));
+        $this->assertTrue($node->isAllowed(Node::WRITE));
+    }
+
+    public function test_remove_permission_depends_on_parent_write_access(): void
+    {
+        $node = $this->node(new TreeNode\File('foo file'), new TreeNode\Directory([], Node::READ));
+        $this->assertFalse($node->isAllowed(Node::REMOVE));
+    }
+
+    private function node(TreeNode $node, TreeNode\Directory $parent = null, string $name = 'foo'): ParentContext
+    {
+        return new ParentContext($node, $parent ?? new TreeNode\Directory(), $name);
     }
 
     private function stub(): TreeNode

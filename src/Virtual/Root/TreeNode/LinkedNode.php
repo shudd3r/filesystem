@@ -81,6 +81,11 @@ class LinkedNode extends TreeNode
         return $this->node->missingSegments();
     }
 
+    public function isAllowed(int $access): bool
+    {
+        return $this->node->isAllowed($access);
+    }
+
     protected function baseNode(TreeNode $overwrite = null): ?TreeNode
     {
         if (!$overwrite) { return $this->link; }

@@ -12,11 +12,14 @@
 namespace Shudd3r\Filesystem\Virtual\Root;
 
 use Shudd3r\Filesystem\Exception;
+use Shudd3r\Filesystem\Node;
 use Generator;
 
 
 abstract class TreeNode
 {
+    protected int $access = Node::READ | Node::WRITE;
+
     public function node(string ...$pathSegments): self
     {
         throw new Exception\UnsupportedOperation();
@@ -94,7 +97,7 @@ abstract class TreeNode
 
     public function isAllowed(int $access): bool
     {
-        return true;
+        return ($access & $this->access) === $access;
     }
 
     protected function attachNode(TreeNode $node): void
