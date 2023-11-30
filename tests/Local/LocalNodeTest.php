@@ -22,38 +22,53 @@ class LocalNodeTest extends NodeTests
 
     public function test_permissions_for_existing_node(): void
     {
-        $node = $this->root(['foo' => []])->node('foo');
+        $root = $this->root(
+            ['foo' => [], 'bar' => ['file' => '...'], 'baz' => []],
+            ['bar' => Node::READ, 'baz' => Node::WRITE]
+        );
+
+        $node = $root->node('foo');
         $this->assertTrue($node->isReadable());
         $this->assertTrue($node->isWritable());
         $this->assertTrue($node->isRemovable());
 
-        $this->override('is_readable', false, $node->pathname());
-        $this->assertFalse($node->isReadable());
+        $node = $root->node('bar');
+        $this->assertTrue($node->isReadable());
+        $this->assertFalse($node->isWritable());
+        $this->assertFalse($node->isRemovable());
+
+        $node = $root->node('bar/file');
+        $this->assertTrue($node->isReadable());
         $this->assertTrue($node->isWritable());
         $this->assertFalse($node->isRemovable());
 
-        $this->override('is_writable', false, $node->pathname());
+        $node = $root->node('baz');
         $this->assertFalse($node->isReadable());
-        $this->assertFalse($node->isWritable());
+        $this->assertTrue($node->isWritable());
         $this->assertFalse($node->isRemovable());
     }
 
     public function test_permissions_for_not_existing_node_depend_on_ancestor_permissions(): void
     {
-        $node = $this->root(['foo' => []])->node('foo/bar/dir');
+        $root = $this->root(
+            ['foo' => [], 'bar' => [], 'baz' => []],
+            ['bar' => Node::READ, 'baz' => Node::WRITE]
+        );
+
+        $node = $root->node('foo/file');
         $this->assertTrue($node->isReadable());
         $this->assertTrue($node->isWritable());
         $this->assertTrue($node->isRemovable());
 
-        $this->override('is_readable', false, $this->path('foo'));
+        $node = $root->node('bar/file');
+        $this->assertTrue($node->isReadable());
+        $this->assertFalse($node->isWritable());
+        $this->assertFalse($node->isRemovable());
+
+        $node = $root->node('baz/file');
         $this->assertFalse($node->isReadable());
         $this->assertTrue($node->isWritable());
         $this->assertTrue($node->isRemovable());
-
-        $this->override('is_writable', false, $this->path('foo'));
-        $this->assertFalse($node->isReadable());
-        $this->assertFalse($node->isWritable());
-        $this->assertFalse($node->isRemovable());
     }
 
     public function test_permissions_for_invalid_node_type_return_false(): void
@@ -84,39 +99,28 @@ class LocalNodeTest extends NodeTests
 
     public function test_instance_validation_with_access_permissions(): void
     {
-        $node = $this->root(['foo' => []])->node('foo/bar.txt');
+        $root = $this->root(
+            ['foo' => [], 'bar' => [], 'baz' => []],
+            ['bar' => Node::READ, 'baz' => Node::WRITE]
+        );
+
+        $node = $root->node('foo');
         $this->assertSame($node, $node->validated(Node::READ | Node::WRITE | Node::REMOVE));
 
-        $this->override('is_readable', false, $this->path('foo'));
-        $check = fn () => $node->validated(Node::READ);
-        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
-        $this->assertSame($node, $node->validated(Node::WRITE));
-
-        $this->override('is_writable', false, $this->path('foo'));
-        $check = fn () => $node->validated(Node::WRITE);
-        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
-
-        $node = $this->root(['foo' => ['bar.txt' => '']])->node('foo/bar.txt');
-        $this->assertSame($node, $node->validated(Node::READ | Node::WRITE));
-
-        $this->override('is_writable', false, $this->path('foo/bar.txt'));
-        $check = fn () => $node->validated(Node::WRITE | Node::READ);
-        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
+        $node = $root->node('bar');
         $this->assertSame($node, $node->validated(Node::READ));
+        $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $node->validated(Node::WRITE));
 
-        $this->override('is_readable', false, $this->path('foo/bar.txt'));
-        $this->override('is_writable', true, $this->path('foo/bar.txt'));
-        $check = fn () => $node->validated(Node::WRITE | Node::READ);
-        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $check);
+        $node = $root->node('baz');
         $this->assertSame($node, $node->validated(Node::WRITE));
+        $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $node->validated(Node::READ));
     }
 
-    public function test_node_of_non_writable_directory_cannot_be_removed(): void
+    public function test_node_from_non_writable_directory_cannot_be_removed(): void
     {
-        $node = $this->root(['foo' => ['bar' => []]])->node('foo/bar');
-        $this->override('is_writable', false, $this->path('foo'));
-        $remove = fn () => $node->remove();
-        $this->assertExceptionType(Exception\FailedPermissionCheck::class, $remove);
+        $root = $this->root(['foo' => ['bar' => '...']], ['foo' => Node::READ]);
+        $node = $root->node('foo/bar');
+        $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $node->remove());
     }
 
     public function test_root_node_cannot_be_removed(): void

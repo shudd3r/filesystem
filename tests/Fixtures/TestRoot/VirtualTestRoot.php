@@ -14,6 +14,10 @@ namespace Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
 use Shudd3r\Filesystem\Virtual\VirtualNode;
 use Shudd3r\Filesystem\Virtual\VirtualDirectory;
 use Shudd3r\Filesystem\Virtual\Root;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\File;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
+use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
 use Shudd3r\Filesystem\Tests\Doubles\FakeVirtualNode;
@@ -22,11 +26,13 @@ use PHPUnit\Framework\Assert;
 
 class VirtualTestRoot extends TestRoot
 {
-    private Root\TreeNode\Directory $tree;
+    private Directory $tree;
+    private array     $access;
 
-    public function __construct(Pathname $rootPath, array $structure = [])
+    public function __construct(Pathname $rootPath, array $structure = [], array $access = [])
     {
-        $this->tree = $this->createNodes($structure);
+        $this->access = $access;
+        $this->tree   = $this->createNodes($structure);
         parent::__construct(VirtualDirectory::root($rootPath->absolute(), $this->tree), $rootPath);
     }
 
@@ -41,15 +47,24 @@ class VirtualTestRoot extends TestRoot
         Assert::assertEquals($this->createNodes($structure), $this->tree, $message);
     }
 
-    private function createNodes(array $tree): Root\TreeNode\Directory
+    private function createNodes(array $tree, string $path = ''): Directory
     {
-        $createNode = fn ($value) => is_array($value) ? $this->createNodes($value) : $this->leafNode($value);
-        return new Root\TreeNode\Directory(array_map($createNode, $tree));
+        foreach ($tree as $name => &$value) {
+            $pathName = $path ? $path . '/' . $name : $name;
+            $value    = is_array($value) ? $this->createNodes($value, $pathName) : $this->leafNode($value, $pathName);
+        }
+
+        return new Directory($tree, $this->mode($path));
     }
 
-    private function leafNode(string $value): Root\TreeNode
+    private function leafNode(string $value, string $path): Root\TreeNode
     {
-        $path = str_starts_with($value, '@') ? 'vfs://' . substr($value, 1) : null;
-        return $path ? new Root\TreeNode\Link($path) : new Root\TreeNode\File($value);
+        $linked = str_starts_with($value, '@') ? 'vfs://' . substr($value, 1) : null;
+        return $linked ? new Link($linked) : new File($value, $this->mode($path));
+    }
+
+    private function mode(string $path): int
+    {
+        return $this->access[$path] ?? (Node::READ | Node::WRITE);
     }
 }

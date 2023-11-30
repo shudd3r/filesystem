@@ -14,7 +14,9 @@ namespace Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
 use Shudd3r\Filesystem\Local\LocalNode;
 use Shudd3r\Filesystem\Local\LocalDirectory;
 use Shudd3r\Filesystem\Generic\Pathname;
+use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
+use Shudd3r\Filesystem\Tests\Fixtures\Override;
 use Shudd3r\Filesystem\Tests\Fixtures\TempFiles;
 use Shudd3r\Filesystem\Tests\Doubles\FakeLocalNode;
 use PHPUnit\Framework\Assert;
@@ -24,12 +26,13 @@ class LocalTestRoot extends TestRoot
 {
     private TempFiles $temp;
 
-    public function __construct(TempFiles $temp, array $structure = [])
+    public function __construct(TempFiles $temp, array $structure = [], array $access = [])
     {
         $path = $temp->directory();
         $this->temp = $temp;
         parent::__construct(LocalDirectory::root($path), Pathname::root($path, DIRECTORY_SEPARATOR));
         $this->createNodes($structure);
+        $this->overrideAccess($access);
     }
 
     public function node(string $name = '', bool $typeMatch = true): LocalNode
@@ -85,5 +88,14 @@ class LocalTestRoot extends TestRoot
     {
         $file = !str_starts_with($value, '@') && $this->temp->file($name, $value);
         return $file ? [] : [$name => substr($value, 1)];
+    }
+
+    private function overrideAccess(array $access): void
+    {
+        foreach ($access as $name => $permissions) {
+            $path = $this->temp->pathname($name);
+            ($permissions & Node::READ) === 0 && Override::set('is_readable', false, $path);
+            ($permissions & Node::WRITE) === 0 && Override::set('is_writable', false, $path);
+        }
     }
 }

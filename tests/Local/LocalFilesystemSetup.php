@@ -39,9 +39,9 @@ trait LocalFilesystemSetup
         Override::reset();
     }
 
-    protected function root(array $structure = null): TestRoot\LocalTestRoot
+    protected function root(array $structure = null, array $access = []): TestRoot\LocalTestRoot
     {
-        return new TestRoot\LocalTestRoot(self::$temp, $structure ?? $this->exampleStructure());
+        return new TestRoot\LocalTestRoot(self::$temp, $structure ?? $this->exampleStructure(), $access);
     }
 
     protected function path(string $name = ''): string
@@ -51,26 +51,11 @@ trait LocalFilesystemSetup
 
     private function assertIOException(string $exception, callable $procedure, string $override, $argValue = null): void
     {
-        $this->override($override, function () {
+        Override::set($override, function () {
             trigger_error('emulated warning', E_USER_WARNING);
             return false;
         }, $argValue);
         $this->assertExceptionType($exception, $procedure);
-        $this->removeOverride($override);
-    }
-
-    /**
-     * @param string         $function
-     * @param callable|mixed $returnValue fn() => mixed
-     * @param mixed          $argValue    Trigger override for this value
-     */
-    private function override(string $function, $returnValue, $argValue = null): void
-    {
-        Override::set($function, $returnValue, $argValue);
-    }
-
-    private function removeOverride(string $function): void
-    {
-        Override::remove($function);
+        Override::remove($override);
     }
 }
