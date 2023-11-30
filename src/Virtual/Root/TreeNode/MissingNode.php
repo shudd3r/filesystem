@@ -58,8 +58,9 @@ class MissingNode extends TreeNode
 
     public function isAllowed(int $access): bool
     {
-        $checkRemove = $access & Node::REMOVE === 0 || $this->directory->isAllowed(Node::WRITE);
-        return $checkRemove && $this->directory->isAllowed($access & ~Node::REMOVE);
+        return $access & Node::REMOVE
+            ? $this->directory->isAllowed($access & ~Node::REMOVE | Node::WRITE)
+            : $this->directory->isAllowed($access);
     }
 
     protected function attachNode(TreeNode $node): void

@@ -95,8 +95,9 @@ class ParentContext extends TreeNode
 
     public function isAllowed(int $access): bool
     {
-        $checkRemove = $access & Node::REMOVE === 0 || $this->parent->isAllowed(Node::WRITE);
-        return $checkRemove && $this->node->isAllowed($access & ~Node::REMOVE);
+        return $access & Node::REMOVE
+            ? $this->parent->isAllowed(Node::WRITE) && $this->node->isAllowed(Node::READ | Node::WRITE)
+            : $this->node->isAllowed($access);
     }
 
     protected function attachNode(TreeNode $node): void

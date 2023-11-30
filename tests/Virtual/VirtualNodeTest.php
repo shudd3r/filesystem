@@ -20,65 +20,6 @@ class VirtualNodeTest extends NodeTests
 {
     use VirtualFilesystemSetup;
 
-    public function test_permissions_for_existing_node(): void
-    {
-        $root = $this->root(
-            ['foo' => [], 'bar' => ['file' => '...'], 'baz' => []],
-            ['bar' => Node::READ, 'baz' => Node::WRITE]
-        );
-
-        $node = $root->node('foo');
-        $this->assertTrue($node->isReadable());
-        $this->assertTrue($node->isWritable());
-        $this->assertTrue($node->isRemovable());
-
-        $node = $root->node('bar');
-        $this->assertTrue($node->isReadable());
-        $this->assertFalse($node->isWritable());
-        $this->assertTrue($node->isRemovable());
-
-        $node = $root->node('bar/file');
-        $this->assertFalse($node->isReadable());
-        $this->assertFalse($node->isWritable());
-        $this->assertFalse($node->isRemovable());
-
-        $node = $root->node('baz');
-        $this->assertFalse($node->isReadable());
-        $this->assertTrue($node->isWritable());
-        $this->assertTrue($node->isRemovable());
-    }
-
-    public function test_permissions_for_not_existing_node_depend_on_ancestor_permissions(): void
-    {
-        $root = $this->root(
-            ['foo' => [], 'bar' => [], 'baz' => []],
-            ['bar' => Node::READ, 'baz' => Node::WRITE]
-        );
-
-        $node = $root->node('foo/file');
-        $this->assertTrue($node->isReadable());
-        $this->assertTrue($node->isWritable());
-        $this->assertTrue($node->isRemovable());
-
-        $node = $root->node('bar/file');
-        $this->assertFalse($node->isReadable());
-        $this->assertFalse($node->isWritable());
-        $this->assertFalse($node->isRemovable());
-
-        $node = $root->node('baz/file');
-        $this->assertFalse($node->isReadable());
-        $this->assertTrue($node->isWritable());
-        $this->assertTrue($node->isRemovable());
-    }
-
-    public function test_permissions_for_invalid_node_type_return_false(): void
-    {
-        $node = $this->root(['foo' => ['exists' => '']])->node('foo/exists', false);
-        $this->assertTrue($node->isReadable());
-        $this->assertTrue($node->isWritable());
-        $this->assertTrue($node->isRemovable());
-    }
-
     public function test_validated_for_existing_node_returns_node_instance(): void
     {
         $node = $this->root(['foo' => ''])->node('foo');

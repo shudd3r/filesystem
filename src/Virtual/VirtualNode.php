@@ -45,17 +45,17 @@ abstract class VirtualNode implements Node
 
     public function isReadable(): bool
     {
-        return $this->node()->isAllowed(self::READ);
+        return $this->isAllowed(self::READ);
     }
 
     public function isWritable(): bool
     {
-        return $this->node()->isAllowed(self::WRITE);
+        return $this->isAllowed(self::WRITE);
     }
 
     public function isRemovable(): bool
     {
-        return $this->node()->isAllowed(self::REMOVE);
+        return $this->isAllowed(self::REMOVE);
     }
 
     public function validated(int $flags = self::PATH): self
@@ -89,5 +89,12 @@ abstract class VirtualNode implements Node
     protected function node(): TreeNode
     {
         return $this->root->node($this->pathname());
+    }
+
+    private function isAllowed(int $access): bool
+    {
+        $node = $this->node();
+        if ($node->exists() && !$this->nodeExists($node)) { return false; }
+        return $node->isAllowed($access);
     }
 }
