@@ -18,9 +18,10 @@ class File extends TreeNode
 {
     private string $contents;
 
-    public function __construct(string $contents = '')
+    public function __construct(string $contents = '', int $access = null)
     {
         $this->contents = $contents;
+        $this->access   = $access ?? $this->access;
     }
 
     public function node(string ...$pathSegments): TreeNode

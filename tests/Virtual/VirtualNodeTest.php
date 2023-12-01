@@ -12,54 +12,9 @@
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use Shudd3r\Filesystem\Tests\NodeTests;
-use Shudd3r\Filesystem\Node;
-use Shudd3r\Filesystem\Exception;
 
 
 class VirtualNodeTest extends NodeTests
 {
     use VirtualFilesystemSetup;
-
-    public function test_node_permissions_for_valid_node_return_true(): void
-    {
-        $node = $this->root(['foo.txt' => 'contents...'])->node('foo.txt');
-        $this->assertTrue($node->isReadable());
-        $this->assertTrue($node->isWritable());
-        $this->assertTrue($node->isRemovable());
-    }
-
-    public function test_permissions_for_invalid_node_return_false(): void
-    {
-        $node = $this->root(['foo.txt' => 'contents...'])->node('foo.txt/exists');
-        $this->assertFalse($node->isReadable());
-        $this->assertFalse($node->isWritable());
-        $this->assertFalse($node->isRemovable());
-    }
-
-    public function test_validated_for_existing_node_returns_node_instance(): void
-    {
-        $node = $this->root(['foo' => ''])->node('foo');
-        $this->assertSame($node, $node->validated());
-    }
-
-    public function test_validated_for_invalid_path_throws_exception(): void
-    {
-        $node = $this->root(['file' => ''])->node('file/bar');
-        $this->assertExceptionType(Exception\UnexpectedLeafNode::class, fn () => $node->validated());
-
-        $node = $this->root(['foo' => ['bar.txt' => '']])->node('foo/bar.txt', false);
-        $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $node->validated());
-    }
-
-    public function test_validated_for_stale_link_throws_exception(): void
-    {
-        $node = $this->root(['foo.lnk' => '@bar.txt'])->node('foo.lnk');
-        $this->assertExceptionType(Exception\UnexpectedNodeType::class, fn () => $node->validated());
-    }
-
-    public function test_validated_with_exists_flag_for_not_existing_path_throws_exception(): void
-    {
-        $node = $this->root(['bar' => ''])->node('foo');
-        $this->assertExceptionType(Exception\NodeNotFound::class, fn () => $node->validated(Node::EXISTS));
-    }
 }

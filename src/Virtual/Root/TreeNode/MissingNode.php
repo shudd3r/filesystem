@@ -12,6 +12,7 @@
 namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Node;
 
 
 class MissingNode extends TreeNode
@@ -53,6 +54,13 @@ class MissingNode extends TreeNode
     public function missingSegments(): array
     {
         return $this->missingSegments;
+    }
+
+    public function isAllowed(int $access): bool
+    {
+        return $access & Node::REMOVE
+            ? $this->directory->isAllowed($access & ~Node::REMOVE | Node::WRITE)
+            : $this->directory->isAllowed($access);
     }
 
     protected function attachNode(TreeNode $node): void

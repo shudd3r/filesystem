@@ -17,9 +17,9 @@ use Shudd3r\Filesystem\Tests\Fixtures\TestRoot\VirtualTestRoot;
 
 trait VirtualFilesystemSetup
 {
-    protected function root(array $structure = null): VirtualTestRoot
+    protected function root(array $structure = null, array $access = []): VirtualTestRoot
     {
-        return new VirtualTestRoot(Pathname::root('vfs://'), $structure ?? $this->exampleStructure());
+        return new VirtualTestRoot(Pathname::root('vfs://'), $structure ?? $this->exampleStructure(), $access);
     }
 
     protected function path(string $name = ''): string

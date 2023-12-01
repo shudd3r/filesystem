@@ -32,7 +32,7 @@ abstract class FilesystemTests extends TestCase
         'inv.lnk' => '@not/exists'
     ];
 
-    abstract protected function root(array $structure = null): Fixtures\TestRoot;
+    abstract protected function root(array $structure = null, array $access = []): Fixtures\TestRoot;
 
     abstract protected function path(string $name = ''): string;
 

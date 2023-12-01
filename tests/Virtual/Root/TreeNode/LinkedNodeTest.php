@@ -13,56 +13,66 @@ namespace Shudd3r\Filesystem\Tests\Virtual\Root\TreeNode;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Node;
 
 
 class LinkedNodeTest extends TestCase
 {
     public function test_isLink_method_returns_true(): void
     {
-        $this->assertTrue($this->linked()->isLink());
+        $this->assertTrue($this->node()->isLink());
     }
 
     public function test_target_method_returns_link_targetPath(): void
     {
-        $this->assertSame('vfs://foo/bar', $this->linked()->target());
+        $this->assertSame('vfs://foo/bar', $this->node()->target());
     }
 
     public function test_setTarget_method_changes_link_targetPath(): void
     {
-        $linked = $this->linked($link);
-        $linked->setTarget('vfs://new/path');
+        $node = $this->node($link);
+        $node->setTarget('vfs://new/path');
         $this->assertSame('vfs://new/path', $link->target());
     }
 
     public function test_other_methods_are_delegated_to_wrapped_node(): void
     {
-        $node   = new TreeNode\Directory(['foo' => new TreeNode\File()]);
-        $linked = $this->linked($lnk, $node);
-        $this->assertTrue($linked->exists());
-        $this->assertTrue($linked->isDir());
-        $this->assertTrue($linked->isValid());
-        $this->assertSame(['foo'], iterator_to_array($linked->filenames(), false));
+        $linked = new TreeNode\Directory(['foo' => new TreeNode\File()]);
+        $node   = $this->node($lnk, $linked);
+        $this->assertTrue($node->exists());
+        $this->assertTrue($node->isDir());
+        $this->assertTrue($node->isValid());
+        $this->assertSame(['foo'], iterator_to_array($node->filenames(), false));
 
-        $node   = new TreeNode\File('old contents...');
-        $linked = $this->linked($lnk, $node);
-        $this->assertTrue($linked->isFile());
-        $this->assertSame('old contents...', $linked->contents());
-        $linked->putContents('new contents...');
-        $this->assertSame('new contents...', $linked->contents());
+        $linked = new TreeNode\File('old contents...');
+        $node   = $this->node($lnk, $linked);
+        $this->assertTrue($node->isFile());
+        $this->assertSame('old contents...', $node->contents());
+        $node->putContents('new contents...');
+        $this->assertSame('new contents...', $node->contents());
 
-        $node   = new TreeNode\InvalidNode('foo', 'bar');
-        $linked = $this->linked($lnk, $node);
-        $this->assertFalse($linked->exists());
-        $this->assertFalse($linked->isFile());
-        $this->assertFalse($linked->isDir());
-        $this->assertFalse($linked->isValid());
-        $this->assertSame(['foo', 'bar'], $linked->missingSegments());
+        $linked = new TreeNode\InvalidNode('foo', 'bar');
+        $node   = $this->node($lnk, $linked);
+        $this->assertFalse($node->exists());
+        $this->assertFalse($node->isFile());
+        $this->assertFalse($node->isDir());
+        $this->assertFalse($node->isValid());
+        $this->assertSame(['foo', 'bar'], $node->missingSegments());
     }
 
-    private function linked(?TreeNode\Link &$link = null, ?TreeNode &$node = null): TreeNode\LinkedNode
+    public function test_isAllowed_returns_permissions_of_wrapped_node(): void
+    {
+        $linked = new TreeNode\File('foo', Node::WRITE);
+        $node   = $this->node($lnk, $linked);
+        $this->assertFalse($node->isAllowed(Node::READ | Node::WRITE));
+        $this->assertTrue($node->isAllowed(Node::WRITE));
+        $this->assertFalse($node->isAllowed(Node::READ));
+    }
+
+    private function node(?TreeNode\Link &$link = null, ?TreeNode &$linked = null): TreeNode\LinkedNode
     {
         $link ??= new TreeNode\Link('vfs://foo/bar');
-        $node ??= new TreeNode\Directory();
-        return new TreeNode\LinkedNode($link, $node);
+        $linked ??= new TreeNode\Directory();
+        return new TreeNode\LinkedNode($link, $linked);
     }
 }

@@ -13,6 +13,7 @@ namespace Shudd3r\Filesystem\Tests\Virtual\Root;
 
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Exception;
 
 
@@ -37,6 +38,7 @@ class TreeNodeTest extends TestCase
         $this->assertException(fn () => $node->setTarget('foo'));
         $this->assertSame([], $node->missingSegments());
         $this->assertException(fn () => $node->moveTo($node));
+        $this->assertTrue($node->isAllowed(Node::READ | Node::WRITE) && !$node->isAllowed(Node::REMOVE));
     }
 
     private function assertException(callable $methodCall): void

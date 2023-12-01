@@ -78,7 +78,10 @@ class Root
         while ($node instanceof TreeNode\Link) {
             $path = $node->target();
             if (in_array($path, $resolvedPaths, true)) { break; }
-            $node = $this->nodes->node(...$this->pathSegments($path), ...$node->missingSegments());
+            $expand = $node->missingSegments();
+            $linked = $this->nodes->node(...$this->pathSegments($path));
+            $linked->exists() || $linked = new TreeNode\InvalidNode();
+            $node = $expand ? $linked->node(...$expand) : $linked;
             $resolvedPaths[] = $path;
         }
 

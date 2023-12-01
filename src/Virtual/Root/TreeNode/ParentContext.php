@@ -11,6 +11,7 @@
 
 namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
+use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 use Generator;
 
@@ -90,6 +91,13 @@ class ParentContext extends TreeNode
         if (!$nodeToMove = $this->baseNode($overwrite)) { return; }
         $target->attachNode($nodeToMove);
         $this->remove();
+    }
+
+    public function isAllowed(int $access): bool
+    {
+        return $access & Node::REMOVE
+            ? $this->parent->isAllowed(Node::WRITE) && $this->node->isAllowed(Node::READ | Node::WRITE)
+            : $this->node->isAllowed($access);
     }
 
     protected function attachNode(TreeNode $node): void
