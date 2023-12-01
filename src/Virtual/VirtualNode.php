@@ -61,19 +61,9 @@ abstract class VirtualNode implements Node
     public function validated(int $flags = self::PATH): self
     {
         $node = $this->node();
-        if ($this->nodeExists($node)) { return $this; }
-        if ($flags & self::EXISTS) {
-            throw Exception\NodeNotFound::forNode($this);
-        }
-
-        if ($node->exists() || $node->isLink()) {
-            throw Exception\UnexpectedNodeType::forNode($this);
-        }
-
-        if (!$node->isValid()) {
-            $collision = substr($this->pathname(), 0, -strlen('/' . implode('/', $node->missingSegments())));
-            throw Exception\UnexpectedLeafNode::forNode($this, $collision);
-        }
+        $this->verifyNodeType($node, $flags);
+        $this->verifyPath($node);
+        $this->verifyAccess($node, $flags);
 
         return $this;
     }
@@ -93,8 +83,45 @@ abstract class VirtualNode implements Node
 
     private function isAllowed(int $access): bool
     {
-        $node = $this->node();
-        if ($node->exists() && !$this->nodeExists($node)) { return false; }
-        return $node->isAllowed($access);
+        $node  = $this->node();
+        $valid = $node->isValid() && (!$node->exists() || $this->nodeExists($node));
+        return $valid && $node->isAllowed($access);
+    }
+
+    private function verifyNodeType(TreeNode $node, int $flags): void
+    {
+        if ($this->nodeExists($node)) { return; }
+        if ($node->exists() || $node->isLink()) {
+            throw Exception\UnexpectedNodeType::forNode($this);
+        }
+        if ($flags & self::EXISTS) {
+            throw Exception\NodeNotFound::forNode($this);
+        }
+    }
+
+    private function verifyPath(TreeNode $node): void
+    {
+        if ($node->isValid() || $node->isLink()) { return; }
+        $collision = substr($this->pathname(), 0, -strlen('/' . implode('/', $node->missingSegments())));
+        throw Exception\UnexpectedLeafNode::forNode($this, $collision);
+    }
+
+    private function verifyAccess(TreeNode $node, int $flags): void
+    {
+        if ($flags & self::READ && !$node->isAllowed(self::READ)) {
+            throw Exception\FailedPermissionCheck::forNodeRead($this);
+        }
+
+        if ($flags & self::WRITE && !$node->isAllowed(self::WRITE)) {
+            throw Exception\FailedPermissionCheck::forNodeWrite($this);
+        }
+
+        if ($flags & ~self::REMOVE) { return; }
+        if (!$this->path->relative()) {
+            throw Exception\FailedPermissionCheck::forRootRemove($this);
+        }
+        if (!$node->isAllowed(self::REMOVE)) {
+            throw Exception\FailedPermissionCheck::forNodeRemove($this, dirname($this->pathname()));
+        }
     }
 }

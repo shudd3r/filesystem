@@ -41,8 +41,6 @@ class RootTest extends TestCase
         $this->assertSame(['bar', 'baz'], $node->missingSegments());
         $this->assertInstanceOf(MissingNode::class, $node = $root->node('vfs://dir.lnk/foo/bar'));
         $this->assertSame(['foo', 'bar'], $node->missingSegments());
-        $this->assertInstanceOf(MissingNode::class, $node = $root->node('vfs://inv.lnk/foo'));
-        $this->assertSame(['baz', 'foo'], $node->missingSegments());
     }
 
     public function test_node_for_invalid_path_returns_InvalidNode(): void
@@ -54,6 +52,8 @@ class RootTest extends TestCase
         $this->assertSame(['bar', 'baz'], $node->missingSegments());
         $this->assertInstanceOf(InvalidNode::class, $node = $root->node('vfs://foo/file.lnk/baz'));
         $this->assertSame(['baz'], $node->missingSegments());
+        $this->assertInstanceOf(InvalidNode::class, $node = $root->node('vfs://inv.lnk/foo'));
+        $this->assertSame(['foo'], $node->missingSegments());
     }
 
     public function test_node_for_existing_path_returns_parent_context_path(): void
