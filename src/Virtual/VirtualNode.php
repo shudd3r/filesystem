@@ -116,12 +116,19 @@ abstract class VirtualNode implements Node
             throw Exception\PermissionDenied::forNodeWrite($this);
         }
 
-        if ($flags & ~self::REMOVE) { return; }
-        if (!$this->path->relative()) {
-            throw Exception\PermissionDenied::forRootRemove($this);
+        if ($flags & self::REMOVE && !$node->isAllowed(self::REMOVE)) {
+            throw $this->removeDeniedException($node);
         }
-        if (!$node->isAllowed(self::REMOVE)) {
-            throw Exception\PermissionDenied::forNodeRemove($this, dirname($this->pathname()));
+    }
+
+    private function removeDeniedException(TreeNode $node): Exception\PermissionDenied
+    {
+        if (!$this->name()) {
+            return Exception\PermissionDenied::forRootRemove($this);
         }
+
+        return $node->isAllowed(self::READ | self::WRITE)
+            ? Exception\PermissionDenied::forNodeRemove($this, dirname($this->pathname()))
+            : Exception\PermissionDenied::forNodeRemove($this);
     }
 }

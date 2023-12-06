@@ -51,12 +51,13 @@ class LocalDirectoryTest extends DirectoryTests
 
     public function test_runtime_remove_directory_failures(): void
     {
-        $directory = $this->root(['foo' => ['bar' => ['baz.txt' => '', 'sub' => []]]])->directory('foo');
-        $remove    = fn () => $directory->remove();
         $exception = IOException\UnableToRemove::class;
-        $this->assertIOException($exception, $remove, 'unlink', $this->path('foo/bar/baz.txt'));
-        $this->assertIOException($exception, $remove, 'rmdir', $this->path('foo/bar/sub'));
-        $this->assertIOException($exception, $remove, 'rmdir', $this->path('foo'));
+        $directory = $this->root(['foo' => ['bar' => ['baz.txt' => '', 'sub' => []]]])->directory('foo');
+        $this->assertIOException($exception, fn () => $directory->remove(), 'rmdir', $this->path('foo/bar/sub'));
+        $this->assertIOException($exception, fn () => $directory->remove(), 'rmdir', $this->path('foo'));
+
+        $directory = $this->root(['foo' => ['bar' => ['baz.txt' => '', 'sub' => []]]])->directory('foo');
+        $this->assertIOException($exception, fn () => $directory->remove(), 'unlink', $this->path('foo/bar/baz.txt'));
     }
 
     public function test_runtime_create_directory_failure(): void

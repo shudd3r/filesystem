@@ -126,16 +126,20 @@ abstract class NodeTests extends FilesystemTests
             ['bar' => Node::READ, 'baz' => Node::WRITE]
         );
 
+        $validate = fn (Node $node, int $flags) => fn () => $node->validated($flags);
+
         $node = $root->node('foo');
         $this->assertSame($node, $node->validated(Node::READ | Node::WRITE | Node::REMOVE));
 
         $node = $root->node('bar');
         $this->assertSame($node, $node->validated(Node::READ));
-        $this->assertExceptionType(Exception\PermissionDenied::class, fn () => $node->validated(Node::WRITE));
+        $this->assertExceptionType(Exception\PermissionDenied::class, $validate($node, Node::WRITE));
+        $this->assertExceptionType(Exception\PermissionDenied::class, $validate($node, Node::READ | Node::REMOVE));
 
         $node = $root->node('baz');
         $this->assertSame($node, $node->validated(Node::WRITE));
-        $this->assertExceptionType(Exception\PermissionDenied::class, fn () => $node->validated(Node::READ));
+        $this->assertExceptionType(Exception\PermissionDenied::class, $validate($node, Node::READ));
+        $this->assertExceptionType(Exception\PermissionDenied::class, $validate($node, Node::WRITE | Node::REMOVE));
     }
 
     public function test_validation_for_not_existing_instance_with_exist_assertion_throws_exception(): void
@@ -161,9 +165,9 @@ abstract class NodeTests extends FilesystemTests
 
     public function test_node_from_non_writable_directory_cannot_be_removed(): void
     {
-        $root = $this->root(['foo' => ['bar' => '...']], ['foo' => Node::READ]);
-        $node = $root->node('foo/bar');
-        $this->assertExceptionType(Exception\PermissionDenied::class, fn () => $node->remove());
+        $root = $this->root(['foo' => ['bar' => '...', 'baz.lnk' => '@baz'], 'baz' => []], ['foo' => Node::READ]);
+        $this->assertExceptionType(Exception\PermissionDenied::class, fn () => $root->node('foo/bar')->remove());
+        $this->assertExceptionType(Exception\PermissionDenied::class, fn () => $root->node('foo/baz.lnk')->remove());
     }
 
     public function test_root_node_cannot_be_removed(): void

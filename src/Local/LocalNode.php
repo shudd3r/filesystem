@@ -67,7 +67,7 @@ abstract class LocalNode implements Node
         $nodeTypeMismatch = !$exists && file_exists($path);
         if ($nodeTypeMismatch) { return false; }
 
-        $existingNodeAccess = !$exists || is_writable($path) && is_readable($path);
+        $existingNodeAccess = !$exists || is_link($path) || is_writable($path) && is_readable($path);
         if (!$existingNodeAccess) { return false; }
 
         $ancestor = $this->closestAncestor();
@@ -89,7 +89,9 @@ abstract class LocalNode implements Node
             throw Exception\PermissionDenied::forNodeWrite($this);
         }
 
-        if ($flags & self::REMOVE) { $this->verifyRemove(); }
+        if ($flags & self::REMOVE && !$this->isRemovable()) {
+            throw $this->removeDeniedException();
+        }
 
         return $this;
     }
@@ -119,16 +121,16 @@ abstract class LocalNode implements Node
         return $ancestorPath;
     }
 
-    private function verifyRemove(): void
+    private function removeDeniedException(): Exception\PermissionDenied
     {
-        if (!$this->pathname->relative()) {
-            throw Exception\PermissionDenied::forRootRemove($this);
+        if (!$this->name()) {
+            return Exception\PermissionDenied::forRootRemove($this);
         }
 
         $path = $this->closestAncestor();
-        if (!is_writable($path)) {
-            throw Exception\PermissionDenied::forNodeRemove($this, $path);
-        }
+        return is_writable($path)
+            ? Exception\PermissionDenied::forNodeRemove($this)
+            : Exception\PermissionDenied::forNodeRemove($this, $path);
     }
 
     private function closestAncestor(): string
