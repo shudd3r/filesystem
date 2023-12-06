@@ -15,7 +15,7 @@ use Shudd3r\Filesystem\Exception as FilesystemException;
 use Shudd3r\Filesystem\Node;
 
 
-class FailedPermissionCheck extends FilesystemException
+class PermissionDenied extends FilesystemException
 {
     public static function forNodeRead(Node $node): self
     {

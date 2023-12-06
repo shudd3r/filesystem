@@ -14,7 +14,7 @@ namespace Shudd3r\Filesystem;
 use Shudd3r\Filesystem\Exception\NodeNotFound;
 use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
 use Shudd3r\Filesystem\Exception\UnexpectedLeafNode;
-use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
+use Shudd3r\Filesystem\Exception\PermissionDenied;
 use Shudd3r\Filesystem\Exception as FilesystemException;
 
 
@@ -90,10 +90,10 @@ interface Node
      *
      * @param int $flags Additional precondition checks
      *
-     * @throws UnexpectedNodeType    when different node type with given name exists
-     * @throws UnexpectedLeafNode    when file (or file link) exists on node's path
-     * @throws FailedPermissionCheck when asserted permissions are denied
-     * @throws NodeNotFound          when asserted node does not exist
+     * @throws UnexpectedNodeType when different node type with given name exists
+     * @throws UnexpectedLeafNode when file (or file link) exists on node's path
+     * @throws PermissionDenied   when asserted permissions are denied
+     * @throws NodeNotFound       when asserted node does not exist
      *
      * @return self Validated node
      */

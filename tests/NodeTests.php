@@ -131,11 +131,11 @@ abstract class NodeTests extends FilesystemTests
 
         $node = $root->node('bar');
         $this->assertSame($node, $node->validated(Node::READ));
-        $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $node->validated(Node::WRITE));
+        $this->assertExceptionType(Exception\PermissionDenied::class, fn () => $node->validated(Node::WRITE));
 
         $node = $root->node('baz');
         $this->assertSame($node, $node->validated(Node::WRITE));
-        $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $node->validated(Node::READ));
+        $this->assertExceptionType(Exception\PermissionDenied::class, fn () => $node->validated(Node::READ));
     }
 
     public function test_validation_for_not_existing_instance_with_exist_assertion_throws_exception(): void
@@ -163,13 +163,13 @@ abstract class NodeTests extends FilesystemTests
     {
         $root = $this->root(['foo' => ['bar' => '...']], ['foo' => Node::READ]);
         $node = $root->node('foo/bar');
-        $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $node->remove());
+        $this->assertExceptionType(Exception\PermissionDenied::class, fn () => $node->remove());
     }
 
     public function test_root_node_cannot_be_removed(): void
     {
         $root = $this->root()->node();
         $this->assertFalse($root->isRemovable());
-        $this->assertExceptionType(Exception\FailedPermissionCheck::class, fn () => $root->remove());
+        $this->assertExceptionType(Exception\PermissionDenied::class, fn () => $root->remove());
     }
 }

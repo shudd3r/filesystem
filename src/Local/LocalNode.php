@@ -13,10 +13,7 @@ namespace Shudd3r\Filesystem\Local;
 
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Generic\Pathname;
-use Shudd3r\Filesystem\Exception\NodeNotFound;
-use Shudd3r\Filesystem\Exception\UnexpectedLeafNode;
-use Shudd3r\Filesystem\Exception\UnexpectedNodeType;
-use Shudd3r\Filesystem\Exception\FailedPermissionCheck;
+use Shudd3r\Filesystem\Exception;
 
 
 abstract class LocalNode implements Node
@@ -80,16 +77,16 @@ abstract class LocalNode implements Node
     public function validated(int $flags = 0): self
     {
         if ($flags & self::EXISTS && !$this->exists()) {
-            throw NodeNotFound::forNode($this);
+            throw Exception\NodeNotFound::forNode($this);
         }
 
         $path = $this->validPath();
         if ($flags & self::READ && !is_readable($path)) {
-            throw FailedPermissionCheck::forNodeRead($this);
+            throw Exception\PermissionDenied::forNodeRead($this);
         }
 
         if ($flags & self::WRITE && !is_writable($path)) {
-            throw FailedPermissionCheck::forNodeWrite($this);
+            throw Exception\PermissionDenied::forNodeWrite($this);
         }
 
         if ($flags & self::REMOVE) { $this->verifyRemove(); }
@@ -111,12 +108,12 @@ abstract class LocalNode implements Node
         if ($this->exists()) { return $path; }
 
         if (file_exists($path) || is_link($path)) {
-            throw UnexpectedNodeType::forNode($this);
+            throw Exception\UnexpectedNodeType::forNode($this);
         }
 
         $ancestorPath = $this->closestAncestor();
         if (!is_dir($ancestorPath)) {
-            throw UnexpectedLeafNode::forNode($this, $ancestorPath);
+            throw Exception\UnexpectedLeafNode::forNode($this, $ancestorPath);
         }
 
         return $ancestorPath;
@@ -125,12 +122,12 @@ abstract class LocalNode implements Node
     private function verifyRemove(): void
     {
         if (!$this->pathname->relative()) {
-            throw FailedPermissionCheck::forRootRemove($this);
+            throw Exception\PermissionDenied::forRootRemove($this);
         }
 
         $path = $this->closestAncestor();
         if (!is_writable($path)) {
-            throw FailedPermissionCheck::forNodeRemove($this, $path);
+            throw Exception\PermissionDenied::forNodeRemove($this, $path);
         }
     }
 

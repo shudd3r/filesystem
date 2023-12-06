@@ -109,19 +109,19 @@ abstract class VirtualNode implements Node
     private function verifyAccess(TreeNode $node, int $flags): void
     {
         if ($flags & self::READ && !$node->isAllowed(self::READ)) {
-            throw Exception\FailedPermissionCheck::forNodeRead($this);
+            throw Exception\PermissionDenied::forNodeRead($this);
         }
 
         if ($flags & self::WRITE && !$node->isAllowed(self::WRITE)) {
-            throw Exception\FailedPermissionCheck::forNodeWrite($this);
+            throw Exception\PermissionDenied::forNodeWrite($this);
         }
 
         if ($flags & ~self::REMOVE) { return; }
         if (!$this->path->relative()) {
-            throw Exception\FailedPermissionCheck::forRootRemove($this);
+            throw Exception\PermissionDenied::forRootRemove($this);
         }
         if (!$node->isAllowed(self::REMOVE)) {
-            throw Exception\FailedPermissionCheck::forNodeRemove($this, dirname($this->pathname()));
+            throw Exception\PermissionDenied::forNodeRemove($this, dirname($this->pathname()));
         }
     }
 }
