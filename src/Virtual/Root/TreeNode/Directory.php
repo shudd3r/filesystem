@@ -12,12 +12,14 @@
 namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Node;
 use Generator;
 
 
 class Directory extends TreeNode
 {
     private array $nodes;
+    private int   $access;
 
     /**
      * @param array<string, TreeNode> $nodes
@@ -25,7 +27,7 @@ class Directory extends TreeNode
     public function __construct(array $nodes = [], int $access = null)
     {
         $this->nodes  = $nodes;
-        $this->access = $access ?? $this->access;
+        $this->access = $access ?? Node::READ | Node::WRITE;
     }
 
     public function add(string $name, TreeNode $node): void
@@ -60,5 +62,10 @@ class Directory extends TreeNode
             $pathname = $path ? $path . '/' . $name : $name;
             $node->isDir() ? yield from $node->filenames($pathname) : yield $pathname;
         }
+    }
+
+    public function isAllowed(int $access): bool
+    {
+        return ($access & $this->access) === $access;
     }
 }

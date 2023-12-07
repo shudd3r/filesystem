@@ -12,16 +12,18 @@
 namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Node;
 
 
 class File extends TreeNode
 {
     private string $contents;
+    private int    $access;
 
     public function __construct(string $contents = '', int $access = null)
     {
         $this->contents = $contents;
-        $this->access   = $access ?? $this->access;
+        $this->access   = $access ?? Node::READ | Node::WRITE;
     }
 
     public function node(string ...$pathSegments): TreeNode
@@ -42,5 +44,10 @@ class File extends TreeNode
     public function putContents(string $contents): void
     {
         $this->contents = $contents;
+    }
+
+    public function isAllowed(int $access): bool
+    {
+        return ($access & $this->access) === $access;
     }
 }

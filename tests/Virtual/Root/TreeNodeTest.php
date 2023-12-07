@@ -38,7 +38,7 @@ class TreeNodeTest extends TestCase
         $this->assertException(fn () => $node->setTarget('foo'));
         $this->assertSame([], $node->missingSegments());
         $this->assertException(fn () => $node->moveTo($node));
-        $this->assertTrue($node->isAllowed(Node::READ | Node::WRITE) && !$node->isAllowed(Node::REMOVE));
+        $this->assertTrue($node->isAllowed(Node::READ | Node::WRITE | Node::REMOVE));
     }
 
     private function assertException(callable $methodCall): void
