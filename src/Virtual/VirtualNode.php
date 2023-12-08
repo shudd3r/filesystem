@@ -102,8 +102,7 @@ abstract class VirtualNode implements Node
     private function verifyPath(TreeNode $node): void
     {
         if ($node->isValid() || $node->isLink()) { return; }
-        $collision = substr($this->pathname(), 0, -strlen('/' . implode('/', $node->missingSegments())));
-        throw Exception\UnexpectedLeafNode::forNode($this, $collision);
+        throw Exception\UnexpectedLeafNode::forNode($this, $node->foundPath());
     }
 
     private function verifyAccess(TreeNode $node, int $flags): void

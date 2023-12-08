@@ -48,11 +48,10 @@ class Root
         $parent   = $segments ? $this->nodes->node(...$segments) : $this->nodes;
         if ($parent instanceof TreeNode\Link) {
             $parent = $this->targetNode($parent);
-            $this->resolvePath($this->realPath, $basename);
+            $this->setRealPath($this->realPath, $basename);
         }
 
         $node = $parent->node($basename);
-        if (!$parent->isDir()) { return $this->pathContext($node); }
         if ($node instanceof TreeNode\Link) {
             $node = new TreeNode\LinkedNode($node, $this->targetNode($node));
         }
@@ -60,24 +59,6 @@ class Root
             $node = new TreeNode\ParentContext($node, $parent, $basename);
         }
         return $this->pathContext($node);
-    }
-
-    public function realpath(string $path): string
-    {
-        $segments = $this->pathSegments($path);
-        $node     = $segments ? $this->nodes->node(...$segments) : $this->nodes;
-
-        $segments      = [];
-        $resolvedPaths = [];
-        while ($node instanceof TreeNode\Link) {
-            $path = $node->target();
-            if (in_array($path, $resolvedPaths, true)) { return ''; }
-            $segments = $node->missingSegments();
-            $node     = $this->nodes->node(...$this->pathSegments($path), ...$segments);
-            $resolvedPaths[] = $path;
-        }
-
-        return $segments ? $path . '/' . implode('/', $segments) : $path;
     }
 
     private function pathContext(TreeNode $node): TreeNode\PathContext
@@ -104,7 +85,7 @@ class Root
             $resolvedPaths[] = $path;
         }
 
-        $this->resolvePath($path, ...$expand);
+        $this->setRealPath($path, ...$expand);
         return $node;
     }
 
@@ -118,7 +99,7 @@ class Root
         return $path ? explode('/', $path) : [];
     }
 
-    private function resolvePath(string $path, string ...$segments): void
+    private function setRealPath(string $path, string ...$segments): void
     {
         $expand = $segments ? implode('/', $segments) : '';
         if ($expand && !str_ends_with($path, '/')) {

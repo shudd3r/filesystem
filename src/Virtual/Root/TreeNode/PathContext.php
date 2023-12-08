@@ -102,11 +102,6 @@ class PathContext extends TreeNode
         $this->node->setTarget($path);
     }
 
-    public function missingSegments(): array
-    {
-        return $this->node->missingSegments();
-    }
-
     public function moveTo(TreeNode $target): void
     {
         $this->node->moveTo($target);
