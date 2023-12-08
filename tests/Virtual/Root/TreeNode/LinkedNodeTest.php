@@ -41,7 +41,6 @@ class LinkedNodeTest extends TestCase
         $node   = $this->node($lnk, $linked);
         $this->assertTrue($node->exists());
         $this->assertTrue($node->isDir());
-        $this->assertTrue($node->isValid());
         $this->assertSame(['foo'], iterator_to_array($node->filenames(), false));
 
         $linked = new TreeNode\File('old contents...');
@@ -56,7 +55,6 @@ class LinkedNodeTest extends TestCase
         $this->assertFalse($node->exists());
         $this->assertFalse($node->isFile());
         $this->assertFalse($node->isDir());
-        $this->assertFalse($node->isValid());
         $this->assertSame(['foo', 'bar'], $node->missingSegments());
     }
 

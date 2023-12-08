@@ -46,11 +46,6 @@ class LinkedNode extends TreeNode
         return true;
     }
 
-    public function isValid(): bool
-    {
-        return $this->node->isValid();
-    }
-
     public function target(): string
     {
         return $this->link->target();
