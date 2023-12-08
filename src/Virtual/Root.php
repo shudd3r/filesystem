@@ -22,6 +22,9 @@ class Root
     private Directory $nodes;
     private int       $length;
 
+    private string $foundPath;
+    private string $realPath;
+
     /**
      * @param string     $path
      * @param ?Directory $nodes
@@ -35,23 +38,28 @@ class Root
 
     public function node(string $path): TreeNode
     {
-        $path = $this->pathSegments($path);
-        if (!$path) { return $this->nodes; }
+        $segments = $this->pathSegments($path);
+        $this->foundPath = $path;
+        $this->realPath  = $path;
 
-        $basename = array_pop($path);
-        $parent   = $path ? $this->nodes->node(...$path) : $this->nodes;
+        if (!$segments) { return $this->pathContext($this->nodes); }
+
+        $basename = array_pop($segments);
+        $parent   = $segments ? $this->nodes->node(...$segments) : $this->nodes;
         if ($parent instanceof TreeNode\Link) {
             $parent = $this->targetNode($parent);
+            $this->resolvePath($this->realPath, $basename);
         }
 
-        if (!$parent->isDir()) { return $parent->node($basename); }
-
         $node = $parent->node($basename);
+        if (!$parent->isDir()) { return $this->pathContext($node); }
         if ($node instanceof TreeNode\Link) {
             $node = new TreeNode\LinkedNode($node, $this->targetNode($node));
         }
-
-        return $node->exists() || $node->isLink() ? new TreeNode\ParentContext($node, $parent, $basename) : $node;
+        if ($node->exists() || $node->isLink()) {
+            $node = new TreeNode\ParentContext($node, $parent, $basename);
+        }
+        return $this->pathContext($node);
     }
 
     public function realpath(string $path): string
@@ -72,19 +80,31 @@ class Root
         return $segments ? $path . '/' . implode('/', $segments) : $path;
     }
 
+    private function pathContext(TreeNode $node): TreeNode\PathContext
+    {
+        return new TreeNode\PathContext($node, $this->foundPath, $this->realPath);
+    }
+
     private function targetNode(TreeNode\Link $node): TreeNode
     {
+        $expand = [];
+        $path   = $this->realPath;
+
         $resolvedPaths = [];
         while ($node instanceof TreeNode\Link) {
-            $path = $node->target();
-            if (in_array($path, $resolvedPaths, true)) { break; }
-            $expand = $node->missingSegments();
-            $linked = $this->nodes->node(...$this->pathSegments($path));
-            $linked->exists() || $linked = new TreeNode\InvalidNode();
+            $path    = $node->target();
+            $expand  = $node->missingSegments();
+            $linked  = $this->nodes->node(...$this->pathSegments($path));
+            $invalid = !$linked->exists() || in_array($path, $resolvedPaths, true);
+            if ($invalid) {
+                $path   = $resolvedPaths ? array_pop($resolvedPaths) : $this->realPath;
+                $linked = new TreeNode\InvalidNode();
+            }
             $node = $expand ? $linked->node(...$expand) : $linked;
             $resolvedPaths[] = $path;
         }
 
+        $this->resolvePath($path, ...$expand);
         return $node;
     }
 
@@ -96,5 +116,14 @@ class Root
 
         $path = substr($path, $this->length);
         return $path ? explode('/', $path) : [];
+    }
+
+    private function resolvePath(string $path, string ...$segments): void
+    {
+        $expand = $segments ? implode('/', $segments) : '';
+        if ($expand && !str_ends_with($path, '/')) {
+            $expand = '/' . $expand;
+        }
+        $this->realPath = $path . $expand;
     }
 }

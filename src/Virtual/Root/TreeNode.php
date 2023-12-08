@@ -22,6 +22,16 @@ abstract class TreeNode
         throw new Exception\UnsupportedOperation();
     }
 
+    public function foundPath(): string
+    {
+        return '';
+    }
+
+    public function realPath(): ?string
+    {
+        return '';
+    }
+
     public function exists(): bool
     {
         return true;

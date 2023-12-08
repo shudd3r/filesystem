@@ -24,6 +24,8 @@ class TreeNodeTest extends TestCase
         $node = new class() extends TreeNode {
         };
         $this->assertException(fn () => $node->node('foo'));
+        $this->assertSame('', $node->foundPath());
+        $this->assertSame('', $node->realPath());
         $this->assertTrue($node->exists());
         $this->assertFalse($node->isDir());
         $this->assertFalse($node->isFile());
