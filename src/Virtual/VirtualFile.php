@@ -68,7 +68,7 @@ class VirtualFile extends VirtualNode implements File
 
     private function selfReference(File $file): bool
     {
-        return $this->sameRoot($file) && $this->node()->realPath() === $this->root->node($file->pathname())->realPath();
+        return $this->sameRoot($file) && $this->node()->equals($this->root->node($file->pathname()));
     }
 
     private function sameRoot(File $file): bool

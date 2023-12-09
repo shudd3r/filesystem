@@ -29,6 +29,11 @@ class ParentContext extends TreeNode
         $this->name   = $name;
     }
 
+    public function equals(TreeNode $node): bool
+    {
+        return $node->equals($this->node);
+    }
+
     public function exists(): bool
     {
         return $this->node->exists();

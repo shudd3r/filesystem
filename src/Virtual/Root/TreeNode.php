@@ -22,6 +22,11 @@ abstract class TreeNode
         throw new Exception\UnsupportedOperation();
     }
 
+    public function equals(TreeNode $node): bool
+    {
+        return $this === $node;
+    }
+
     public function foundPath(): string
     {
         return '';

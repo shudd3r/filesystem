@@ -26,6 +26,11 @@ class LinkedNode extends TreeNode
         $this->node = $node;
     }
 
+    public function equals(TreeNode $node): bool
+    {
+        return $this->node->equals($node);
+    }
+
     public function exists(): bool
     {
         return $this->node->exists();

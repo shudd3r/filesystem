@@ -28,6 +28,11 @@ class PathContext extends TreeNode
         $this->realPath  = $realPath;
     }
 
+    public function equals(TreeNode $node): bool
+    {
+        return $this->node->equals($node);
+    }
+
     public function foundPath(): string
     {
         $segments = $this->node->missingSegments();
