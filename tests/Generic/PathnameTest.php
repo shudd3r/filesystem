@@ -75,10 +75,12 @@ class PathnameTest extends TestCase
         $pathname = $this->path('root\\path/foo\\')->forChildNode($name);
         $this->assertSame('root\\path/foo\\/bar/baz', $pathname->absolute());
         $this->assertSame('bar/baz', $pathname->relative());
+        $this->assertSame('/', $pathname->separator());
 
         $pathname = $this->path('root\path/foo/', '\\')->forChildNode($name);
         $this->assertSame('root\path/foo/\\bar\\baz', $pathname->absolute());
         $this->assertSame('bar\\baz', $pathname->relative());
+        $this->assertSame('\\', $pathname->separator());
     }
 
     public function test_expanding_root_ending_with_separator_does_not_duplicate_separator(): void

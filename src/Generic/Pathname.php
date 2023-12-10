@@ -28,8 +28,8 @@ final class Pathname
     }
 
     /**
-     * @param string $path      absolute directory path
-     * @param string $separator directory separator
+     * @param string $path      Absolute directory path
+     * @param string $separator Directory separator
      */
     public static function root(string $path, string $separator = '/'): self
     {
@@ -37,7 +37,7 @@ final class Pathname
     }
 
     /**
-     * @return string absolute pathname within filesystem
+     * @return string Absolute pathname within filesystem
      */
     public function absolute(): string
     {
@@ -45,7 +45,7 @@ final class Pathname
     }
 
     /**
-     * @return string path name relative to its root directory
+     * @return string Path name relative to its root directory
      */
     public function relative(): string
     {
@@ -53,15 +53,23 @@ final class Pathname
     }
 
     /**
-     * Either forward `/` or backward `\` slashes are accepted for path
+     * @return string Separator of path segments used by this instance
+     */
+    public function separator(): string
+    {
+        return $this->separator;
+    }
+
+    /**
+     * Either forward `/` or backward `\` slashes are accepted as path
      * separators, and both leading & trailing slashes will be ignored.
      * For either empty or dot-path segments Exception will be thrown.
      *
-     * @param string $name Canonical relative pathname for child node. Either
+     * @param string $name Canonical relative pathname for child node
      *
      * @throws InvalidNodeName when name contains empty or dot-path segments
      *
-     * @return self with added or expanded relative path
+     * @return self Instance with added or expanded relative path
      */
     public function forChildNode(string $name): self
     {
