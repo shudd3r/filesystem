@@ -80,11 +80,30 @@ final class Pathname
     }
 
     /**
-     * @return self without relative path
+     * Creates Pathname with instance absolute path, but without
+     * relative part. If current instance does not contain relative
+     * path same instance is returned.
      */
     public function asRoot(): self
     {
         return $this->nameLength ? new self($this->path, $this->separator) : $this;
+    }
+
+    /**
+     * Creates Pathname with absolute path given as argument relative to
+     * instance's absolute path. This is a shorthand method that determines
+     * part of absolute pathname string as a relative name that would be
+     * used with self::forChildNode() method.
+     * If given path does not strictly match current absolute path null will
+     * be returned.
+     *
+     * @param string $absolutePath Absolute path expanding current pathname
+     */
+    public function asRootFor(string $absolutePath): ?self
+    {
+        if (!str_starts_with($absolutePath, $this->path)) { return null; }
+        $name = substr($absolutePath, strlen($this->path));
+        return $name ? $this->asRoot()->forChildNode($name) : $this->asRoot();
     }
 
     private function validName(string $name): string

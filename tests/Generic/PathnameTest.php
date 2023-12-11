@@ -114,6 +114,17 @@ class PathnameTest extends TestCase
         $this->assertSame('baz', $path->relative());
     }
 
+    public function test_deriving_pathname_from_absolute_path_string()
+    {
+        $root = $this->path('A:\\', '\\');
+        $this->assertNull($root->asRootFor('C:\\foo'));
+        $this->assertEquals($root->forChildNode('foo/bar'), $root->asRootFor('A:\\foo\\bar'));
+
+        $root = $this->path('http://');
+        $this->assertNull($root->asRootFor('example.com/foo'));
+        $this->assertEquals($root->forChildNode('example.com/foo'), $root->asRootFor('http://example.com/foo'));
+    }
+
     private function path(string $pathname = 'root', string $separator = '/'): Pathname
     {
         return Pathname::root($pathname, $separator);
