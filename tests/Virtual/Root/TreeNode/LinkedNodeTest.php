@@ -25,14 +25,14 @@ class LinkedNodeTest extends TestCase
 
     public function test_target_method_returns_link_targetPath(): void
     {
-        $this->assertSame('vfs://foo/bar', $this->node()->target());
+        $this->assertSame('foo/bar', $this->node()->target());
     }
 
     public function test_setTarget_method_changes_link_targetPath(): void
     {
         $node = $this->node($link);
-        $node->setTarget('vfs://new/path');
-        $this->assertSame('vfs://new/path', $link->target());
+        $node->setTarget('new/path');
+        $this->assertSame('new/path', $link->target());
     }
 
     public function test_other_methods_are_delegated_to_wrapped_node(): void
@@ -69,7 +69,7 @@ class LinkedNodeTest extends TestCase
 
     private function node(?TreeNode\Link &$link = null, ?TreeNode &$linked = null): TreeNode\LinkedNode
     {
-        $link ??= new TreeNode\Link('vfs://foo/bar');
+        $link ??= new TreeNode\Link('foo/bar');
         $linked ??= new TreeNode\Directory();
         return new TreeNode\LinkedNode($link, $linked);
     }

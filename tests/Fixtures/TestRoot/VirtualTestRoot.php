@@ -59,7 +59,7 @@ class VirtualTestRoot extends TestRoot
 
     private function leafNode(string $value, string $path): Root\TreeNode
     {
-        $linked = str_starts_with($value, '@') ? 'vfs://' . substr($value, 1) : null;
+        $linked = str_starts_with($value, '@') ? substr($value, 1) : null;
         return $linked ? new Link($linked) : new File($value, $this->mode($path));
     }
 

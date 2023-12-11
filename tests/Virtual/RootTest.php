@@ -30,18 +30,18 @@ class RootTest extends TestCase
             'foo' => new Directory([
                 'bar' => new Directory([
                     'baz.txt'  => new File('baz contents'),
-                    'self.lnk' => new Link('vfs://foo/self.lnk')
+                    'self.lnk' => new Link('foo/self.lnk')
                 ]),
-                'file.lnk' => new Link('vfs://bar.txt'),
+                'file.lnk' => new Link('bar.txt'),
                 'empty'    => new Directory(),
-                'self.lnk' => new Link('vfs://self.lnk'),
-                'root'     => new Link('vfs://')
+                'self.lnk' => new Link('self.lnk'),
+                'root'     => new Link('')
             ]),
             'bar.txt'  => new File('this is bar file'),
-            'dir.lnk'  => new Link('vfs://foo/bar'),
-            'inv.lnk'  => new Link('vfs://foo/baz'),
-            'red.lnk'  => new Link('vfs://dir.lnk'),
-            'self.lnk' => new Link('vfs://foo/bar/self.lnk')
+            'dir.lnk'  => new Link('foo/bar'),
+            'inv.lnk'  => new Link('foo/baz'),
+            'red.lnk'  => new Link('dir.lnk'),
+            'self.lnk' => new Link('foo/bar/self.lnk')
         ]));
     }
 
@@ -109,7 +109,7 @@ class RootTest extends TestCase
             $this->assertSame($isFile, $node->isFile());
             $this->assertSame($isLink, $node->isLink());
             $this->assertSame($path, $node->foundPath());
-            $this->assertSame($realPath ?? $path, $node->realPath());
+            $this->assertSame($realPath ?? $path, $node->realPath(), $path);
         }
     }
 

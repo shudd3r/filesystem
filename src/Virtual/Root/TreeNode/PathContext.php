@@ -12,20 +12,23 @@
 namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Generic\Pathname;
 use Generator;
 
 
 class PathContext extends TreeNode
 {
+    private Pathname $root;
     private TreeNode $node;
     private string   $foundPath;
     private string   $realPath;
 
-    public function __construct(TreeNode $node, string $foundPath, string $realPath)
+    public function __construct(Pathname $root, TreeNode $node, string $foundPath, string $realPath = null)
     {
+        $this->root      = $root;
         $this->node      = $node;
         $this->foundPath = $foundPath;
-        $this->realPath  = $realPath;
+        $this->realPath  = $realPath ?? $foundPath;
     }
 
     public function equals(TreeNode $node): bool
@@ -97,14 +100,16 @@ class PathContext extends TreeNode
         $this->node->putContents($contents);
     }
 
-    public function target(): ?string
+    public function target(): string
     {
-        return $this->node->target();
+        $target = $this->node->target();
+        return $target ? $this->root->forChildNode($target)->absolute() : $this->root->absolute();
     }
 
     public function setTarget(string $path): void
     {
-        $this->node->setTarget($path);
+        $pathname = $this->root->asRootFor($path);
+        $this->node->setTarget(str_replace($this->root->separator(), '/', $pathname->relative()));
     }
 
     public function moveTo(TreeNode $target): void

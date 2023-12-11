@@ -25,9 +25,9 @@ class ParentContextTest extends TestCase
         return [
             [new TreeNode\File()],
             [new TreeNode\Directory()],
-            [new TreeNode\Link('vfs://')],
+            [new TreeNode\Link('')],
             [new TreeNode\InvalidNode()],
-            [new TreeNode\LinkedNode(new TreeNode\Link('vfs://file.txt'), new TreeNode\File())]
+            [new TreeNode\LinkedNode(new TreeNode\Link('file.txt'), new TreeNode\File())]
         ];
     }
 
