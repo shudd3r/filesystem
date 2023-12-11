@@ -11,6 +11,7 @@
 
 namespace Shudd3r\Filesystem\Virtual;
 
+use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 use Shudd3r\Filesystem\Exception;
@@ -18,22 +19,20 @@ use Shudd3r\Filesystem\Exception;
 
 class Root
 {
-    private string    $path;
+    private Pathname  $path;
     private Directory $nodes;
-    private int       $length;
 
     private string $foundPath;
     private string $realPath;
 
     /**
-     * @param string     $path
+     * @param Pathname   $path
      * @param ?Directory $nodes
      */
-    public function __construct(string $path, Directory $nodes = null)
+    public function __construct(Pathname $path, Directory $nodes = null)
     {
-        $this->path   = $path;
-        $this->nodes  = $nodes ?? new Directory();
-        $this->length = strlen($path) + (str_ends_with($path, '/') ? 0 : 1);
+        $this->path  = $path;
+        $this->nodes = $nodes ?? new Directory();
     }
 
     public function node(string $path): TreeNode
@@ -91,20 +90,19 @@ class Root
 
     private function pathSegments(string $path): array
     {
-        if (!str_starts_with($path, $this->path)) {
+        if (!$pathname = $this->path->asRootFor($path)) {
             throw new Exception\UnsupportedOperation();
         }
 
-        $path = substr($path, $this->length);
-        return $path ? explode('/', $path) : [];
+        $path = $pathname->relative();
+        return $path ? explode($this->path->separator(), $path) : [];
     }
 
     private function setRealPath(string $path, string ...$segments): void
     {
-        $expand = $segments ? implode('/', $segments) : '';
-        if ($expand && !str_ends_with($path, '/')) {
-            $expand = '/' . $expand;
-        }
-        $this->realPath = $path . $expand;
+        $pathname = $this->path->asRootFor($path);
+        $this->realPath = $segments
+            ? $pathname->forChildNode(implode($this->path->separator(), $segments))->absolute()
+            : $pathname->absolute();
     }
 }

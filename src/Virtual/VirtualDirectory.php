@@ -29,7 +29,8 @@ class VirtualDirectory extends VirtualNode implements Directory
      */
     public static function root(string $path = 'vfs://', RootDirectory $directory = null): self
     {
-        return new self(new Root($path, $directory ?? new RootDirectory()), Pathname::root($path));
+        $rootPath = Pathname::root($path);
+        return new self(new Root($rootPath, $directory ?? new RootDirectory()), $rootPath);
     }
 
     public function create(): void

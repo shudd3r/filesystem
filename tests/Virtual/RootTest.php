@@ -16,6 +16,7 @@ use Shudd3r\Filesystem\Virtual\Root;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\File;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
+use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Exception;
 
 
@@ -25,7 +26,7 @@ class RootTest extends TestCase
 
     public static function setUpBeforeClass(): void
     {
-        self::$root = new Root('vfs://', new Directory([
+        self::$root = new Root(Pathname::root('vfs://'), new Directory([
             'foo' => new Directory([
                 'bar' => new Directory([
                     'baz.txt'  => new File('baz contents'),

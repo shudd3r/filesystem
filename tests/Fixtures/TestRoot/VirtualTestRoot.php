@@ -38,7 +38,7 @@ class VirtualTestRoot extends TestRoot
 
     public function node(string $name = '', bool $typeMatch = true): VirtualNode
     {
-        $root = new Root($this->rootDir->pathname(), $this->tree);
+        $root = new Root($this->rootPath, $this->tree);
         return new FakeVirtualNode($root, $this->pathname($name), $typeMatch);
     }
 
