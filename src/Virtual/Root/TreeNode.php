@@ -11,7 +11,7 @@
 
 namespace Shudd3r\Filesystem\Virtual\Root;
 
-use Shudd3r\Filesystem\Exception;
+use LogicException;
 use Generator;
 
 
@@ -19,7 +19,7 @@ abstract class TreeNode
 {
     public function node(string ...$pathSegments): self
     {
-        throw new Exception\UnsupportedOperation();
+        throw new LogicException();
     }
 
     public function equals(TreeNode $node): bool
@@ -64,12 +64,12 @@ abstract class TreeNode
 
     public function remove(): void
     {
-        throw new Exception\UnsupportedOperation();
+        throw new LogicException();
     }
 
     public function createDir(): void
     {
-        throw new Exception\UnsupportedOperation();
+        throw new LogicException();
     }
 
     public function filenames(): Generator
@@ -84,7 +84,7 @@ abstract class TreeNode
 
     public function putContents(string $contents): void
     {
-        throw new Exception\UnsupportedOperation();
+        throw new LogicException();
     }
 
     public function target(): ?string
@@ -94,7 +94,7 @@ abstract class TreeNode
 
     public function setTarget(string $path): void
     {
-        throw new Exception\UnsupportedOperation();
+        throw new LogicException();
     }
 
     public function missingSegments(): array
@@ -104,7 +104,7 @@ abstract class TreeNode
 
     public function moveTo(TreeNode $target): void
     {
-        throw new Exception\UnsupportedOperation();
+        throw new LogicException();
     }
 
     public function isAllowed(int $access): bool
@@ -114,7 +114,7 @@ abstract class TreeNode
 
     protected function attachNode(TreeNode $node): void
     {
-        throw new Exception\UnsupportedOperation();
+        throw new LogicException();
     }
 
     protected function baseNode(TreeNode $overwrite = null): ?TreeNode

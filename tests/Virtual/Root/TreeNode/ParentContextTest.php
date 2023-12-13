@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\ParentContext;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 use Shudd3r\Filesystem\Node;
-use Shudd3r\Filesystem\Exception;
+use LogicException;
 
 
 class ParentContextTest extends TestCase
@@ -46,7 +46,7 @@ class ParentContextTest extends TestCase
     public function test_moveTo_non_context_node_throws_Exception(TreeNode $target): void
     {
         $node = $this->node(new TreeNode\File());
-        $this->expectException(Exception\UnsupportedOperation::class);
+        $this->expectException(LogicException::class);
         $node->moveTo($target);
     }
 

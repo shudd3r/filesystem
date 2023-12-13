@@ -17,7 +17,7 @@ use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\File;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
 use Shudd3r\Filesystem\Generic\Pathname;
-use Shudd3r\Filesystem\Exception;
+use LogicException;
 
 
 class RootTest extends TestCase
@@ -47,7 +47,7 @@ class RootTest extends TestCase
 
     public function test_node_for_not_matching_root_path_throws_exception(): void
     {
-        $this->expectException(Exception\UnsupportedOperation::class);
+        $this->expectException(LogicException::class);
         self::$root->node('virtual://root/path');
     }
 

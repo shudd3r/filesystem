@@ -15,7 +15,7 @@ use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\RootContext;
-use Shudd3r\Filesystem\Exception;
+use LogicException;
 
 
 class Root
@@ -36,7 +36,7 @@ class Root
     public function node(string $path): TreeNode
     {
         if (!$pathname = $this->path->asRootFor($path)) {
-            throw new Exception\UnsupportedOperation();
+            throw new LogicException();
         }
 
         $internalPath = str_replace($this->path->separator(), '/', $pathname->relative());

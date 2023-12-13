@@ -14,7 +14,8 @@ namespace Shudd3r\Filesystem\Tests\Virtual\Root;
 use PHPUnit\Framework\TestCase;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 use Shudd3r\Filesystem\Node;
-use Shudd3r\Filesystem\Exception;
+use LogicException;
+use Exception;
 
 
 class TreeNodeTest extends TestCase
@@ -45,15 +46,13 @@ class TreeNodeTest extends TestCase
 
     private function assertException(callable $methodCall): void
     {
-        $expected = Exception\UnsupportedOperation::class;
         try {
             $methodCall();
-        } catch (\Exception $ex) {
-            $message = 'Unexpected Exception type - expected `%s` caught `%s`';
-            $this->assertInstanceOf($expected, $ex, sprintf($message, $expected, get_class($ex)));
+        } catch (Exception $ex) {
+            $this->assertInstanceOf(LogicException::class, $ex, 'Unexpected Exception type');
             return;
         }
 
-        $this->fail(sprintf('No Exception thrown - expected `%s`', $expected));
+        $this->fail(sprintf('No Exception thrown - expected `%s`', LogicException::class));
     }
 }
