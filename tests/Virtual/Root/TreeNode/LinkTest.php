@@ -42,7 +42,7 @@ class LinkTest extends TestCase
         $this->assertNotSame($link, $expanded);
         $this->assertSame(['foo', 'bar'], $expanded->missingSegments());
         $this->assertSame(['foo', 'bar', 'baz'], $expanded->node('baz')->missingSegments());
-        $this->assertFalse($expanded->exists() || $expanded->isLink() || $expanded->isValid());
+        $this->assertFalse($expanded->exists() || $expanded->isLink());
     }
 
     private function link(string $targetPath): Link

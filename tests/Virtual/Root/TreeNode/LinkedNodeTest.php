@@ -55,7 +55,6 @@ class LinkedNodeTest extends TestCase
         $this->assertFalse($node->exists());
         $this->assertFalse($node->isFile());
         $this->assertFalse($node->isDir());
-        $this->assertSame(['foo', 'bar'], $node->missingSegments());
     }
 
     public function test_isAllowed_returns_permissions_of_wrapped_node(): void

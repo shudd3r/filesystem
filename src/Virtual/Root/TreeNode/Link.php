@@ -41,11 +41,6 @@ class Link extends TreeNode
         return empty($this->missingSegments);
     }
 
-    public function isValid(): bool
-    {
-        return empty($this->missingSegments);
-    }
-
     public function target(): string
     {
         return $this->targetPath;

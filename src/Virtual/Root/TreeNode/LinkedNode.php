@@ -76,11 +76,6 @@ class LinkedNode extends TreeNode
         return $this->node->filenames();
     }
 
-    public function missingSegments(): array
-    {
-        return $this->node->missingSegments();
-    }
-
     public function isAllowed(int $access): bool
     {
         return $this->node->isAllowed($access);
