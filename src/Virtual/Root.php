@@ -14,7 +14,7 @@ namespace Shudd3r\Filesystem\Virtual;
 use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\RootContext;
+use Shudd3r\Filesystem\Virtual\Root\RootContext;
 use LogicException;
 
 

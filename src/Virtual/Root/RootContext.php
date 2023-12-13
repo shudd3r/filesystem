@@ -9,20 +9,25 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
+namespace Shudd3r\Filesystem\Virtual\Root;
 
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 use Shudd3r\Filesystem\Generic\Pathname;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\InvalidNode;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\LinkedNode;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\ParentContext;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\PathContext;
 
 
-class RootContext extends TreeNode
+class RootContext
 {
     private Pathname $rootPath;
     private TreeNode $rootNode;
 
     private array $segments;
 
-    public function __construct(Pathname $rootPath, TreeNode $rootNode)
+    public function __construct(Pathname $rootPath, Directory $rootNode)
     {
         $this->rootPath = $rootPath;
         $this->rootNode = $rootNode;
