@@ -12,7 +12,7 @@
 namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\Generic\Pathname;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Virtual\Root\Node;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
 use Shudd3r\Filesystem\Virtual\Root\RootContext;
 use LogicException;
@@ -33,7 +33,7 @@ class Root
         $this->directory = $directory ?? new Directory();
     }
 
-    public function node(string $path): TreeNode
+    public function node(string $path): Node
     {
         if (!$pathname = $this->path->asRootFor($path)) {
             throw new LogicException();

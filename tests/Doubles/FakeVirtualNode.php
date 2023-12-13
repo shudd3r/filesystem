@@ -26,7 +26,7 @@ class FakeVirtualNode extends VirtualNode
         $this->typeMatch = $typeMatch;
     }
 
-    protected function nodeExists(Root\TreeNode $node): bool
+    protected function nodeExists(Root\Node $node): bool
     {
         return $node->exists() && $this->typeMatch;
     }

@@ -11,8 +11,8 @@
 
 namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
 
-use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Node;
 use Generator;
 
 

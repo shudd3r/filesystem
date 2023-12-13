@@ -13,11 +13,10 @@ namespace Shudd3r\Filesystem\Virtual\Root;
 
 use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\InvalidNode;
+use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\LinkedNode;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\ParentContext;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\PathContext;
 
 
 class RootContext
@@ -33,7 +32,7 @@ class RootContext
         $this->rootNode = $rootNode;
     }
 
-    public function nodeAtPath(string $path): TreeNode
+    public function nodeAtPath(string $path): Node
     {
         if (!$this->segments = $path ? explode('/', $path) : []) {
             return $this->pathContext($this->rootNode, $path);
@@ -56,10 +55,10 @@ class RootContext
         return $this->pathContext($node, $path);
     }
 
-    private function pathContext(TreeNode $node, $path): PathContext
+    private function pathContext(TreeNode $node, $path): Node
     {
         $originalPath = $path ? $this->rootPath->forChildNode($path) : $this->rootPath;
-        return new PathContext($this->rootPath, $node, $originalPath->absolute(), $this->resolvedPath());
+        return new Node($this->rootPath, $node, $originalPath->absolute(), $this->resolvedPath());
     }
 
     private function targetNode(Link $node): TreeNode

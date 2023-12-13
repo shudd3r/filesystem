@@ -9,14 +9,13 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
+namespace Shudd3r\Filesystem\Virtual\Root;
 
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 use Shudd3r\Filesystem\Generic\Pathname;
 use Generator;
 
 
-class PathContext extends TreeNode
+class Node
 {
     private Pathname $root;
     private TreeNode $node;
@@ -31,9 +30,9 @@ class PathContext extends TreeNode
         $this->realPath  = $realPath ?? $foundPath;
     }
 
-    public function equals(TreeNode $node): bool
+    public function equals(Node $node): bool
     {
-        return $this->node->equals($node);
+        return $this->node->equals($node->node);
     }
 
     public function foundPath(): string
@@ -112,23 +111,13 @@ class PathContext extends TreeNode
         $this->node->setTarget(str_replace($this->root->separator(), '/', $pathname->relative()));
     }
 
-    public function moveTo(TreeNode $target): void
+    public function moveTo(Node $target): void
     {
-        $this->node->moveTo($target);
+        $this->node->moveTo($target->node);
     }
 
     public function isAllowed(int $access): bool
     {
         return $this->node->isAllowed($access);
-    }
-
-    protected function attachNode(TreeNode $node): void
-    {
-        $this->node->attachNode($node);
-    }
-
-    protected function baseNode(TreeNode $overwrite = null): ?TreeNode
-    {
-        return $this->node->baseNode($overwrite);
     }
 }

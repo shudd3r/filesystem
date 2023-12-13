@@ -15,7 +15,7 @@ use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Generic\FileGenerator;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Virtual\Root\Node;
 use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory as RootDirectory;
 use Shudd3r\Filesystem\Exception;
 use Generator;
@@ -70,7 +70,7 @@ class VirtualDirectory extends VirtualNode implements Directory
         return new self($this->root, $path);
     }
 
-    protected function nodeExists(TreeNode $node): bool
+    protected function nodeExists(Node $node): bool
     {
         return $node->isDir();
     }

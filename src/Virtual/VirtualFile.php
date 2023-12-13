@@ -14,7 +14,7 @@ namespace Shudd3r\Filesystem\Virtual;
 use Shudd3r\Filesystem\File;
 use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\ContentStream;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Virtual\Root\Node;
 
 
 class VirtualFile extends VirtualNode implements File
@@ -61,7 +61,7 @@ class VirtualFile extends VirtualNode implements File
         return null;
     }
 
-    protected function nodeExists(TreeNode $node): bool
+    protected function nodeExists(Node $node): bool
     {
         return $node->isFile();
     }
@@ -76,13 +76,13 @@ class VirtualFile extends VirtualNode implements File
         return $file instanceof self && $this->root === $file->root;
     }
 
-    private function moveNode(TreeNode $node, File $file): void
+    private function moveNode(Node $node, File $file): void
     {
         $targetNode = $this->root->node($file->validated(self::WRITE)->pathname());
         $node->moveTo($targetNode);
     }
 
-    private function moveToFilesystem(TreeNode $node, File $file): void
+    private function moveToFilesystem(Node $node, File $file): void
     {
         $file->copy($this);
         $node->remove();
