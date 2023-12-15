@@ -13,19 +13,19 @@ namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\Node as FilesystemNode;
 use Shudd3r\Filesystem\Generic\Pathname;
-use Shudd3r\Filesystem\Virtual\Root\Node;
+use Shudd3r\Filesystem\Virtual\Nodes\Node;
 use Shudd3r\Filesystem\Exception;
 
 
 abstract class VirtualNode implements FilesystemNode
 {
-    protected Root     $root;
+    protected Nodes    $nodes;
     protected Pathname $path;
 
-    protected function __construct(Root $root, Pathname $path)
+    protected function __construct(Nodes $nodes, Pathname $path)
     {
-        $this->root = $root;
-        $this->path = $path;
+        $this->nodes = $nodes;
+        $this->path  = $path;
     }
 
     public function pathname(): string
@@ -78,7 +78,7 @@ abstract class VirtualNode implements FilesystemNode
 
     protected function node(): Node
     {
-        return $this->root->node($this->pathname());
+        return $this->nodes->node($this->pathname());
     }
 
     private function isAllowed(int $access): bool

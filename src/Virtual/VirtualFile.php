@@ -14,7 +14,7 @@ namespace Shudd3r\Filesystem\Virtual;
 use Shudd3r\Filesystem\File;
 use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\ContentStream;
-use Shudd3r\Filesystem\Virtual\Root\Node;
+use Shudd3r\Filesystem\Virtual\Nodes\Node;
 
 
 class VirtualFile extends VirtualNode implements File
@@ -68,17 +68,17 @@ class VirtualFile extends VirtualNode implements File
 
     private function selfReference(File $file): bool
     {
-        return $this->sameRoot($file) && $this->node()->equals($this->root->node($file->pathname()));
+        return $this->sameRoot($file) && $this->node()->equals($this->nodes->node($file->pathname()));
     }
 
     private function sameRoot(File $file): bool
     {
-        return $file instanceof self && $this->root === $file->root;
+        return $file instanceof self && $this->nodes === $file->nodes;
     }
 
     private function moveNode(Node $node, File $file): void
     {
-        $targetNode = $this->root->node($file->validated(self::WRITE)->pathname());
+        $targetNode = $this->nodes->node($file->validated(self::WRITE)->pathname());
         $node->moveTo($targetNode);
     }
 

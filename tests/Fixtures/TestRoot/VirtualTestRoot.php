@@ -13,10 +13,10 @@ namespace Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
 
 use Shudd3r\Filesystem\Virtual\VirtualNode;
 use Shudd3r\Filesystem\Virtual\VirtualDirectory;
-use Shudd3r\Filesystem\Virtual\Root;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\File;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
+use Shudd3r\Filesystem\Virtual\Nodes;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\Directory;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\File;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\Link;
 use Shudd3r\Filesystem\Node;
 use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Tests\Fixtures\TestRoot;
@@ -40,7 +40,7 @@ class VirtualTestRoot extends TestRoot
 
     public function node(string $name = '', bool $typeMatch = true): VirtualNode
     {
-        $root = new Root($this->rootPath, $this->tree);
+        $root = new Nodes($this->rootPath, $this->tree);
         return new FakeVirtualNode($root, $this->pathname($name), $typeMatch);
     }
 
@@ -59,7 +59,7 @@ class VirtualTestRoot extends TestRoot
         return new Directory($tree, $this->mode($path));
     }
 
-    private function leafNode(string $value, string $path): Root\TreeNode
+    private function leafNode(string $value, string $path): Nodes\TreeNode
     {
         $linked = str_starts_with($value, '@') ? substr($value, 1) : null;
         return $linked ? new Link($linked) : new File($value, $this->mode($path));

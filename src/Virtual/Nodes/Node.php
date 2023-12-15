@@ -9,7 +9,7 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual\Root;
+namespace Shudd3r\Filesystem\Virtual\Nodes;
 
 use Shudd3r\Filesystem\Generic\Pathname;
 use Generator;

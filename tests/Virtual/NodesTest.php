@@ -12,21 +12,21 @@
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Virtual\Root;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\File;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
+use Shudd3r\Filesystem\Virtual\Nodes;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\Directory;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\File;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\Link;
 use Shudd3r\Filesystem\Generic\Pathname;
 use LogicException;
 
 
-class RootTest extends TestCase
+class NodesTest extends TestCase
 {
-    private static Root $root;
+    private static Nodes $nodes;
 
     public static function setUpBeforeClass(): void
     {
-        self::$root = new Root(Pathname::root('vfs://'), new Directory([
+        self::$nodes = new Nodes(Pathname::root('vfs://'), new Directory([
             'foo' => new Directory([
                 'bar' => new Directory([
                     'baz.txt'  => new File('baz contents'),
@@ -48,7 +48,7 @@ class RootTest extends TestCase
     public function test_node_for_not_matching_root_path_throws_exception(): void
     {
         $this->expectException(LogicException::class);
-        self::$root->node('virtual://root/path');
+        self::$nodes->node('virtual://root/path');
     }
 
     public function test_node_for_not_existing_path_returns_missing_node(): void
@@ -60,7 +60,7 @@ class RootTest extends TestCase
         ];
 
         foreach ($missingNodes as $path => [$foundPath, $realPath]) {
-            $node = self::$root->node($path);
+            $node = self::$nodes->node($path);
             $this->assertFalse($node->exists());
             $this->assertTrue($node->isValid());
             $this->assertFalse($node->isDir() || $node->isFile() || $node->isLink());
@@ -79,7 +79,7 @@ class RootTest extends TestCase
         ];
 
         foreach ($invalidNodes as $path => $foundPath) {
-            $node = self::$root->node($path);
+            $node = self::$nodes->node($path);
             $this->assertFalse($node->exists());
             $this->assertFalse($node->isValid());
             $this->assertFalse($node->isDir() || $node->isFile() || $node->isLink());
@@ -102,7 +102,7 @@ class RootTest extends TestCase
         ];
 
         foreach ($existingNodes as $path => [$isDir, $isFile, $isLink, $realPath]) {
-            $node = self::$root->node($path);
+            $node = self::$nodes->node($path);
             $this->assertSame($isDir || $isFile, $node->exists());
             $this->assertTrue($node->isValid());
             $this->assertSame($isDir, $node->isDir());
@@ -115,21 +115,21 @@ class RootTest extends TestCase
 
     public function test_resolving_multiple_links(): void
     {
-        $node = self::$root->node('vfs://foo/root/red.lnk/baz.txt');
+        $node = self::$nodes->node('vfs://foo/root/red.lnk/baz.txt');
         $this->assertTrue($node->isFile());
         $this->assertSame('vfs://foo/bar/baz.txt', $node->realPath());
 
-        $node = self::$root->node('vfs://foo/root/red.lnk/fizz/buzz.txt');
+        $node = self::$nodes->node('vfs://foo/root/red.lnk/fizz/buzz.txt');
         $this->assertFalse($node->exists());
         $this->assertTrue($node->isValid());
         $this->assertSame('vfs://foo/bar/fizz/buzz.txt', $node->realPath());
 
-        $node = self::$root->node('vfs://foo/root/inv.lnk');
+        $node = self::$nodes->node('vfs://foo/root/inv.lnk');
         $this->assertFalse($node->exists());
         $this->assertTrue($node->isValid());
         $this->assertSame('vfs://inv.lnk', $node->realPath());
 
-        $node = self::$root->node('vfs://foo/root/inv.lnk/bar');
+        $node = self::$nodes->node('vfs://foo/root/inv.lnk/bar');
         $this->assertFalse($node->isValid());
         $this->assertSame('vfs://foo/root/inv.lnk', $node->foundPath());
         $this->assertNull($node->realPath());
@@ -137,14 +137,14 @@ class RootTest extends TestCase
 
     public function test_circular_reference_protection(): void
     {
-        $node = self::$root->node('vfs://foo/self.lnk');
+        $node = self::$nodes->node('vfs://foo/self.lnk');
         $this->assertTrue($node->isValid());
         $this->assertFalse($node->exists());
         $this->assertTrue($node->isLink());
         $this->assertSame('vfs://foo/self.lnk', $node->foundPath());
         $this->assertSame('vfs://foo/self.lnk', $node->realPath());
 
-        $node = self::$root->node('vfs://foo/self.lnk/bar');
+        $node = self::$nodes->node('vfs://foo/self.lnk/bar');
         $this->assertFalse($node->isValid());
         $this->assertFalse($node->exists());
         $this->assertSame('vfs://foo/self.lnk', $node->foundPath());

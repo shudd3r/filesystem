@@ -9,14 +9,14 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual\Root;
+namespace Shudd3r\Filesystem\Virtual\Nodes;
 
 use Shudd3r\Filesystem\Generic\Pathname;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\InvalidNode;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\LinkedNode;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\ParentContext;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\Directory;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\InvalidNode;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\Link;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\LinkedNode;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\ParentContext;
 
 
 class RootContext

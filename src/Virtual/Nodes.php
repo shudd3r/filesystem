@@ -12,13 +12,13 @@
 namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\Generic\Pathname;
-use Shudd3r\Filesystem\Virtual\Root\Node;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory;
-use Shudd3r\Filesystem\Virtual\Root\RootContext;
+use Shudd3r\Filesystem\Virtual\Nodes\Node;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\Directory;
+use Shudd3r\Filesystem\Virtual\Nodes\RootContext;
 use LogicException;
 
 
-class Root
+class Nodes
 {
     private Pathname  $path;
     private Directory $directory;
