@@ -19,6 +19,9 @@ class Link extends TreeNode
     private string $targetPath;
     private array  $missingSegments = [];
 
+    /**
+     * Basic type with target path data.
+     */
     public function __construct(string $targetPath)
     {
         $this->targetPath = $targetPath;

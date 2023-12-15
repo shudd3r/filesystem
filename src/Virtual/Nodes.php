@@ -20,27 +20,32 @@ use LogicException;
 
 class Nodes
 {
-    private Pathname  $path;
-    private Directory $directory;
+    private Pathname  $rootPath;
+    private Directory $rootNode;
 
     /**
-     * @param Pathname   $path
-     * @param ?Directory $directory
+     * @param Pathname   $rootPath
+     * @param ?Directory $rootNode
      */
-    public function __construct(Pathname $path, Directory $directory = null)
+    public function __construct(Pathname $rootPath, Directory $rootNode = null)
     {
-        $this->path      = $path;
-        $this->directory = $directory ?? new Directory();
+        $this->rootPath = $rootPath;
+        $this->rootNode = $rootNode ?? new Directory();
     }
 
+    /**
+     * @param string $path Absolute filesystem path
+     *
+     * @return Node
+     */
     public function node(string $path): Node
     {
-        if (!$pathname = $this->path->asRootFor($path)) {
+        if (!$pathname = $this->rootPath->asRootFor($path)) {
             throw new LogicException();
         }
 
-        $internalPath = str_replace($this->path->separator(), '/', $pathname->relative());
-        $rootContext  = new RootContext($this->path, $this->directory);
+        $internalPath = str_replace($this->rootPath->separator(), '/', $pathname->relative());
+        $rootContext  = new RootContext($this->rootPath, $this->rootNode);
         return $rootContext->nodeAtPath($internalPath);
     }
 }

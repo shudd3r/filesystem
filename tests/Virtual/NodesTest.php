@@ -65,7 +65,7 @@ class NodesTest extends TestCase
             $this->assertTrue($node->isValid());
             $this->assertFalse($node->isDir() || $node->isFile() || $node->isLink());
             $this->assertSame($foundPath, $node->foundPath());
-            $this->assertSame($realPath ?? $path, $node->realPath());
+            $this->assertSame($realPath ?? $path, $node->resolvedPath());
         }
     }
 
@@ -84,7 +84,7 @@ class NodesTest extends TestCase
             $this->assertFalse($node->isValid());
             $this->assertFalse($node->isDir() || $node->isFile() || $node->isLink());
             $this->assertSame($foundPath, $node->foundPath());
-            $this->assertNull($node->realPath());
+            $this->assertNull($node->resolvedPath());
         }
     }
 
@@ -108,8 +108,9 @@ class NodesTest extends TestCase
             $this->assertSame($isDir, $node->isDir());
             $this->assertSame($isFile, $node->isFile());
             $this->assertSame($isLink, $node->isLink());
+            $isLink ? $this->assertTrue(is_string($node->target())) : $this->assertNull($node->target());
             $this->assertSame($path, $node->foundPath());
-            $this->assertSame($realPath ?? $path, $node->realPath(), $path);
+            $this->assertSame($realPath ?? $path, $node->resolvedPath(), $path);
         }
     }
 
@@ -117,22 +118,22 @@ class NodesTest extends TestCase
     {
         $node = self::$nodes->node('vfs://foo/root/red.lnk/baz.txt');
         $this->assertTrue($node->isFile());
-        $this->assertSame('vfs://foo/bar/baz.txt', $node->realPath());
+        $this->assertSame('vfs://foo/bar/baz.txt', $node->resolvedPath());
 
         $node = self::$nodes->node('vfs://foo/root/red.lnk/fizz/buzz.txt');
         $this->assertFalse($node->exists());
         $this->assertTrue($node->isValid());
-        $this->assertSame('vfs://foo/bar/fizz/buzz.txt', $node->realPath());
+        $this->assertSame('vfs://foo/bar/fizz/buzz.txt', $node->resolvedPath());
 
         $node = self::$nodes->node('vfs://foo/root/inv.lnk');
         $this->assertFalse($node->exists());
         $this->assertTrue($node->isValid());
-        $this->assertSame('vfs://inv.lnk', $node->realPath());
+        $this->assertSame('vfs://inv.lnk', $node->resolvedPath());
 
         $node = self::$nodes->node('vfs://foo/root/inv.lnk/bar');
         $this->assertFalse($node->isValid());
         $this->assertSame('vfs://foo/root/inv.lnk', $node->foundPath());
-        $this->assertNull($node->realPath());
+        $this->assertNull($node->resolvedPath());
     }
 
     public function test_circular_reference_protection(): void
@@ -142,12 +143,12 @@ class NodesTest extends TestCase
         $this->assertFalse($node->exists());
         $this->assertTrue($node->isLink());
         $this->assertSame('vfs://foo/self.lnk', $node->foundPath());
-        $this->assertSame('vfs://foo/self.lnk', $node->realPath());
+        $this->assertSame('vfs://foo/self.lnk', $node->resolvedPath());
 
         $node = self::$nodes->node('vfs://foo/self.lnk/bar');
         $this->assertFalse($node->isValid());
         $this->assertFalse($node->exists());
         $this->assertSame('vfs://foo/self.lnk', $node->foundPath());
-        $this->assertNull($node->realPath());
+        $this->assertNull($node->resolvedPath());
     }
 }

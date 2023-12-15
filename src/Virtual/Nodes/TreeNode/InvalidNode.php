@@ -18,6 +18,9 @@ class InvalidNode extends TreeNode
 {
     private array $missingSegments;
 
+    /**
+     * Subtype indicating unresolvable tree path.
+     */
     public function __construct(string ...$missingSegments)
     {
         $this->missingSegments = $missingSegments;

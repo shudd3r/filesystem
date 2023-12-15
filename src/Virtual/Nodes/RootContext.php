@@ -26,12 +26,21 @@ class RootContext
 
     private array $segments;
 
+    /**
+     * Class resolving TreeNode composition and path resolution for
+     * requested Node instance.
+     */
     public function __construct(Pathname $rootPath, Directory $rootNode)
     {
         $this->rootPath = $rootPath;
         $this->rootNode = $rootNode;
     }
 
+    /**
+     * @param string $path Absolute TreeNode path (without filesystem root)
+     *
+     * @return Node found at given path
+     */
     public function nodeAtPath(string $path): Node
     {
         if (!$this->segments = $path ? explode('/', $path) : []) {

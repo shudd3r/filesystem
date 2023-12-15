@@ -22,6 +22,9 @@ class ParentContext extends TreeNode
     private Directory $parent;
     private string    $name;
 
+    /**
+     * Subtype able to remove existing TreeNode.
+     */
     public function __construct(TreeNode $node, Directory $parent, string $name)
     {
         $this->node   = $node;

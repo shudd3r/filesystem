@@ -20,6 +20,10 @@ class LinkedNode extends TreeNode
     private Link     $link;
     private TreeNode $node;
 
+    /**
+     * Subtype allowing to perform operations on both Link itself
+     * and linked TreeNode.
+     */
     public function __construct(Link $link, TreeNode $node)
     {
         $this->link = $link;
