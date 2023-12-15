@@ -9,9 +9,9 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
+namespace Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 
 
 class Link extends TreeNode
@@ -19,6 +19,9 @@ class Link extends TreeNode
     private string $targetPath;
     private array  $missingSegments = [];
 
+    /**
+     * Basic type with target path data.
+     */
     public function __construct(string $targetPath)
     {
         $this->targetPath = $targetPath;
@@ -37,11 +40,6 @@ class Link extends TreeNode
     }
 
     public function isLink(): bool
-    {
-        return empty($this->missingSegments);
-    }
-
-    public function isValid(): bool
     {
         return empty($this->missingSegments);
     }

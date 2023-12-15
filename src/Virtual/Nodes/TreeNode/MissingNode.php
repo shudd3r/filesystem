@@ -9,9 +9,9 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
+namespace Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 use Shudd3r\Filesystem\Node;
 
 
@@ -20,6 +20,10 @@ class MissingNode extends TreeNode
     private Directory $directory;
     private array     $missingSegments;
 
+    /**
+     * Subtype able to create not existing TreeNode in Directory
+     * structure.
+     */
     public function __construct(Directory $directory, string ...$missingSegments)
     {
         $this->directory       = $directory;

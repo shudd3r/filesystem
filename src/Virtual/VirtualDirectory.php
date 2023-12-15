@@ -15,8 +15,8 @@ use Shudd3r\Filesystem\Directory;
 use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Generic\FileIterator;
 use Shudd3r\Filesystem\Generic\FileGenerator;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\Directory as RootDirectory;
+use Shudd3r\Filesystem\Virtual\Nodes\Node;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\Directory as RootDirectory;
 use Shudd3r\Filesystem\Exception;
 use Generator;
 
@@ -24,12 +24,13 @@ use Generator;
 class VirtualDirectory extends VirtualNode implements Directory
 {
     /**
-     * @param string         $path      Root node path
-     * @param ?RootDirectory $directory Pre-existing node meta-data structure
+     * @param ?Pathname      $pathname  Pathname of root directory
+     * @param ?RootDirectory $directory Pre-existing TreeNode structure
      */
-    public static function root(string $path = 'vfs://', RootDirectory $directory = null): self
+    public static function root(?Pathname $pathname = null, RootDirectory $directory = null): self
     {
-        return new self(new Root($path, $directory ?? new RootDirectory()), Pathname::root($path));
+        $rootPath = $pathname ? $pathname->asRoot() : Pathname::root('vfs://');
+        return new self(new Nodes($rootPath, $directory ?? new RootDirectory()), $rootPath);
     }
 
     public function create(): void
@@ -41,17 +42,17 @@ class VirtualDirectory extends VirtualNode implements Directory
 
     public function subdirectory(string $name): VirtualDirectory
     {
-        return new VirtualDirectory($this->root, $this->path->forChildNode($name));
+        return new VirtualDirectory($this->nodes, $this->path->forChildNode($name));
     }
 
     public function link(string $name): VirtualLink
     {
-        return new VirtualLink($this->root, $this->path->forChildNode($name));
+        return new VirtualLink($this->nodes, $this->path->forChildNode($name));
     }
 
     public function file(string $name): VirtualFile
     {
-        return new VirtualFile($this->root, $this->path->forChildNode($name));
+        return new VirtualFile($this->nodes, $this->path->forChildNode($name));
     }
 
     public function files(): FileIterator
@@ -66,10 +67,10 @@ class VirtualDirectory extends VirtualNode implements Directory
         if (!$this->exists()) {
             throw Exception\RootDirectoryNotFound::forRoot($this);
         }
-        return new self($this->root, $path);
+        return new self($this->nodes, $path);
     }
 
-    protected function nodeExists(TreeNode $node): bool
+    protected function nodeExists(Node $node): bool
     {
         return $node->isDir();
     }
@@ -80,7 +81,7 @@ class VirtualDirectory extends VirtualNode implements Directory
         $filenames = $node->isDir() ? $node->filenames() : [];
 
         foreach ($filenames as $filename) {
-            yield new VirtualFile($this->root, $this->path->forChildNode($filename));
+            yield new VirtualFile($this->nodes, $this->path->forChildNode($filename));
         }
     }
 }

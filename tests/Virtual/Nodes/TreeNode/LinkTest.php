@@ -9,10 +9,10 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Tests\Virtual\Root\TreeNode;
+namespace Shudd3r\Filesystem\Tests\Virtual\Nodes\TreeNode;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\Link;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\Link;
 
 
 class LinkTest extends TestCase
@@ -42,7 +42,7 @@ class LinkTest extends TestCase
         $this->assertNotSame($link, $expanded);
         $this->assertSame(['foo', 'bar'], $expanded->missingSegments());
         $this->assertSame(['foo', 'bar', 'baz'], $expanded->node('baz')->missingSegments());
-        $this->assertFalse($expanded->exists() || $expanded->isLink() || $expanded->isValid());
+        $this->assertFalse($expanded->exists() || $expanded->isLink());
     }
 
     private function link(string $targetPath): Link

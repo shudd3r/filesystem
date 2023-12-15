@@ -9,9 +9,9 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
+namespace Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 use Generator;
 
 
@@ -20,10 +20,19 @@ class LinkedNode extends TreeNode
     private Link     $link;
     private TreeNode $node;
 
+    /**
+     * Subtype allowing to perform operations on both Link itself
+     * and linked TreeNode.
+     */
     public function __construct(Link $link, TreeNode $node)
     {
         $this->link = $link;
         $this->node = $node;
+    }
+
+    public function equals(TreeNode $node): bool
+    {
+        return $this->node->equals($node);
     }
 
     public function exists(): bool
@@ -69,11 +78,6 @@ class LinkedNode extends TreeNode
     public function filenames(): Generator
     {
         return $this->node->filenames();
-    }
-
-    public function missingSegments(): array
-    {
-        return $this->node->missingSegments();
     }
 
     public function isAllowed(int $access): bool

@@ -9,15 +9,18 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
+namespace Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 
 
 class InvalidNode extends TreeNode
 {
     private array $missingSegments;
 
+    /**
+     * Subtype indicating unresolvable tree path.
+     */
     public function __construct(string ...$missingSegments)
     {
         $this->missingSegments = $missingSegments;

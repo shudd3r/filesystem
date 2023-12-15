@@ -9,13 +9,13 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Tests\Virtual\Root\TreeNode;
+namespace Shudd3r\Filesystem\Tests\Virtual\Nodes\TreeNode;
 
 use PHPUnit\Framework\TestCase;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode\ParentContext;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\ParentContext;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 use Shudd3r\Filesystem\Node;
-use Shudd3r\Filesystem\Exception;
+use LogicException;
 
 
 class ParentContextTest extends TestCase
@@ -25,9 +25,9 @@ class ParentContextTest extends TestCase
         return [
             [new TreeNode\File()],
             [new TreeNode\Directory()],
-            [new TreeNode\Link('vfs://')],
+            [new TreeNode\Link('')],
             [new TreeNode\InvalidNode()],
-            [new TreeNode\LinkedNode(new TreeNode\Link('vfs://file.txt'), new TreeNode\File())]
+            [new TreeNode\LinkedNode(new TreeNode\Link('file.txt'), new TreeNode\File())]
         ];
     }
 
@@ -46,7 +46,7 @@ class ParentContextTest extends TestCase
     public function test_moveTo_non_context_node_throws_Exception(TreeNode $target): void
     {
         $node = $this->node(new TreeNode\File());
-        $this->expectException(Exception\UnsupportedOperation::class);
+        $this->expectException(LogicException::class);
         $node->moveTo($target);
     }
 

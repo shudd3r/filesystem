@@ -135,16 +135,27 @@ abstract class DirectoryTests extends FilesystemTests
 
     public function test_files_returns_all_files_iterator(): void
     {
-        $directory = $this->root($this->exampleStructure(['foo' => ['fizz' => '', 'buzz' => '']]))->directory();
-        $expected  = $this->files(['bar.txt', 'foo/bar/baz.txt', 'foo/buzz', 'foo/fizz'], $directory);
-        $this->assertFiles($expected, $directory->files());
+        $root = $this->root([
+            'foo'     => ['bar' => ['baz.txt' => '', 'foo.lnk' => '@foo.txt'], 'fizz' => '', 'buzz' => ''],
+            'foo.txt' => '',
+            'bar.lnk' => '@foo/bar'
+        ]);
 
-        $expected = $this->files(['foo/bar/baz.txt', 'foo/buzz', 'foo/fizz'], $directory);
-        $this->assertFiles($expected, $directory->subdirectory('foo')->files());
+        $rootDir  = $root->directory();
+        $expected = $this->files(['foo.txt', 'foo/bar/baz.txt', 'foo/fizz', 'foo/buzz'], $rootDir);
+        $this->assertFiles($expected, $rootDir->files());
 
-        $directory = $directory->subdirectory('foo')->asRoot();
-        $expected  = $this->files(['bar/baz.txt', 'buzz', 'fizz'], $directory);
-        $this->assertFiles($expected, $directory->files());
+        $subDir   = $rootDir->subdirectory('foo');
+        $expected = $this->files(['foo/bar/baz.txt', 'foo/buzz', 'foo/fizz'], $rootDir);
+        $this->assertFiles($expected, $subDir->files());
+
+        $newRoot  = $rootDir->subdirectory('foo')->asRoot();
+        $expected = $this->files(['bar/baz.txt', 'fizz', 'buzz'], $newRoot);
+        $this->assertFiles($expected, $newRoot->files());
+
+        $linkedDir = $rootDir->subdirectory('bar.lnk');
+        $expected  = $this->files(['bar.lnk/baz.txt'], $rootDir);
+        $this->assertFiles($expected, $linkedDir->files());
     }
 
     public function test_files_for_not_existing_directory_returns_empty_iterator(): void

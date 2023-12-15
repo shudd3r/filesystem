@@ -9,10 +9,10 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
+namespace Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 use Shudd3r\Filesystem\Node;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
 use Generator;
 
 
@@ -22,11 +22,19 @@ class ParentContext extends TreeNode
     private Directory $parent;
     private string    $name;
 
+    /**
+     * Subtype able to remove existing TreeNode.
+     */
     public function __construct(TreeNode $node, Directory $parent, string $name)
     {
         $this->node   = $node;
         $this->parent = $parent;
         $this->name   = $name;
+    }
+
+    public function equals(TreeNode $node): bool
+    {
+        return $node->equals($this->node);
     }
 
     public function exists(): bool

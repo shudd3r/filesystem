@@ -13,20 +13,20 @@ namespace Shudd3r\Filesystem\Tests\Doubles;
 
 use Shudd3r\Filesystem\Virtual\VirtualNode;
 use Shudd3r\Filesystem\Generic\Pathname;
-use Shudd3r\Filesystem\Virtual\Root;
+use Shudd3r\Filesystem\Virtual\Nodes;
 
 
 class FakeVirtualNode extends VirtualNode
 {
     private bool $typeMatch;
 
-    public function __construct(Root $root, Pathname $path, bool $typeMatch = true)
+    public function __construct(Nodes $nodes, Pathname $path, bool $typeMatch = true)
     {
-        parent::__construct($root, $path);
+        parent::__construct($nodes, $path);
         $this->typeMatch = $typeMatch;
     }
 
-    protected function nodeExists(Root\TreeNode $node): bool
+    protected function nodeExists(Nodes\Node $node): bool
     {
         return $node->exists() && $this->typeMatch;
     }

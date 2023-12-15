@@ -9,9 +9,9 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
+namespace Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 use Shudd3r\Filesystem\Node;
 
 
@@ -20,15 +20,13 @@ class File extends TreeNode
     private string $contents;
     private int    $access;
 
+    /**
+     * Basic type with file contents.
+     */
     public function __construct(string $contents = '', int $access = null)
     {
         $this->contents = $contents;
         $this->access   = $access ?? Node::READ | Node::WRITE;
-    }
-
-    public function node(string ...$pathSegments): TreeNode
-    {
-        return new InvalidNode(...$pathSegments);
     }
 
     public function isFile(): bool

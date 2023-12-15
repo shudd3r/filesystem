@@ -12,8 +12,8 @@
 namespace Shudd3r\Filesystem\Virtual;
 
 use Shudd3r\Filesystem\Link;
-use Shudd3r\Filesystem\Node;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Node as FilesystemNode;
+use Shudd3r\Filesystem\Virtual\Nodes\Node;
 use Shudd3r\Filesystem\Exception;
 
 
@@ -26,7 +26,7 @@ class VirtualLink extends VirtualNode implements Link
         return $show ? $node->target() : null;
     }
 
-    public function setTarget(Node $node): void
+    public function setTarget(FilesystemNode $node): void
     {
         $this->node()->setTarget($this->targetPath($node));
     }
@@ -41,14 +41,14 @@ class VirtualLink extends VirtualNode implements Link
         return $this->node()->isFile();
     }
 
-    protected function nodeExists(TreeNode $node): bool
+    protected function nodeExists(Node $node): bool
     {
         return $node->isLink();
     }
 
-    private function targetPath(Node $target): string
+    private function targetPath(FilesystemNode $target): string
     {
-        if (!$target instanceof VirtualNode || $target->root !== $this->root) {
+        if (!$target instanceof VirtualNode || $target->nodes !== $this->nodes) {
             throw Exception\IOException\UnableToCreate::externalLink($this);
         }
 

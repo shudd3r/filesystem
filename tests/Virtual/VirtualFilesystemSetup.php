@@ -11,15 +11,15 @@
 
 namespace Shudd3r\Filesystem\Tests\Virtual;
 
-use Shudd3r\Filesystem\Generic\Pathname;
 use Shudd3r\Filesystem\Tests\Fixtures\TestRoot\VirtualTestRoot;
+use Shudd3r\Filesystem\Generic\Pathname;
 
 
 trait VirtualFilesystemSetup
 {
-    protected function root(array $structure = null, array $access = []): VirtualTestRoot
+    protected function root(array $structure = null, array $access = [], Pathname $pathname = null): VirtualTestRoot
     {
-        return new VirtualTestRoot(Pathname::root('vfs://'), $structure ?? $this->exampleStructure(), $access);
+        return new VirtualTestRoot($pathname, $structure ?? $this->exampleStructure(), $access);
     }
 
     protected function path(string $name = ''): string

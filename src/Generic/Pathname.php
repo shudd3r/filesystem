@@ -28,8 +28,8 @@ final class Pathname
     }
 
     /**
-     * @param string $path      absolute directory path
-     * @param string $separator directory separator
+     * @param string $path      Absolute directory path
+     * @param string $separator Directory separator
      */
     public static function root(string $path, string $separator = '/'): self
     {
@@ -37,7 +37,7 @@ final class Pathname
     }
 
     /**
-     * @return string absolute pathname within filesystem
+     * @return string Absolute pathname within filesystem
      */
     public function absolute(): string
     {
@@ -45,7 +45,7 @@ final class Pathname
     }
 
     /**
-     * @return string path name relative to its root directory
+     * @return string Path name relative to its root directory
      */
     public function relative(): string
     {
@@ -53,15 +53,23 @@ final class Pathname
     }
 
     /**
-     * Either forward `/` or backward `\` slashes are accepted for path
+     * @return string Separator of path segments used by this instance
+     */
+    public function separator(): string
+    {
+        return $this->separator;
+    }
+
+    /**
+     * Either forward `/` or backward `\` slashes are accepted as path
      * separators, and both leading & trailing slashes will be ignored.
      * For either empty or dot-path segments Exception will be thrown.
      *
-     * @param string $name Canonical relative pathname for child node. Either
+     * @param string $name Canonical relative pathname for child node
      *
      * @throws InvalidNodeName when name contains empty or dot-path segments
      *
-     * @return self with added or expanded relative path
+     * @return self Instance with added or expanded relative path
      */
     public function forChildNode(string $name): self
     {
@@ -72,11 +80,30 @@ final class Pathname
     }
 
     /**
-     * @return self without relative path
+     * Creates Pathname with instance absolute path, but without
+     * relative part. If current instance does not contain relative
+     * path same instance is returned.
      */
     public function asRoot(): self
     {
         return $this->nameLength ? new self($this->path, $this->separator) : $this;
+    }
+
+    /**
+     * Creates Pathname with absolute path given as argument relative to
+     * instance's absolute path. This is a shorthand method that determines
+     * part of absolute pathname string as a relative name that would be
+     * used with self::forChildNode() method.
+     * If given path does not strictly match current absolute path null will
+     * be returned.
+     *
+     * @param string $absolutePath Absolute path expanding current pathname
+     */
+    public function asRootFor(string $absolutePath): ?self
+    {
+        if (!str_starts_with($absolutePath, $this->path)) { return null; }
+        $name = substr($absolutePath, strlen($this->path));
+        return $name ? $this->asRoot()->forChildNode($name) : $this->asRoot();
     }
 
     private function validName(string $name): string

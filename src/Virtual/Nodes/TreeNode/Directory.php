@@ -9,9 +9,9 @@
  * with this source code in the file LICENSE.
  */
 
-namespace Shudd3r\Filesystem\Virtual\Root\TreeNode;
+namespace Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Virtual\Nodes\TreeNode;
 use Shudd3r\Filesystem\Node;
 use Generator;
 
@@ -22,6 +22,8 @@ class Directory extends TreeNode
     private int   $access;
 
     /**
+     * Basic type with child nodes.
+     *
      * @param array<string, TreeNode> $nodes
      */
     public function __construct(array $nodes = [], int $access = null)
@@ -30,11 +32,17 @@ class Directory extends TreeNode
         $this->access = $access ?? Node::READ | Node::WRITE;
     }
 
+    /**
+     * Adds TreeNode with given name to directory nodes.
+     */
     public function add(string $name, TreeNode $node): void
     {
         $this->nodes[$name] = $node;
     }
 
+    /**
+     * Removes TreeNode with given name from directory nodes.
+     */
     public function unlink(string $name): void
     {
         unset($this->nodes[$name]);

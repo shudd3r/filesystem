@@ -11,21 +11,21 @@
 
 namespace Shudd3r\Filesystem\Virtual;
 
-use Shudd3r\Filesystem\Node;
+use Shudd3r\Filesystem\Node as FilesystemNode;
 use Shudd3r\Filesystem\Generic\Pathname;
-use Shudd3r\Filesystem\Virtual\Root\TreeNode;
+use Shudd3r\Filesystem\Virtual\Nodes\Node;
 use Shudd3r\Filesystem\Exception;
 
 
-abstract class VirtualNode implements Node
+abstract class VirtualNode implements FilesystemNode
 {
-    protected Root     $root;
+    protected Nodes    $nodes;
     protected Pathname $path;
 
-    protected function __construct(Root $root, Pathname $path)
+    protected function __construct(Nodes $nodes, Pathname $path)
     {
-        $this->root = $root;
-        $this->path = $path;
+        $this->nodes = $nodes;
+        $this->path  = $path;
     }
 
     public function pathname(): string
@@ -74,11 +74,11 @@ abstract class VirtualNode implements Node
         $this->validated(self::REMOVE)->node()->remove();
     }
 
-    abstract protected function nodeExists(TreeNode $node): bool;
+    abstract protected function nodeExists(Node $node): bool;
 
-    protected function node(): TreeNode
+    protected function node(): Node
     {
-        return $this->root->node($this->pathname());
+        return $this->nodes->node($this->pathname());
     }
 
     private function isAllowed(int $access): bool
@@ -88,7 +88,7 @@ abstract class VirtualNode implements Node
         return $valid && $node->isAllowed($access);
     }
 
-    private function verifyNodeType(TreeNode $node, int $flags): void
+    private function verifyNodeType(Node $node, int $flags): void
     {
         if ($this->nodeExists($node)) { return; }
         if ($node->exists() || $node->isLink()) {
@@ -99,14 +99,13 @@ abstract class VirtualNode implements Node
         }
     }
 
-    private function verifyPath(TreeNode $node): void
+    private function verifyPath(Node $node): void
     {
         if ($node->isValid() || $node->isLink()) { return; }
-        $collision = substr($this->pathname(), 0, -strlen('/' . implode('/', $node->missingSegments())));
-        throw Exception\UnexpectedLeafNode::forNode($this, $collision);
+        throw Exception\UnexpectedLeafNode::forNode($this, $node->foundPath());
     }
 
-    private function verifyAccess(TreeNode $node, int $flags): void
+    private function verifyAccess(Node $node, int $flags): void
     {
         if ($flags & self::READ && !$node->isAllowed(self::READ)) {
             throw Exception\PermissionDenied::forNodeRead($this);
@@ -121,7 +120,7 @@ abstract class VirtualNode implements Node
         }
     }
 
-    private function removeDeniedException(TreeNode $node): Exception\PermissionDenied
+    private function removeDeniedException(Node $node): Exception\PermissionDenied
     {
         if (!$this->name()) {
             return Exception\PermissionDenied::forRootRemove($this);
