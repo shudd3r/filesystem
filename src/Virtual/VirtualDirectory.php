@@ -24,12 +24,12 @@ use Generator;
 class VirtualDirectory extends VirtualNode implements Directory
 {
     /**
-     * @param string         $path      Root node path
-     * @param ?RootDirectory $directory Pre-existing node meta-data structure
+     * @param ?Pathname      $pathname  Pathname of root directory
+     * @param ?RootDirectory $directory Pre-existing TreeNode structure
      */
-    public static function root(string $path = 'vfs://', RootDirectory $directory = null): self
+    public static function root(?Pathname $pathname = null, RootDirectory $directory = null): self
     {
-        $rootPath = Pathname::root($path);
+        $rootPath = $pathname ? $pathname->asRoot() : Pathname::root('vfs://');
         return new self(new Root($rootPath, $directory ?? new RootDirectory()), $rootPath);
     }
 

@@ -29,11 +29,13 @@ class VirtualTestRoot extends TestRoot
     private Directory $tree;
     private array     $access;
 
-    public function __construct(Pathname $rootPath, array $structure = [], array $access = [])
+    public function __construct(?Pathname $rootPath = null, array $structure = [], array $access = [])
     {
         $this->access = $access;
         $this->tree   = $this->createNodes($structure);
-        parent::__construct(VirtualDirectory::root($rootPath->absolute(), $this->tree), $rootPath);
+
+        $rootPath = $rootPath ? $rootPath->asRoot() : Pathname::root('vfs://');
+        parent::__construct(VirtualDirectory::root($rootPath, $this->tree), $rootPath);
     }
 
     public function node(string $name = '', bool $typeMatch = true): VirtualNode
