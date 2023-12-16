@@ -76,12 +76,12 @@ class Node
     }
 
     /**
-     * For existing symlink that cannot be resolved to existing node method
-     * should return false.
+     * For existing symlink that cannot be resolved to neither file
+     * or directory this method should return false.
      *
-     * @see Node::isLink() - use this method to determine stale symlink
+     * @see Node::isLink() method to determine stale symlink
      *
-     * @return bool true if node exists in filesystem
+     * @return bool true if node refers a file or directory
      */
     public function exists(): bool
     {
@@ -89,7 +89,7 @@ class Node
     }
 
     /**
-     * @return bool true if node is existing directory
+     * @return bool true if node is a directory
      */
     public function isDir(): bool
     {
@@ -97,7 +97,7 @@ class Node
     }
 
     /**
-     * @return bool true if node is existing file
+     * @return bool true if node is a file
      */
     public function isFile(): bool
     {
@@ -105,7 +105,7 @@ class Node
     }
 
     /**
-     * @return bool true if node is existing symlink
+     * @return bool true if direct node is a symlink
      */
     public function isLink(): bool
     {
@@ -121,9 +121,10 @@ class Node
     }
 
     /**
-     * Removes existing node from filesystem.
+     * Removes direct node from tree structure.
+     * For link resolved nodes only link will be removed.
      *
-     * @throws LogicException
+     * @throws LogicException when direct node does not exist
      */
     public function remove(): void
     {
@@ -131,9 +132,9 @@ class Node
     }
 
     /**
-     * Creates node as directory.
+     * Creates node as directory within tree structure.
      *
-     * @throws LogicException
+     * @throws LogicException when node exists
      */
     public function createDir(): void
     {
@@ -159,7 +160,7 @@ class Node
     /**
      * Writes given contents to file.
      *
-     * @throws LogicException
+     * @throws LogicException when file does not exist and cannot be created
      */
     public function putContents(string $contents): void
     {
@@ -179,7 +180,7 @@ class Node
     /**
      * Sets given path as Link target.
      *
-     * @throws LogicException
+     * @throws LogicException when link does not exist and cannot be created
      */
     public function setTarget(string $path): void
     {
@@ -190,7 +191,7 @@ class Node
     /**
      * Moves node to given target Node.
      *
-     * @throws LogicException
+     * @throws LogicException when node does not exist or target cannot be created
      */
     public function moveTo(Node $target): void
     {

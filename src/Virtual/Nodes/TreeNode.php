@@ -13,7 +13,6 @@ namespace Shudd3r\Filesystem\Virtual\Nodes;
 
 use LogicException;
 use Generator;
-use Shudd3r\Filesystem\Virtual\Nodes\TreeNode\InvalidNode;
 
 
 abstract class TreeNode
@@ -25,7 +24,7 @@ abstract class TreeNode
      */
     public function node(string ...$pathSegments): self
     {
-        return new InvalidNode(...$pathSegments);
+        return new TreeNode\InvalidNode(...$pathSegments);
     }
 
     /**
@@ -39,12 +38,12 @@ abstract class TreeNode
     }
 
     /**
-     * For existing symlink that cannot be resolved to existing node method
-     * should return false.
+     * For existing symlink that cannot be resolved to neither file
+     * or directory this method should return false.
      *
-     * @see TreeNode::isLink() - use this method to determine stale symlink
+     * @see TreeNode::isLink() method to determine stale symlink
      *
-     * @return bool true if node exists in filesystem
+     * @return bool true if node refers a file or directory
      */
     public function exists(): bool
     {
@@ -52,7 +51,7 @@ abstract class TreeNode
     }
 
     /**
-     * @return bool true if node is existing directory
+     * @return bool true if node is a directory
      */
     public function isDir(): bool
     {
@@ -60,7 +59,7 @@ abstract class TreeNode
     }
 
     /**
-     * @return bool true if node is existing file
+     * @return bool true if node is a file
      */
     public function isFile(): bool
     {
@@ -68,7 +67,7 @@ abstract class TreeNode
     }
 
     /**
-     * @return bool true if node is existing symlink
+     * @return bool true if direct node is a symlink
      */
     public function isLink(): bool
     {
@@ -84,9 +83,10 @@ abstract class TreeNode
     }
 
     /**
-     * Removes existing node from tree structure.
+     * Removes direct node from tree structure.
+     * For link resolved nodes only link will be removed.
      *
-     * @throws LogicException
+     * @throws LogicException when direct node does not exist
      */
     public function remove(): void
     {
@@ -96,7 +96,7 @@ abstract class TreeNode
     /**
      * Creates node as directory within tree structure.
      *
-     * @throws LogicException
+     * @throws LogicException when node exists
      */
     public function createDir(): void
     {
@@ -122,7 +122,7 @@ abstract class TreeNode
     /**
      * Writes given contents to file.
      *
-     * @throws LogicException
+     * @throws LogicException when file does not exist and cannot be created
      */
     public function putContents(string $contents): void
     {
@@ -140,7 +140,7 @@ abstract class TreeNode
     /**
      * Sets given path as Link target.
      *
-     * @throws LogicException
+     * @throws LogicException when link does not exist and cannot be created
      */
     public function setTarget(string $path): void
     {
@@ -158,7 +158,7 @@ abstract class TreeNode
     /**
      * Moves node to given target Node.
      *
-     * @throws LogicException
+     * @throws LogicException when node does not exist or target cannot be created
      */
     public function moveTo(TreeNode $target): void
     {
