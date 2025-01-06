@@ -22,7 +22,7 @@ class TempFiles
 {
     private string $root;
 
-    public function __construct(string $testName = null)
+    public function __construct(?string $testName = null)
     {
         $tmpName = getenv('DEV_TESTS_DIRECTORY') . '/' . ($testName ?? 'test' . bin2hex(random_bytes(3)));
         $this->root = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . $this->relative($tmpName);

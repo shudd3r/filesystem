@@ -85,7 +85,7 @@ class LinkedNode extends TreeNode
         return $this->node->isAllowed($access);
     }
 
-    protected function baseNode(TreeNode $overwrite = null): ?TreeNode
+    protected function baseNode(?TreeNode $overwrite = null): ?TreeNode
     {
         if (!$overwrite) { return $this->link; }
         return $overwrite === $this->node ? $this->node : $this->link->baseNode($overwrite);

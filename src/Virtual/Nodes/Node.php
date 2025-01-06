@@ -29,7 +29,7 @@ class Node
      * @param string      $path     Pathname used to find TreeNode relative to filesystem root
      * @param string|null $realPath Resolved path or null if the same as $path
      */
-    public function __construct(Pathname $root, TreeNode $node, string $path, string $realPath = null)
+    public function __construct(Pathname $root, TreeNode $node, string $path, ?string $realPath = null)
     {
         $this->root     = $root;
         $this->node     = $node;

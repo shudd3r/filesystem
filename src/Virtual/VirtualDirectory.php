@@ -27,7 +27,7 @@ class VirtualDirectory extends VirtualNode implements Directory
      * @param ?Pathname      $pathname  Pathname of root directory
      * @param ?RootDirectory $directory Pre-existing TreeNode structure
      */
-    public static function root(?Pathname $pathname = null, RootDirectory $directory = null): self
+    public static function root(?Pathname $pathname = null, ?RootDirectory $directory = null): self
     {
         $rootPath = $pathname ? $pathname->asRoot() : Pathname::root('vfs://');
         return new self(new Nodes($rootPath, $directory ?? new RootDirectory()), $rootPath);

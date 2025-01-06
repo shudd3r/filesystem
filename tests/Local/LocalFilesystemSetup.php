@@ -39,7 +39,7 @@ trait LocalFilesystemSetup
         Override::reset();
     }
 
-    protected function root(array $structure = null, array $access = []): TestRoot\LocalTestRoot
+    protected function root(?array $structure = null, array $access = []): TestRoot\LocalTestRoot
     {
         return new TestRoot\LocalTestRoot(self::$temp, $structure ?? $this->exampleStructure(), $access);
     }

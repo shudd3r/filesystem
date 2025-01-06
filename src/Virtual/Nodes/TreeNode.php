@@ -182,7 +182,7 @@ abstract class TreeNode
         throw new LogicException();
     }
 
-    protected function baseNode(TreeNode $overwrite = null): ?TreeNode
+    protected function baseNode(?TreeNode $overwrite = null): ?TreeNode
     {
         return $this === $overwrite ? null : $this;
     }

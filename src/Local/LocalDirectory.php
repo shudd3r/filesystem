@@ -119,7 +119,7 @@ class LocalDirectory extends LocalNode implements Directory
     /**
      * @param ?callable $filter fn(string) => bool
      */
-    private function descendantPaths(callable $filter = null): Generator
+    private function descendantPaths(?callable $filter = null): Generator
     {
         if (!$this->exists()) {
             yield from [];

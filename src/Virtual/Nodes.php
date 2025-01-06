@@ -27,7 +27,7 @@ class Nodes
      * @param Pathname   $rootPath
      * @param ?Directory $rootNode
      */
-    public function __construct(Pathname $rootPath, Directory $rootNode = null)
+    public function __construct(Pathname $rootPath, ?Directory $rootNode = null)
     {
         $this->rootPath = $rootPath;
         $this->rootNode = $rootNode ?? new Directory();

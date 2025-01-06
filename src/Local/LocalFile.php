@@ -62,7 +62,7 @@ class LocalFile extends LocalNode implements File
         $this->save($stream ? $stream->resource() : $file->contents(), LOCK_EX);
     }
 
-    public function moveTo(Directory $directory, string $name = null): void
+    public function moveTo(Directory $directory, ?string $name = null): void
     {
         if (!$this->validated(self::READ | self::REMOVE)->exists()) { return; }
 

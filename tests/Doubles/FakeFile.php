@@ -92,7 +92,7 @@ class FakeFile implements File
         $this->contents = $file->contents();
     }
 
-    public function moveTo(Directory $directory, string $name = null): void
+    public function moveTo(Directory $directory, ?string $name = null): void
     {
         if (!$this->exists()) { return; }
         $directory->file($name ?? basename($this->name))->copy($this);

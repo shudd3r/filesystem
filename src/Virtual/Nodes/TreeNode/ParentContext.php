@@ -113,7 +113,7 @@ class ParentContext extends TreeNode
         $this->parent->add($this->name, $node);
     }
 
-    protected function baseNode(TreeNode $overwrite = null): ?TreeNode
+    protected function baseNode(?TreeNode $overwrite = null): ?TreeNode
     {
         return $this->node->baseNode($overwrite);
     }
