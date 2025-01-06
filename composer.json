@@ -14,7 +14,7 @@
         "php": "^7.4 || ^8.0"
     },
     "require-dev": {
-        "polymorphine/dev": "0.4.*"
+        "polymorphine/dev": "0.5.*"
     },
     "autoload": {
         "psr-4": {

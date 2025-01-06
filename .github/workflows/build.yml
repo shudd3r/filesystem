@@ -66,7 +66,7 @@ jobs:
     strategy:
       matrix:
         operating-system: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        php-versions: ['8.2']
+        php-versions: ['8.4']
     env:
       extensions: dom, json, libxml, mbstring, pdo_sqlite, soap, xml, xmlwriter
       key: cache-v3
@@ -110,7 +110,7 @@ jobs:
     strategy:
       matrix:
         operating-system: ['ubuntu-latest']
-        php-versions: ['8.0', '8.1', '8.2']
+        php-versions: ['8.0', '8.1', '8.2', '8.3']
     env:
       extensions: dom, json, libxml, mbstring, pdo_sqlite, soap, xml, xmlwriter
       key: cache-v3
