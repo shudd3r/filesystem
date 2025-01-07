@@ -164,7 +164,7 @@ class ParentContextTest extends TestCase
         $this->assertFalse($node->isAllowed(Node::REMOVE));
     }
 
-    private function node(TreeNode $node, TreeNode\Directory $parent = null, string $name = 'foo'): ParentContext
+    private function node(TreeNode $node, ?TreeNode\Directory $parent = null, string $name = 'foo'): ParentContext
     {
         return new ParentContext($node, $parent ?? new TreeNode\Directory(), $name);
     }

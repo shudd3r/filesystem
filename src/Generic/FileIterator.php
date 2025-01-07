@@ -78,7 +78,7 @@ class FileIterator implements IteratorAggregate
      *
      * @return array<Type>
      */
-    public function map(callable $transformFile = null): array
+    public function map(?callable $transformFile = null): array
     {
         $items = [];
         foreach ($this as $file) {

@@ -29,7 +29,7 @@ class PermissionDenied extends FilesystemException
         return new self(sprintf($message, ucfirst(self::nodeType($node)), $node->name(), $node->pathname()));
     }
 
-    public static function forNodeRemove(Node $node, string $path = null): self
+    public static function forNodeRemove(Node $node, ?string $path = null): self
     {
         $reason  = $path ? 'write permission required for `%s`' : 'limited access for `%s`';
         $message = '%s `%s` is not removable - ' . $reason;

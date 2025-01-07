@@ -23,7 +23,7 @@ class File extends TreeNode
     /**
      * Basic type with file contents.
      */
-    public function __construct(string $contents = '', int $access = null)
+    public function __construct(string $contents = '', ?int $access = null)
     {
         $this->contents = $contents;
         $this->access   = $access ?? Node::READ | Node::WRITE;

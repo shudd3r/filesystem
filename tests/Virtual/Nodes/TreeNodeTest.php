@@ -22,8 +22,7 @@ class TreeNodeTest extends TestCase
 {
     public function test_default_methods(): void
     {
-        $node = new class() extends TreeNode {
-        };
+        $node = new class extends TreeNode {};
         $this->assertInstanceOf(TreeNode\InvalidNode::class, $node->node('foo'));
         $this->assertTrue($node->exists());
         $this->assertFalse($node->isDir());

@@ -47,7 +47,7 @@ class VirtualFile extends VirtualNode implements File
         $stream ? $this->writeStream($stream) : $this->write($file->contents());
     }
 
-    public function moveTo(Directory $directory, string $name = null): void
+    public function moveTo(Directory $directory, ?string $name = null): void
     {
         $node = $this->validated(self::READ | self::REMOVE)->node();
         if (!$this->nodeExists($node)) { return; }

@@ -76,7 +76,7 @@ interface File extends Node
      *
      * @throws FilesystemException
      */
-    public function moveTo(Directory $directory, string $name = null): void;
+    public function moveTo(Directory $directory, ?string $name = null): void;
 
     /**
      * In situations where required contents are not processed but only

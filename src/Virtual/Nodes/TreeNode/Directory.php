@@ -26,7 +26,7 @@ class Directory extends TreeNode
      *
      * @param array<string, TreeNode> $nodes
      */
-    public function __construct(array $nodes = [], int $access = null)
+    public function __construct(array $nodes = [], ?int $access = null)
     {
         $this->nodes  = $nodes;
         $this->access = $access ?? Node::READ | Node::WRITE;

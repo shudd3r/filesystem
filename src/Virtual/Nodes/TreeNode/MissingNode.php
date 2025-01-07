@@ -76,7 +76,7 @@ class MissingNode extends TreeNode
         $this->directory->add($attachName, $node);
     }
 
-    protected function baseNode(TreeNode $overwrite = null): ?TreeNode
+    protected function baseNode(?TreeNode $overwrite = null): ?TreeNode
     {
         return null;
     }

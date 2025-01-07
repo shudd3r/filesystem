@@ -17,7 +17,7 @@ use Shudd3r\Filesystem\Generic\Pathname;
 
 trait VirtualFilesystemSetup
 {
-    protected function root(array $structure = null, array $access = [], Pathname $pathname = null): VirtualTestRoot
+    protected function root(?array $structure = null, array $access = [], ?Pathname $pathname = null): VirtualTestRoot
     {
         return new VirtualTestRoot($pathname, $structure ?? $this->exampleStructure(), $access);
     }

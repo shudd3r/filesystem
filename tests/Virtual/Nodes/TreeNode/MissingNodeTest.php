@@ -71,7 +71,7 @@ class MissingNodeTest extends TestCase
         $this->assertFalse($node->isAllowed(Node::REMOVE));
     }
 
-    private function missingNode(Directory &$directory = null, string ...$missingSegments): MissingNode
+    private function missingNode(?Directory &$directory = null, string ...$missingSegments): MissingNode
     {
         $directory ??= new Directory();
         return new MissingNode($directory, ...$missingSegments);
